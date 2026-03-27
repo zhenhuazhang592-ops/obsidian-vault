@@ -1,0 +1,112 @@
+{
+  "project_id": "proj_huofu_test",
+  "project_name": "活着",
+  "episode": "第1-5集",
+  "created_at": "2026-03-27T00:00:00",
+  "updated_at": "2026-03-27T00:00:00",
+  "v": "v9.0.0",
+  "steps": {
+    "step_0": {
+      "status": "done",
+      "started_at": "2026-03-27T00:00:00",
+      "completed_at": "2026-03-27T00:00:00",
+      "input_ref": "",
+      "output_ref": "00-项目信息/项目配置单.md",
+      "error_msg": "",
+      "metadata": {}
+    },
+    "step_1": {
+      "status": "done",
+      "started_at": null,
+      "completed_at": null,
+      "input_ref": "",
+      "output_ref": "复用CDP数据",
+      "error_msg": "",
+      "metadata": {}
+    },
+    "step_2": {
+      "status": "done",
+      "started_at": null,
+      "completed_at": null,
+      "input_ref": "",
+      "output_ref": "01-IP档案/IP档案.yaml",
+      "error_msg": "",
+      "metadata": {}
+    },
+    "step_3": {
+      "status": "done",
+      "started_at": null,
+      "completed_at": null,
+      "input_ref": "",
+      "output_ref": "复用CDP plots数据",
+      "error_msg": "",
+      "metadata": {}
+    },
+    "step_4_5": {
+      "status": "done",
+      "started_at": "2026-03-27T00:00:00",
+      "completed_at": "2026-03-27T00:00:00",
+      "input_ref": "02-剧本/第01集-剧本.md",
+      "output_ref": "03-导演分析/",
+      "error_msg": "",
+      "metadata": {
+        "episodes": 5,
+        "emotion_type": "虐/悲"
+      }
+    },
+    "step_5": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "input_ref": "01-IP档案/IP档案.yaml",
+      "output_ref": "05-资产库/角色库/",
+      "error_msg": "",
+      "metadata": {
+        "characters": 8,
+        "locations": 7,
+        "note": "人工生成参考图"
+      }
+    },
+    "step_6": {
+      "status": "pending",
+      "started_at": null,
+      "completed_at": null,
+      "input_ref": "03-导演分析/",
+      "output_ref": "05-资产库/分镜图/",
+      "error_msg": "",
+      "metadata": {
+        "note": "人工在LibTV执行"
+      }
+    },
+    "step_7": {
+      "status": "done",
+      "started_at": "2026-03-27T00:00:00",
+      "completed_at": "2026-03-27T00:00:00",
+      "input_ref": "03-导演分析/",
+      "output_ref": "03-分镜/",
+      "error_msg": "",
+      "metadata": {
+        "episodes_completed": 5,
+        "shots": {
+          "EP01": {"shots": 8, "duration": 64, "status": "done"},
+          "EP02": {"shots": 3, "duration": 24, "status": "done"},
+          "EP03": {"shots": 5, "duration": 40, "status": "done"},
+          "EP04": {"shots": 2, "duration": 16, "status": "done"},
+          "EP05": {"shots": 3, "duration": 24, "status": "done"}
+        },
+        "total_shots": 21,
+        "total_duration": 168
+      }
+    }
+  },
+  "human_execution": {
+    "boundary": "Step 7完成，AI生成全由人工执行",
+    "next_steps": [
+      "Step 5: 资产库（角色参考图 + 场景图）",
+      "Step 6: 分镜图（LibTV Canvas）",
+      "LibTV: 21镜图片生成",
+      "LibTV: 21镜视频生成",
+      "拼接: 剪映/FFmpeg EP01-05"
+    ]
+  }
+}

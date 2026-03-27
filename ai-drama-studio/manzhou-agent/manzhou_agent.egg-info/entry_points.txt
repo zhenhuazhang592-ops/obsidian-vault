@@ -1,0 +1,2 @@
+[console_scripts]
+manzhou = manzhou.cli:main

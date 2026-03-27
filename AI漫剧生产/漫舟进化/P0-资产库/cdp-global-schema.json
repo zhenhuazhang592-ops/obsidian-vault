@@ -1,0 +1,57 @@
+{
+  "version": "1.0.0",
+  "meta": {
+    "created": "2026-03-25",
+    "project": null,
+    "type": "global_asset_library",
+    "append": false
+  },
+  "characters": [
+    {
+      "id": "char_01",
+      "name": null,
+      "aliases": [],
+      "role": "protagonist|antagonist|supporting",
+      "dna": {
+        "identity": null,
+        "appearance": null,
+        "clothing": null,
+        "expression": null,
+        "gesture": null,
+        "perspective": null
+      },
+      "visual_anchors": [],
+      "reference_images": [],
+      "usage_count": 0,
+      "last_used": null,
+      "projects": []
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_01",
+      "name": null,
+      "aliases": [],
+      "category": "interior|exterior|virtual",
+      "lighting": null,
+      "props": [],
+      "reference_images": [],
+      "usage_count": 0,
+      "last_used": null,
+      "projects": []
+    }
+  ],
+  "items": [
+    {
+      "id": "item_01",
+      "name": null,
+      "category": "key|supporting|ambient",
+      "narrative_weight": "high|medium|low",
+      "appearance": null,
+      "reference_images": [],
+      "usage_count": 0,
+      "last_used": null,
+      "projects": []
+    }
+  ]
+}

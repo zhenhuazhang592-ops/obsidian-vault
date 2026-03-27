@@ -1,0 +1,16 @@
+{
+  "youtube": {
+    "api_key": "YOUR_YOUTUBE_API_KEY",
+    "quota_limit": 10000,
+    "max_results_per_day": 100
+  },
+  "notebooklm": {
+    "default_language": "zh_Hans",
+    "auto_create_deliverables": false,
+    "default_notebook_name_template": "YouTube Research: {topic} - {date}"
+  },
+  "analysis": {
+    "default_deliverables": [],
+    "max_sources_per_analysis": 50
+  }
+}

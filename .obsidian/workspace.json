@@ -1,0 +1,306 @@
+{
+  "main": {
+    "id": "80c58c8c9818965f",
+    "type": "split",
+    "children": [
+      {
+        "id": "4e7a1c0505fb0b96",
+        "type": "split",
+        "children": [
+          {
+            "id": "ad560bb4dae0a93d",
+            "type": "tabs",
+            "dimension": 22.701475595913735,
+            "children": [
+              {
+                "id": "ec47258c9723c122",
+                "type": "leaf",
+                "state": {
+                  "type": "markdown",
+                  "state": {
+                    "file": "独立站项目/品牌独立站落地方案.md",
+                    "mode": "source",
+                    "source": false
+                  },
+                  "icon": "lucide-file",
+                  "title": "品牌独立站落地方案"
+                }
+              }
+            ]
+          },
+          {
+            "id": "3a9f30109753fcc5",
+            "type": "tabs",
+            "dimension": 77.29852440408627,
+            "children": [
+              {
+                "id": "90a2bb87bdce1312",
+                "type": "leaf",
+                "pinned": true,
+                "state": {
+                  "type": "terminal:terminal",
+                  "state": {
+                    "terminal:terminal": {
+                      "cwd": "/Users/huage/Obsidian Vault",
+                      "focus": false,
+                      "profile": {
+                        "args": [
+                          "--login"
+                        ],
+                        "executable": "/bin/zsh",
+                        "followTheme": true,
+                        "name": "",
+                        "platforms": {
+                          "darwin": true
+                        },
+                        "pythonExecutable": "python3",
+                        "restoreHistory": false,
+                        "rightClickAction": "copyPaste",
+                        "successExitCodes": [
+                          "0",
+                          "SIGINT",
+                          "SIGTERM"
+                        ],
+                        "terminalOptions": {
+                          "documentOverride": null
+                        },
+                        "type": "integrated",
+                        "useWin32Conhost": true
+                      },
+                      "serial": null
+                    }
+                  },
+                  "pinned": true,
+                  "icon": "terminal",
+                  "title": "终端：✳ Claude Code"
+                }
+              }
+            ]
+          }
+        ],
+        "direction": "horizontal"
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "cddde60fee418bac",
+    "type": "split",
+    "children": [
+      {
+        "id": "0eb1002a01eac8e1",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "fbae5b48240a60f4",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "88b06488a20ee183",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "351e0cf7e250196d",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 311.5
+  },
+  "right": {
+    "id": "7af3afd3ef4c513e",
+    "type": "split",
+    "children": [
+      {
+        "id": "eb4e2d2ddecd1110",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "2f2411290522cde3",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "未命名.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "未命名 的反向链接列表"
+            }
+          },
+          {
+            "id": "8c369ce55aace604",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "未命名.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "未命名 的出链列表"
+            }
+          },
+          {
+            "id": "d0e353f64694f429",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "1769eef68c6e2aea",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "32cbde4b2a5290b5",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "大纲"
+            }
+          },
+          {
+            "id": "be560c07902514ec",
+            "type": "leaf",
+            "state": {
+              "type": "claudian-view",
+              "state": {},
+              "icon": "bot",
+              "title": "Claudian"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 340.5,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false,
+      "obsidian42-brat:BRAT": false,
+      "claudian:Open Claudian": false,
+      "terminal:Open terminal": false
+    }
+  },
+  "active": "90a2bb87bdce1312",
+  "lastOpenFiles": [
+    "独立站项目/品牌独立站落地方案.md",
+    "docs/plans/2026-03-27-manzhou-studio-v2-plan.md",
+    "docs/plans/2026-03-27-manzhou-studio-v2-design.md",
+    "独立站项目/总览.md",
+    "独立站项目/Medusa/平台分析.md",
+    "独立站项目/Payload/平台分析.md",
+    "独立站项目/Strapi/平台分析.md",
+    "独立站项目/Saleor/平台分析.md",
+    "独立站项目/Medusa",
+    "独立站项目/Strapi",
+    "独立站项目/Payload",
+    "独立站项目/Saleor",
+    "独立站项目",
+    "AI漫剧项目/活着-v9/05-资产库/02-场景定场图提示词.md",
+    "AI漫剧项目/活着-v9/05-资产库/01-角色参考图提示词.md",
+    "AI漫剧项目/活着-v9/02-剧本/第01集-剧本.md",
+    "AI漫剧项目/活着-v9/02-剧本/第05集-剧本.md",
+    "AI漫剧项目/活着-v9/02-剧本/第04集-剧本.md",
+    "AI漫剧项目/活着-v9/02-剧本/第03集-剧本.md",
+    "AI漫剧项目/活着-v9/02-剧本/第02集-剧本.md",
+    "AI漫剧项目/活着-v9/02-剧本/剧本总览.md",
+    "AI漫剧项目/活着-v9/05-资产库/资产库总索引.md",
+    "AI漫剧项目/活着-v9/00-项目信息/项目配置单.md",
+    "AI漫剧项目/活着-v9/03-分镜/第01集-分镜-v9.0.0.md",
+    "AI漫剧项目/活着-v9/03-分镜/第01集-分镜-v10.1.0.md",
+    "ai-drama-studio/manzhou-agent/manzhou/__pycache__/qwen_client.cpython-312.pyc",
+    "ai-drama-studio/manzhou-agent/manzhou/qwen_client.py",
+    "ai-drama-studio/manzhou-agent/manzhou/__pycache__/claude_client.cpython-312.pyc",
+    "ai-drama-studio/manzhou-agent/manzhou/claude_client.py",
+    "AI漫剧项目/manzhou-studio/index.html",
+    "AI漫剧项目/格子间女人-v1/S1-风格指南-确认版.md",
+    "AI漫剧项目/格子间女人-v1/04-视频生成/视频生成任务清单.md",
+    "AI漫剧项目/格子间女人-v1/03-分镜脚本/第01集-分镜脚本.md",
+    "AI漫剧项目/格子间女人-v1/02-资产库/生成任务表.md",
+    "AI漫剧项目/格子间女人-v1/01-CDP资产包/CDP-JSON.md",
+    "ai-drama-studio/manzhou-agent/docs/plans/2026-03-27-schema-enforcement-plan.md",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/12_胜利饭店场景.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/08_何小勇.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/11_根龙.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/10_阿方.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/09_李血头.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/07_一乐_成年.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/05_许玉兰_中年.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/06_一乐_少年.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/01_许三观_青年.png",
+    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/02_许三观_中年.png",
+    "未命名.canvas"
+  ]
+}

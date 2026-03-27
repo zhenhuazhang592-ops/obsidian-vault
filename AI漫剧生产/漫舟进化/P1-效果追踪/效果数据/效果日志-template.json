@@ -1,0 +1,18 @@
+{
+  "meta": {
+    "version": "1.0.0",
+    "created": "2026-03-25",
+    "description": "效果日志模板，按项目复制后填写",
+    "usage": "复制此文件为 {{项目名}}-效果日志.json，按镜头生成顺序追加记录"
+  },
+  "scoring_formula": {
+    "formula": "effect_score = 0.40×完播率 + 0.25×点赞率 + 0.20×评论率 + 0.15×分享率",
+    "grade_thresholds": {
+      "fire": "score >= 0.80",
+      "pass": "0.60 <= score < 0.80",
+      "warn": "0.40 <= score < 0.60",
+      "fail": "score < 0.40"
+    }
+  },
+  "records": []
+}

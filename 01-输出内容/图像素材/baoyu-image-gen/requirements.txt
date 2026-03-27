@@ -1,0 +1,9 @@
+pydantic >= 2.0.0
+inferencesh
+diffusers
+transformers
+accelerate
+torch
+pillow
+huggingface-hub
+safetensors

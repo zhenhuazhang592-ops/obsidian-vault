@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI漫剧工业化创作站</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    #root { min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script src="https://cdn.bootcdn.net/ajax/libs/react/18.2.0/umd/react.development.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/react-dom/18.2.0/umd/react-dom.development.js"></script>
+  <script src="https://cdn.bootcdn.net/ajax/libs/babel-standalone/7.24.0/babel.min.js"></script>
+  <script type="text/babel" data-presets="react">
+const { useState, useRef, useEffect } = React;
+
+const STEPS = [
+  { id: 0, label: "项目配置", icon: "⚙️", short: "S00" },
+  { id: 1, label: "小说改编", icon: "📖", short: "S01" },
+  { id: 2, label: "IP解析", icon: "🧬", short: "S02" },
+  { id: 3, label: "剧本生成", icon: "🎬", short: "S03" },
+  { id: 4, label: "角色&场景", icon: "🎭", short: "S05" },
+  { id: 5, label: "分镜脚本", icon: "🎞️", short: "S06" },
+  { id: 6, label: "操作文档", icon: "📄", short: "OUT" },
+];
+
+const STYLE_PRESETS = ["都市职场", "清新治愈", "古风仙侠", "甜宠爱情", "悬疑惊悚", "复仇爽剧", "赛博朋克"];
+const PLATFORMS = ["抖音", "小红书", "快手", "视频号", "B站"];
+const DRAMA_TYPES = ["都市", "动画", "古风", "甜宠", "悬疑", "复仇", "仙侠"];
+
+const API_CONFIG = {
+  model: localStorage.getItem("manzhou_model") || "qwen-max",
+  maxTokens: parseInt(localStorage.getItem("manzhou_max_tokens") || "8192"),
+  apiKey: localStorage.getItem("manzhou_api_key") || "",
+};
+
+function sendToAPI(systemPrompt, userContent, onChunk, onDone) {
+  if (!API_CONFIG.apiKey) {
+    onChunk("\n\n❌ 错误：请先在右上角设置 API Key！\n访问 https://dashscope.console.aliyun.com 获取密钥。");
+    onDone();
+    return;
+  }
+
+  fetch("https://dashscope.aliyuncs.com/compatible-mode/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + API_CONFIG.apiKey,
+    },
+    body: JSON.stringify({
+      model: API_CONFIG.model,
+      max_tokens: API_CONFIG.maxTokens,
+      stream: true,
+      system: systemPrompt,
+      messages: [{ role: "user", content: userContent }],
+    }),
+  })
+    .then((res) => {
+      if (!res.ok) {
+        res.text().then(body => {
+          let msg = `❌ API错误 (${res.status})：\n`;
+          if (res.status === 401) msg += "API Key 无效或已过期。";
+          else if (res.status === 403) msg += "访问被拒绝，权限不足或跨域拦截。";
+          else if (res.status === 429) msg += "请求超限或余额不足，请稍后重试。";
+          else if (res.status === 400) msg += "请求格式错误或模型不支持。";
+          else msg += body.slice(0, 300);
+          onChunk("\n\n" + msg);
+          onDone();
+        });
+        return;
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) { onDone(); return; }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split("\n");
+          buffer = lines.pop();
+
+          for (const line of lines) {
+            if (line.trim() === "") continue;
+            if (line.startsWith("data: ")) {
+              const dataStr = line.slice(6);
+              if (dataStr.trim() === "[DONE]") continue;
+              try {
+                const data = JSON.parse(dataStr);
+                // DashScope / OpenAI compatible: choices[0].delta.content
+                if (data.choices?.[0]?.delta?.content) {
+                  onChunk(data.choices[0].delta.content);
+                }
+              } catch (e) {
+                console.warn("解析流数据片段失败:", dataStr);
+              }
+            }
+          }
+          read();
+        });
+      }
+      read();
+    })
+    .catch((err) => {
+      onChunk("\n\n❌ 网络错误，请检查网络或 API Key 是否有效。\n错误详情：" + err.message);
+      onDone();
+    });
+}
+
+// ─── UI 组件 ─────────────────────────────────────────────────────────────────
+
+function StepPanel({ title, icon, children }) {
+  return (
+    <div style={{ background: "#0f1117", border: "1px solid #2a2d3a", borderRadius: 16, padding: 28, marginBottom: 24, boxShadow: "0 4px 20px rgba(0,0,0,0.2)" }}>
+      <h2 style={{ color: "#e2e8f0", fontSize: 20, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 24 }}>{icon}</span>{title}
+      </h2>
+      {children}
+    </div>
+  );
+}
+
+function Field({ label, children, hint }) {
+  return (
+    <div style={{ marginBottom: 16 }}>
+      <label style={{ display: "block", color: "#94a3b8", fontSize: 13, fontWeight: 600, marginBottom: 6, letterSpacing: "0.05em" }}>{label}</label>
+      {children}
+      {hint && <div style={{ color: "#475569", fontSize: 12, marginTop: 4 }}>{hint}</div>}
+    </div>
+  );
+}
+
+function Input({ value, onChange, placeholder, multiline, rows = 4 }) {
+  const style = {
+    width: "100%", background: "#1a1d2e", border: "1px solid #2a2d3a", borderRadius: 8,
+    padding: "12px 14px", color: "#e2e8f0", fontSize: 14, outline: "none",
+    resize: multiline ? "vertical" : "none", fontFamily: "inherit", boxSizing: "border-box"
+  };
+  return multiline
+    ? <textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} rows={rows} style={style} />
+    : <input value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} style={style} />;
+}
+
+function Tags({ options, selected, onChange }) {
+  return (
+    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+      {options.map(o => {
+        const on = selected === o;
+        return (
+          <button key={o} onClick={() => onChange(o)}
+            style={{
+              padding: "6px 14px", borderRadius: 20,
+              border: `1px solid ${on ? "#6366f1" : "#2a2d3a"}`,
+              background: on ? "#6366f1" : "transparent",
+              color: on ? "#fff" : "#94a3b8", fontSize: 13, cursor: "pointer", transition: "all 0.2s"
+            }}>
+            {o}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+function GenerateBtn({ onClick, loading, label = "✨ 自动生成" }) {
+  return (
+    <button onClick={onClick} disabled={loading}
+      style={{
+        width: "100%", padding: "14px 0", borderRadius: 10,
+        background: loading ? "#374151" : "linear-gradient(135deg, #6366f1, #8b5cf6)",
+        border: "none", color: "#fff", fontSize: 15, fontWeight: 700,
+        cursor: loading ? "not-allowed" : "pointer", marginTop: 16,
+        letterSpacing: "0.05em", transition: "all 0.2s", opacity: loading ? 0.7 : 1
+      }}>
+      {loading ? "⏳ 正在连接 AI 大脑..." : label}
+    </button>
+  );
+}
+
+function OutputBox({ content, loading }) {
+  const [copied, setCopied] = useState(false);
+
+  if (!content && !loading) return null;
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(content);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div style={{ marginTop: 20, background: "#0a0c14", border: "1px solid #1e3a5f", borderRadius: 12, padding: 20, position: "relative" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ color: loading ? "#fbbf24" : "#60a5fa", fontSize: 12, fontWeight: 700, letterSpacing: "0.1em" }}>
+          {loading ? "⏳ 实时生成中..." : "✅ 生成完成"}
+        </div>
+        {!loading && content && (
+          <button onClick={handleCopy}
+            style={{
+              background: copied ? "#059669" : "#1e3a5f", border: "none", color: "#fff",
+              padding: "4px 10px", borderRadius: 6, fontSize: 12, cursor: "pointer", transition: "background 0.2s"
+            }}>
+            {copied ? "已复制 ✔" : "📋 复制全部"}
+          </button>
+        )}
+      </div>
+      <pre style={{
+        color: "#e2e8f0", fontSize: 14, lineHeight: 1.8, whiteSpace: "pre-wrap",
+        wordBreak: "break-word", margin: 0, fontFamily: "'Consolas', 'Courier New', monospace"
+      }}>
+        {content}{loading && <span style={{ animation: "blink 1s infinite" }}>▊</span>}
+      </pre>
+    </div>
+  );
+}
+
+// ─── Main App ─────────────────────────────────────────────────────────────────
+
+function App() {
+  const [step, setStep] = useState(0);
+  const [outputs, setOutputs] = useState(() => {
+    try { return JSON.parse(localStorage.getItem("manzhou_outputs")) || {}; } catch { return {}; }
+  });
+  const [loading, setLoading] = useState({});
+  const [showSettings, setShowSettings] = useState(false);
+  const [settings, setSettings] = useState({
+    apiKey: API_CONFIG.apiKey,
+    model: API_CONFIG.model,
+    maxTokens: String(API_CONFIG.maxTokens),
+  });
+
+  const [cfg, setCfg] = useState(() => {
+    try {
+      const s = JSON.parse(localStorage.getItem("manzhou_cfg")) || {};
+      return { title: s.title||"", type: s.type||"动画", platform: s.platform||"小红书", duration: s.duration||"120", episodes: s.episodes||"10", style: s.style||"清新治愈", budget: s.budget||"中等" };
+    } catch {
+      return { title: "", type: "动画", platform: "小红书", duration: "120", episodes: "10", style: "清新治愈", budget: "中等" };
+    }
+  });
+
+  const [novel, setNovel] = useState("");
+  const [charCount, setCharCount] = useState("3");
+  const [sceneCount, setSceneCount] = useState("4");
+  const [ipNotes, setIpNotes] = useState("");
+  const [scriptNotes, setScriptNotes] = useState("");
+  const [charNotes, setCharNotes] = useState("");
+  const [shotNotes, setShotNotes] = useState("");
+
+  const outputsRef = useRef(outputs);
+  useEffect(() => { outputsRef.current = outputs; }, [outputs]);
+
+  function saveOutputs(key, value) {
+    setOutputs(p => {
+      const n = { ...p, [key]: value };
+      try { localStorage.setItem("manzhou_outputs", JSON.stringify(n)); } catch {}
+      return n;
+    });
+  }
+
+  function saveCfg(n) {
+    try { localStorage.setItem("manzhou_cfg", JSON.stringify(n)); } catch {}
+    setCfg(n);
+  }
+
+  function saveSettings() {
+    localStorage.setItem("manzhou_api_key", settings.apiKey);
+    localStorage.setItem("manzhou_model", settings.model);
+    localStorage.setItem("manzhou_max_tokens", settings.maxTokens);
+    Object.assign(API_CONFIG, { apiKey: settings.apiKey, model: settings.model, maxTokens: parseInt(settings.maxTokens) });
+    setShowSettings(false);
+  }
+
+  function gen(key, system, user) {
+    saveOutputs(key, "");
+    setLoading(p => ({ ...p, [key]: true }));
+    sendToAPI(system, user,
+      (chunk) => saveOutputs(key, (outputsRef.current[key] || "") + chunk),
+      () => setLoading(p => ({ ...p, [key]: false }))
+    );
+  }
+
+  function genStep1() {
+    gen("s1",
+      `你是顶级影视/短剧改编编剧。严格按以下格式输出，保持简洁有力。`,
+      `请将以下内容改编为AI视频生成专用的标准化剧本改编稿。
+项目信息：项目名：${cfg.title || "未命名"} | 类型：${cfg.type} | 单集时长：${cfg.duration}秒 | 目标平台：${cfg.platform}
+改编要求：
+1. 删除内心独白，全部转化为可见动作/对话/视觉意象。
+2. 每30秒一个小冲突，每60秒一个情绪转折。
+3. 对白必须简练，每句台词不超过15个中文字符。
+4. 开场5秒立刻抓取眼球（视觉冲击或情绪冲突）。
+---原始素材---
+${novel || "（未提供内容）"}
+---`
+    );
+  }
+
+  function genStep2() {
+    const src = outputs["s1"] || novel;
+    gen("s2",
+      `你是资深IP资产解析师。请生成标准化YAML格式的IP档案。`,
+      `请从以下改编稿中提取角色和场景资产，生成完整IP档案。
+要求提取 ${charCount} 个主要角色和 ${sceneCount} 个核心场景。
+输出YAML结构，包含外貌锁、风格锁、场景氛围等细节。
+${ipNotes ? `额外要求：${ipNotes}` : ""}
+---改编稿---
+${src || "（待生成）"}
+---`
+    );
+  }
+
+  function genStep3() {
+    const script = outputs["s1"] || novel;
+    const ip = outputs["s2"] || "（IP档案待生成）";
+    gen("s3",
+      `你是AI漫剧导演。生成包含：剧本内容+导演意图+音频标注的三合一剧本。`,
+      `根据改编稿和IP档案，生成第1集的标准化剧本。
+目标时长：${cfg.duration}秒，风格：${cfg.style}。包含详细的景别、情绪值、BGM提示。
+${scriptNotes ? `额外要求：${scriptNotes}` : ""}
+---改编稿---
+${script}
+---IP档案---
+${ip}
+---`
+    );
+  }
+
+  function genStep4() {
+    const ip = outputs["s2"] || "（IP档案待生成）";
+    gen("s4",
+      `你是AI视觉总监。请为AI绘画/视频工具生成精准的 Prompt 参数。`,
+      `根据IP档案，生成角色DNA三视图提示词和场景图生成提示词（Midjourney/Niji/Seedance风格）。
+包含：正面、侧面、日常穿搭、核心场景氛围图的详细英文与中文对照Prompt。
+风格预设：${cfg.style}。
+${charNotes ? `特殊要求：${charNotes}` : ""}
+---IP档案---
+${ip}
+---`
+    );
+  }
+
+  function genStep5() {
+    const ip = outputs["s2"] || "";
+    const script = outputs["s3"] || "";
+    const assets = outputs["s4"] || "";
+    gen("s5",
+      `你是分镜大师。请生成可直接导入剪辑软件或AI视频生成器的完整分镜表。`,
+      `结合前序资产，生成按秒切分的详细分镜表。包含运镜方向（推拉摇移）、画面描述、图像Prompt和音效提示。
+平台：${cfg.platform}，画幅：竖屏9:16。
+${shotNotes ? `特殊要求：${shotNotes}` : ""}
+---剧本---
+${script}
+---资产---
+${assets}
+---`
+    );
+  }
+
+  function genDoc() {
+    const docPrompt = `
+生成一份专业、完整、可直接发给团队执行的《${cfg.title || "项目"} 制作操作手册》。
+将已生成的角色档案、场景Prompt、分镜表进行归纳排版。
+---项目配置---
+平台：${cfg.platform}，类型：${cfg.type}，风格：${cfg.style}
+---`;
+    gen("doc", "你是执行制片人，负责撰写SOP手册。", docPrompt);
+  }
+
+
+  return (
+    <div style={{ minHeight: "100vh", background: "#070a12", color: "#e2e8f0", fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" }}>
+      <style>{`
+        * { box-sizing: border-box; }
+        textarea:focus, input:focus, select:focus {
+          border-color: #6366f1 !important;
+          box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f1117; }
+        ::-webkit-scrollbar-thumb { background: #2a2d3a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f4354; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{
+        background: "#0f1117", borderBottom: "1px solid #1e2132", padding: "16px 32px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        position: "sticky", top: 0, zIndex: 10
+      }}>
+        <div>
+          <div style={{
+            fontSize: 22, fontWeight: 800,
+            background: "linear-gradient(135deg, #818cf8, #c084fc, #f472b6)",
+            WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent"
+          }}>
+            🎬 AI漫剧工业化创作站
+          </div>
+          <div style={{ color: "#64748b", fontSize: 13, marginTop: 4 }}>
+            Concept → IP → Script → Prompt → Storyboard 闭环系统
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {API_CONFIG.apiKey ? (
+            <div style={{
+              background: "rgba(16, 185, 129, 0.1)", border: "1px solid rgba(16, 185, 129, 0.3)",
+              borderRadius: 8, padding: "6px 14px", color: "#10b981", fontSize: 13, fontWeight: 500
+            }}>
+              🟢 API 就绪 · {API_CONFIG.model}
+            </div>
+          ) : (
+            <div style={{
+              background: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: 8, padding: "6px 14px", color: "#ef4444", fontSize: 13, fontWeight: 500,
+              animation: "blink 2s infinite"
+            }}>
+              ⚠️ 点击右侧配置 API Key
+            </div>
+          )}
+          <button onClick={() => setShowSettings(true)}
+            style={{
+              padding: "8px 16px", borderRadius: 8, background: "#1e2132",
+              border: "1px solid #2a2d3a", color: "#e2e8f0", fontSize: 13, cursor: "pointer",
+              display: "flex", alignItems: "center", gap: 6
+            }}>
+            ⚙️ 设置
+          </button>
+        </div>
+      </div>
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.8)", backdropFilter: "blur(4px)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000
+        }}
+          onClick={e => e.target === e.currentTarget && setShowSettings(false)}>
+          <div style={{
+            background: "#0f1117", border: "1px solid #2a2d3a", borderRadius: 16,
+            padding: 32, width: 480, maxWidth: "95vw",
+            boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)"
+          }}>
+            <h2 style={{ color: "#e2e8f0", fontSize: 20, fontWeight: 700, marginBottom: 24 }}>⚙️ 模型接口设置</h2>
+            <Field label="模型版本">
+              <select value={settings.model} onChange={e => setSettings(p => ({ ...p, model: e.target.value }))}
+                style={{ width: "100%", background: "#1a1d2e", border: "1px solid #2a2d3a", borderRadius: 8, padding: "12px 14px", color: "#e2e8f0", fontSize: 14, outline: "none" }}>
+                <option value="qwen-max">通义千问 Max (推荐)</option>
+                <option value="qwen-plus">通义千问 Plus</option>
+                <option value="qwen-turbo">通义千问 Turbo</option>
+                <option value="claude-3-5-sonnet-20241022">Claude 3.5 Sonnet</option>
+              </select>
+            </Field>
+            <Field label="API Key (DashScope)">
+              <input type="password" value={settings.apiKey}
+                onChange={e => setSettings(p => ({ ...p, apiKey: e.target.value }))}
+                placeholder="sk-xxxxxxxx..."
+                style={{
+                  width: "100%", background: "#1a1d2e", border: "1px solid #2a2d3a", borderRadius: 8,
+                  padding: "12px 14px", color: "#e2e8f0", fontSize: 14, outline: "none", boxSizing: "border-box"
+                }} />
+            </Field>
+            <Field label="最大输出 Token">
+              <input type="number" value={settings.maxTokens}
+                onChange={e => setSettings(p => ({ ...p, maxTokens: e.target.value }))}
+                placeholder="8192"
+                style={{
+                  width: "100%", background: "#1a1d2e", border: "1px solid #2a2d3a", borderRadius: 8,
+                  padding: "12px 14px", color: "#e2e8f0", fontSize: 14, outline: "none", boxSizing: "border-box"
+                }} />
+            </Field>
+            <div style={{ display: "flex", gap: 12, marginTop: 32 }}>
+              <button onClick={() => {
+                if (window.confirm("确定清除本地所有已生成的内容和缓存？")) {
+                  localStorage.clear();
+                  window.location.reload();
+                }
+              }}
+                style={{
+                  padding: "10px 14px", borderRadius: 8,
+                  background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)",
+                  color: "#ef4444", fontSize: 13, cursor: "pointer"
+                }}>
+                🗑️ 清空数据
+              </button>
+              <button onClick={() => setShowSettings(false)}
+                style={{
+                  flex: 1, padding: 10, borderRadius: 8, background: "transparent",
+                  border: "1px solid #2a2d3a", color: "#94a3b8", fontSize: 14, cursor: "pointer"
+                }}>
+                取消
+              </button>
+              <button onClick={saveSettings}
+                style={{
+                  flex: 1, padding: 10, borderRadius: 8, background: "#6366f1",
+                  border: "none", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer"
+                }}>
+                保存应用
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div style={{ display: "flex", height: "calc(100vh - 75px)" }}>
+        {/* Sidebar */}
+        <div style={{
+          width: 220, background: "#0f1117", borderRight: "1px solid #1e2132",
+          padding: "24px 16px", flexShrink: 0, overflowY: "auto"
+        }}>
+          <div style={{ color: "#475569", fontSize: 12, fontWeight: 700, marginBottom: 16, letterSpacing: "0.05em", paddingLeft: 8 }}>
+            WORKFLOW
+          </div>
+          {STEPS.map(s => {
+            const done = s.id < 6 ? !!outputs[`s${s.id}`] : !!outputs["doc"];
+            const active = step === s.id;
+            return (
+              <button key={s.id} onClick={() => setStep(s.id)}
+                style={{
+                  width: "100%", textAlign: "left", padding: "12px 16px", borderRadius: 10,
+                  border: "none", background: active ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                  color: active ? "#818cf8" : done ? "#10b981" : "#94a3b8",
+                  fontSize: 14, cursor: "pointer", marginBottom: 6,
+                  display: "flex", alignItems: "center", gap: 12,
+                  fontWeight: active ? 600 : 400, transition: "all 0.2s"
+                }}>
+                <span style={{ fontSize: 18 }}>{done && !active ? "✓" : s.icon}</span>
+                <span>{s.label}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Main Workspace */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "40px 60px", scrollBehavior: "smooth" }}>
+          <div style={{ maxWidth: 900, margin: "0 auto" }}>
+
+            {/* Step 0: Project Config */}
+            {step === 0 && (
+              <StepPanel title="Step 00 · 项目全局配置" icon="⚙️">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+                  <Field label="项目名称 (IP Title)">
+                    <Input value={cfg.title} onChange={v => saveCfg({ ...cfg, title: v })} placeholder="例：牛油果天使 / 格子间女人" />
+                  </Field>
+                  <Field label="剧集类型 (Genre)">
+                    <Tags options={DRAMA_TYPES} selected={cfg.type} onChange={v => saveCfg({ ...cfg, type: v })} />
+                  </Field>
+                  <Field label="核心投放平台">
+                    <Tags options={PLATFORMS} selected={cfg.platform} onChange={v => saveCfg({ ...cfg, platform: v })} />
+                  </Field>
+                  <Field label="单集目标时长">
+                    <Tags options={["60", "90", "120", "180"]} selected={cfg.duration} onChange={v => saveCfg({ ...cfg, duration: v })} />
+                  </Field>
+                  <Field label="视觉风格预设 (Aesthetic)">
+                    <Tags options={STYLE_PRESETS} selected={cfg.style} onChange={v => saveCfg({ ...cfg, style: v })} />
+                  </Field>
+                </div>
+                <button onClick={() => setStep(1)}
+                  style={{
+                    marginTop: 30, width: "100%", padding: 16, borderRadius: 12, background: "#6366f1",
+                    border: "none", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer",
+                    boxShadow: "0 4px 14px rgba(99, 102, 241, 0.4)"
+                  }}>
+                  进入编剧工作台 →
+                </button>
+              </StepPanel>
+            )}
+
+            {/* Step 1: Novel Adaptation */}
+            {step === 1 && (
+              <StepPanel title="Step 01 · 剧本降维转换" icon="📖">
+                <Field label="输入原始文本 (文案/小说片段)" hint="字数建议在 3000 字以内，AI 会自动提炼动作与对白">
+                  <Input value={novel} onChange={setNovel} multiline rows={10} placeholder="在此粘贴小说或文案原文..." />
+                </Field>
+                <GenerateBtn onClick={genStep1} loading={loading["s1"]} label="✨ 开始提炼剧本" />
+                <OutputBox content={outputs["s1"]} loading={loading["s1"]} />
+                {outputs["s1"] && !loading["s1"] && (
+                  <button onClick={() => setStep(2)}
+                    style={{
+                      width: "100%", padding: 14, borderRadius: 10,
+                      background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)",
+                      color: "#818cf8", fontSize: 15, cursor: "pointer", marginTop: 16, fontWeight: 600
+                    }}>
+                    提取 IP 资产 →
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+            {/* Step 2: IP Parsing */}
+            {step === 2 && (
+              <StepPanel title="Step 02 · 核心 IP 资产解析" icon="🧬">
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, marginBottom: 20 }}>
+                  <Field label="锁定核心角色数">
+                    <Tags options={["2", "3", "4", "5"]} selected={charCount} onChange={setCharCount} />
+                  </Field>
+                  <Field label="锁定主场景数">
+                    <Tags options={["3", "4", "5", "6"]} selected={sceneCount} onChange={setSceneCount} />
+                  </Field>
+                </div>
+                <Field label="补充 IP 解析要求 (可选)">
+                  <Input value={ipNotes} onChange={setIpNotes} multiline rows={2} placeholder="例如：角色需要民国气质，场景要写实风格..." />
+                </Field>
+                <GenerateBtn onClick={genStep2} loading={loading["s2"]} label="🧬 解析 IP 角色与场景" />
+                <OutputBox content={outputs["s2"]} loading={loading["s2"]} />
+                {outputs["s2"] && !loading["s2"] && (
+                  <button onClick={() => setStep(3)}
+                    style={{
+                      width: "100%", padding: 14, borderRadius: 10,
+                      background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)",
+                      color: "#818cf8", fontSize: 15, cursor: "pointer", marginTop: 16, fontWeight: 600
+                    }}>
+                    进入导演剧本阶段 →
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+            {/* Step 3: Director Script */}
+            {step === 3 && (
+              <StepPanel title="Step 03 · 导演三合一剧本" icon="🎬">
+                <Field label="补充导演要求 (可选)">
+                  <Input value={scriptNotes} onChange={setScriptNotes} multiline rows={2} placeholder="例如：增加悬疑感，配乐要紧凑..." />
+                </Field>
+                <GenerateBtn onClick={genStep3} loading={loading["s3"]} label="🎬 生成分场剧本" />
+                <OutputBox content={outputs["s3"]} loading={loading["s3"]} />
+                {outputs["s3"] && !loading["s3"] && (
+                  <button onClick={() => setStep(4)}
+                    style={{
+                      width: "100%", padding: 14, borderRadius: 10,
+                      background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)",
+                      color: "#818cf8", fontSize: 15, cursor: "pointer", marginTop: 16, fontWeight: 600
+                    }}>
+                    生成视觉 Prompt 库 →
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+            {/* Step 4: Visual Prompts */}
+            {step === 4 && (
+              <StepPanel title="Step 04 · AI 视觉 Prompt 库构建" icon="🎭">
+                <GenerateBtn onClick={genStep4} loading={loading["s4"]} label="🎨 生成一致性生图/视频 Prompt" />
+                <OutputBox content={outputs["s4"]} loading={loading["s4"]} />
+                {outputs["s4"] && !loading["s4"] && (
+                  <button onClick={() => setStep(5)}
+                    style={{
+                      width: "100%", padding: 14, borderRadius: 10,
+                      background: "rgba(99, 102, 241, 0.1)", border: "1px solid rgba(99, 102, 241, 0.3)",
+                      color: "#818cf8", fontSize: 15, cursor: "pointer", marginTop: 16, fontWeight: 600
+                    }}>
+                    打磨最终分镜表 →
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+            {/* Step 5: Storyboard */}
+            {step === 5 && (
+              <StepPanel title="Step 05 · 可执行分镜脚本" icon="🎞️">
+                <GenerateBtn onClick={genStep5} loading={loading["s5"]} label="🎞️ 生成全要素分镜表" />
+                <OutputBox content={outputs["s5"]} loading={loading["s5"]} />
+                {outputs["s5"] && !loading["s5"] && (
+                  <button onClick={() => setStep(6)}
+                    style={{
+                      width: "100%", padding: 14, borderRadius: 10, background: "#10b981",
+                      border: "none", color: "#fff", fontSize: 15, cursor: "pointer", marginTop: 16, fontWeight: 600
+                    }}>
+                    🎉 导出最终项目操作手册
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+            {/* Step 6: Export */}
+            {step === 6 && (
+              <StepPanel title="FINAL · 导出制作手册" icon="📄">
+                <GenerateBtn onClick={genDoc} loading={loading["doc"]} label="📄 生成可交付 Markdown 格式手册" />
+                <OutputBox content={outputs["doc"]} loading={loading["doc"]} />
+                {outputs["doc"] && !loading["doc"] && (
+                  <button onClick={() => {
+                    const blob = new Blob([outputs["doc"]], { type: "text/plain;charset=utf-8" });
+                    const a = document.createElement("a");
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${cfg.title || "AI项目"}_工作手册.md`;
+                    a.click();
+                  }}
+                    style={{
+                      marginTop: 16, width: "100%", padding: 16, borderRadius: 12, background: "#10b981",
+                      border: "none", color: "#fff", fontSize: 16, fontWeight: 700, cursor: "pointer",
+                      boxShadow: "0 4px 14px rgba(16, 185, 129, 0.4)"
+                    }}>
+                    ⬇️ 下载 .md 操作手册
+                  </button>
+                )}
+              </StepPanel>
+            )}
+
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+  </script>
+</body>
+</html>

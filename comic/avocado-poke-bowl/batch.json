@@ -1,0 +1,16 @@
+{
+  "jobs": 4,
+  "tasks": [
+    {"id": "cover", "promptFiles": ["prompts/00-cover.md"], "image": "00-cover.png", "ar": "3:4"},
+    {"id": "page01", "promptFiles": ["prompts/01-page.md"], "image": "01-page.png", "ar": "3:4"},
+    {"id": "page02", "promptFiles": ["prompts/02-page.md"], "image": "02-page.png", "ar": "3:4"},
+    {"id": "page03", "promptFiles": ["prompts/03-page.md"], "image": "03-page.png", "ar": "3:4"},
+    {"id": "page04", "promptFiles": ["prompts/04-page.md"], "image": "04-page.png", "ar": "3:4"},
+    {"id": "page05", "promptFiles": ["prompts/05-page.md"], "image": "05-page.png", "ar": "3:4"},
+    {"id": "page06", "promptFiles": ["prompts/06-page.md"], "image": "06-page.png", "ar": "3:4"},
+    {"id": "page07", "promptFiles": ["prompts/07-page.md"], "image": "07-page.png", "ar": "3:4"},
+    {"id": "page08", "promptFiles": ["prompts/08-page.md"], "image": "08-page.png", "ar": "3:4"},
+    {"id": "page09", "promptFiles": ["prompts/09-page.md"], "image": "09-page.png", "ar": "3:4"},
+    {"id": "page10", "promptFiles": ["prompts/10-page.md"], "image": "10-page.png", "ar": "3:4"}
+  ]
+}

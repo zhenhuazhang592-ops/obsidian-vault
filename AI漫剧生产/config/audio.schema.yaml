@@ -1,0 +1,53 @@
+# 音频标签统一格式
+
+version: "2.0.0"
+last_updated: "2026-03-25"
+
+# ==================== 配音标签（VO） ====================
+voice:
+  format: 'voice:({情绪}/{语速})"{台词}"'
+  example: 'voice:(温柔/慢)"我等你很久了"'
+  
+  emotion_source: "emotion.schema.yaml#vo_emotions"
+  
+  speed_levels:
+    - 极慢    # < 2字/秒
+    - 慢      # 2-3字/秒
+    - 正常    # 3-5字/秒
+    - 快      # 5-7字/秒
+    - 极快    # > 7字/秒
+
+# ==================== BGM标签 ====================
+bgm:
+  format: "[BGM: {情绪描述}]"
+  example: "[BGM: 甜蜜]"
+  
+  emotion_source: "emotion.schema.yaml#bgm_emotions"
+  
+  # BGM自动推导（基于VO情绪）
+  auto_infer: true
+  mapping_ref: "emotion.schema.yaml#cross_map"
+
+# ==================== SFX标签 ====================
+sfx:
+  format: "[SFX: {音效}]"
+  example: "[SFX: 玻璃碎裂]"
+  
+  categories:
+    - 环境音      # 风声、雨声、街道声
+    - 动作音      # 脚步声、关门声、打斗声
+    - 情绪音      # 心跳声、呼吸声
+    - 转场音      # 淡入淡出音效
+
+# ==================== 音频整合规则 ====================
+integration:
+  rules:
+    - "每个镜头必须同时包含 voice: / [BGM:] / [SFX:]"
+    - "BGM情绪应与VO情绪匹配（参考emotion.schema.yaml）"
+    - "SFX应与画面动作同步"
+    - "音频总时长必须等于分镜表总时长"
+    
+  validation:
+    - check_triple: true           # 三要素完整性
+    - check_duration: true         # 时长一致性
+    - check_emotion_match: true    # 情绪匹配度

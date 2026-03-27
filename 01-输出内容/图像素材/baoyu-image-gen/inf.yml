@@ -1,0 +1,17 @@
+namespace: ""
+name: baoyu-image-gen
+description: "牛油果文章配图生成器 - 基于Stable Diffusion"
+metadata: {}
+category: image
+images:
+    card: ""
+    thumbnail: ""
+    banner: ""
+env: {}
+kernel: python-3.11
+resources:
+    gpu:
+        count: 1
+        vram: 15
+        type: nvidia-t4
+    ram: 16

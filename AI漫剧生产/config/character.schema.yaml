@@ -1,0 +1,92 @@
+# 角色ID体系Schema
+
+version: "2.0.0"
+last_updated: "2026-03-25"
+
+# ==================== 角色类型 ====================
+character_types:
+  protagonist:
+    code: "protagonist"
+    name: "主角"
+    prefix: "protagonist_"
+    example: "protagonist_01"
+  antagonist:
+    code: "antagonist"
+    name: "反派"
+    prefix: "antagonist_"
+    example: "antagonist_01"
+  supporting:
+    code: "supporting"
+    name: "配角"
+    prefix: "supporting_"
+    example: "supporting_01"
+  cameo:
+    code: "cameo"
+    name: "客串"
+    prefix: "cameo_"
+    example: "cameo_01"
+
+# ==================== 指纹版本 ====================
+# 来源: manzhou-character-consistency.md（最完整版本）
+# 统一版本定义，解决3处不一致问题
+fingerprint:
+  versions: ["V1", "V2", "V3", "V4", "V5"]
+  naming: "{character_name}_{version}"  # LinFeng_V1, LinFeng_V2
+
+  # 核心映射表（各Skill统一引用此处）
+  version_map:
+    V1:
+      emotion: "标准/中性"
+      usage: "日常对话、亮相、常规场景"
+      example: "LinFeng_V1"
+    V2:
+      emotion: "愤怒/冷峻"
+      usage: "对峙、打脸、反击场景"
+      example: "LinFeng_V2"
+    V3:
+      emotion: "悲伤/脆弱"
+      usage: "虐心、回忆、委屈场景"
+      example: "LinFeng_V3"
+    V4:
+      emotion: "狂喜/自信"
+      usage: "爽点、胜利、觉醒场景"
+      example: "LinFeng_V4"
+    V5:
+      emotion: "特殊状态"
+      usage: "雨中/火光中/黑暗中等特殊环境"
+      example: "LinFeng_V5"
+
+# ==================== 九宫格定妆表代号 ====================
+grid_code:
+  S:
+    name: "侧脸/四分之三"
+    description: "展示侧颜轮廓"
+    angle: "90度侧"
+  M:
+    name: "正脸/中景"
+    description: "标准正面照"
+    angle: "0度正"
+  A:
+    name: "仰角"
+    description: "从下往上拍，威严感"
+    angle: "仰视15度"
+  B:
+    name: "俯角"
+    description: "从上往下拍，俯视感"
+    angle: "俯视15度"
+  W:
+    name: "全身"
+    description: "展示整体造型"
+    angle: "0度"
+  T:
+    name: "上半身"
+    description: "胸口以上"
+    angle: "0度"
+  C:
+    name: "特写"
+    description: "面部大特写"
+    angle: "0度"
+  O:
+    name: "背面"
+    description: "背面照"
+    angle: "180度"

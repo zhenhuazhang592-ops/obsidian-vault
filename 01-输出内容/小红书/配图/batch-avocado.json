@@ -1,0 +1,50 @@
+{
+  "jobs": 5,
+  "tasks": [
+    {
+      "id": "cover",
+      "prompt": "A fresh halved avocado on a clean white marble countertop, showing the creamy green-yellow flesh inside, natural daylight from window, soft shadows, 3:4 vertical format, photorealistic, clean and appetizing, with a few whole avocados next to it, soft pastel green and cream colors, warm and inviting atmosphere",
+      "image": "/Users/huage/Obsidian Vault/小红书内容创作/配图/01-cover-avocado.png",
+      "provider": "google",
+      "model": "gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k"
+    },
+    {
+      "id": "closeup",
+      "prompt": "Close-up of a perfectly ripe avocado half, showing the smooth creamy flesh with a gradient from light green to yellow, pit removed, glistening texture, natural soft lighting, on a light wooden board, 3:4 vertical format, photorealistic, fresh and delicious look, subtle dew drops on the surface, clean minimalist composition",
+      "image": "/Users/huage/Obsidian Vault/小红书内容创作/配图/02-avocado-closeup.png",
+      "provider": "google",
+      "model": "gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k"
+    },
+    {
+      "id": "toast",
+      "prompt": "Avocado toast on whole grain bread, topped with sliced avocado and cherry tomatoes, fresh and healthy breakfast style, flat lay on a light blue tablecloth, natural morning light, 3:4 vertical format, photorealistic, fresh and nutritious vibe, includes a glass of fresh orange juice and fresh herbs, clean and appetizing presentation",
+      "image": "/Users/huage/Obsidian Vault/小红书内容创作/配图/03-avocado-toast.png",
+      "provider": "google",
+      "model": "gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k"
+    },
+    {
+      "id": "prep",
+      "prompt": "Simple 1-minute avocado spread preparation: halved avocado, bowl, knife, salt and pepper, minimalist kitchen counter, natural daylight, ingredients arranged neatly, 3:4 vertical format, photorealistic, quick and easy cooking vibe, fresh herbs garnish, warm and inviting colors",
+      "image": "/Users/huage/Obsidian Vault/小红书内容创作/配图/04-avocado-prep.png",
+      "provider": "google",
+      "model": "gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k"
+    },
+    {
+      "id": "smoothie",
+      "prompt": "Creamy avocado banana smoothie in a tall glass, smooth texture, topped with coconut flakes, fresh mint leaf, natural lighting, on a marble countertop, 3:4 vertical format, photorealistic, refreshing and healthy drink, pastel green and cream colors, smoothie aesthetics",
+      "image": "/Users/huage/Obsidian Vault/小红书内容创作/配图/05-avocado-smoothie.png",
+      "provider": "google",
+      "model": "gemini-3-pro-image-preview",
+      "ar": "3:4",
+      "quality": "2k"
+    }
+  ]
+}

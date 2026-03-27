@@ -1,0 +1,131 @@
+{
+  "episode": 1,
+  "title": "牛油果大冒险",
+  "theme": "微波炉危机",
+  "duration": 75,
+  "deathType": "热死",
+  "scenes": [
+    {
+      "sceneNumber": 1,
+      "setting": "漠玫轻食餐厅后厨",
+      "characters": ["漠小漠"],
+      "visual": "漠小漠蹦蹦跳跳进入后厨，看到微波炉，眼睛一亮",
+      "dialogue": [
+        {"character": "漠小漠", "text": "哇！这就是传说中的微波炉？", "emotion": "好奇"},
+        {"character": "漠小漠", "text": "听说它能让东西变热变热！", "emotion": "兴奋"}
+      ],
+      "camera": "特写微波炉，镜头拉远展示漠小漠的全身",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 2,
+      "setting": "微波炉前",
+      "characters": ["漠小漠"],
+      "visual": "漠小漠绕着微波炉转圈，用果柄敲敲打打",
+      "dialogue": [
+        {"character": "漠小漠", "text": "这东西怎么用的？", "emotion": "思考"},
+        {"character": "漠小漠", "text": "不管了，按个按钮试试！", "emotion": "自信"}
+      ],
+      "camera": "中景跟拍，最后定格在微波炉按钮上",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 3,
+      "setting": "后厨门口",
+      "characters": ["玫博士", "漠小漠"],
+      "visual": "玫博士从后门冲进来，大喊",
+      "dialogue": [
+        {"character": "玫博士", "text": "小漠！住手！", "emotion": "焦急"},
+        {"character": "漠小漠", "text": "不至于吧？我就按一下！", "emotion": "不以为然"}
+      ],
+      "camera": "双人镜头，漠小漠手已经伸向按钮",
+      "duration": 6
+    },
+    {
+      "sceneNumber": 4,
+      "setting": "微波炉前",
+      "characters": ["漠小漠", "玫博士"],
+      "visual": "漠小漠已经开始加热，玫博士捂脸",
+      "dialogue": [
+        {"character": "漠小漠", "text": "不至于吧？微波炉又不是烤箱！", "emotion": "自信"},
+        {"character": "玫博士", "text": "根据研究显示，牛油果不能——", "emotion": "无奈"}
+      ],
+      "camera": "漠小漠按下按钮，特写微波炉开始运转",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 5,
+      "setting": "微波炉前",
+      "characters": ["漠小漠"],
+      "visual": "漠小漠趴在微波炉门上看，眼睛越来越亮",
+      "dialogue": [
+        {"character": "漠小漠", "text": "好暖和...好舒服...", "emotion": "满足"},
+        {"character": "漠小漠", "text": "再热点！再热点！", "emotion": "贪心"}
+      ],
+      "camera": "微波炉内部视角，漠小漠的果皮开始微微变色",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 6,
+      "setting": "后厨",
+      "characters": ["玫博士"],
+      "visual": "玫博士从指缝里偷看，表情大变",
+      "dialogue": [
+        {"character": "玫博士", "text": "糟糕！它的颜色——", "emotion": "惊恐"},
+        {"character": "玫博士", "text": "快跑！小漠！", "emotion": "大喊"}
+      ],
+      "camera": "特写玫博士惊恐表情，切换到微波炉内部",
+      "duration": 6
+    },
+    {
+      "sceneNumber": 7,
+      "setting": "微波炉内",
+      "characters": ["漠小漠"],
+      "visual": "漠小漠的果皮从深绿变成黄绿，体积开始膨胀",
+      "dialogue": [
+        {"character": "漠小漠", "text": "咦？怎么有点热...", "emotion": "困惑"},
+        {"character": "漠小漠", "text": "等等，这是——", "emotion": "惊恐"}
+      ],
+      "camera": "特写漠小漠表情，眼睛开始凸出",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 8,
+      "setting": "后厨",
+      "characters": ["漠小漠"],
+      "visual": "微波炉"叮"的一声，漠小漠被炸出，躺在地上冒烟",
+      "dialogue": [
+        {"character": "漠小漠", "text": "我...裂...开...了...", "emotion": "绝望"}
+      ],
+      "camera": "慢动作特写爆炸瞬间，然后定格在漠小漠的"遗照"",
+      "duration": 10
+    },
+    {
+      "sceneNumber": 9,
+      "setting": "后厨",
+      "characters": ["玫博士"],
+      "visual": "玫博士无奈地收拾微波炉，摇摇头",
+      "dialogue": [
+        {"character": "玫博士", "text": "说了不让放微波炉...", "emotion": "叹气"},
+        {"character": "玫博士", "text": "下一个。", "emotion": "平静"}
+      ],
+      "camera": "大全景，暗示这只是下一集的铺垫",
+      "duration": 8
+    },
+    {
+      "sceneNumber": 10,
+      "setting": "虚空中",
+      "characters": ["漠小漠（复活形态）"],
+      "visual": "漠小漠的灵魂飘出来，举着小牌子",
+      "dialogue": [
+        {"character": "漠小漠", "text": "再给我一次机会！", "emotion": "复活宣言"},
+        {"character": "漠小漠", "text": "下一集，我一定不会再按那个按钮了！", "emotion": "flag"}
+      ],
+      "camera": "幽默定格，文字弹出"未完待续"",
+      "duration": 5
+    }
+  ],
+  "socialQuote": "不至于吧？微波炉又不是烤箱！",
+  "shareableMoment": "漠小漠眼睛凸出、躺在地上冒烟的"遗照"画面",
+  "oneLinePitch": "一颗自信满满的牛油果，非要把自己的生命交给微波炉"
+}

@@ -1,0 +1,241 @@
+{
+  "version": "1.0.0",
+  "meta": {
+    "created": "2026-03-25",
+    "project": "格子间女人",
+    "type": "global_asset_library",
+    "append": false,
+    "source": "格子间女人/01-IP档案/IP档案.yaml",
+    "migration_note": "从 IP档案.yaml 迁移，usage_count=1（初始导入）"
+  },
+  "characters": [
+    {
+      "id": "char_01",
+      "name": "谭斌",
+      "aliases": [
+        "Cherie",
+        "Cheritang"
+      ],
+      "role": "protagonist",
+      "dna": {
+        "identity": "MPL中国公司销售代表，28-32岁，职场黄金期女性，英文名Cheritang",
+        "appearance": "干练的职业女性形象；正装+大披肩的办公室形象；松绿软缎+白色宽腿长裤+金色凉鞋的便装打扮",
+        "clothing": "办公室：职业套装+大披肩；便装：松绿软缎+白色宽腿长裤+金色凉鞋",
+        "expression": "理性冷静，察言观色，自嘲幽默掩饰真实情绪",
+        "gesture": "面对突发邮件保持专业；用玩笑缓解尴尬；敏锐读懂他人笑容背后的苦涩",
+        "perspective": "女性职场成长视角，从被动卷入到主动出击"
+      },
+      "visual_anchors": [
+        "大披肩（标志性办公室形象）",
+        "金色凉鞋（便装标志）",
+        "干练短发或束发"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "char_02",
+      "name": "程睿敏",
+      "aliases": [
+        "Cheng Ruimin"
+      ],
+      "role": "antagonist",
+      "dna": {
+        "identity": "MPL中国大中国区销售总经理，35-40岁，九年老臣，已被离职",
+        "appearance": "极修长的手指，触手冰凉，似一段多年前就冷却的生命",
+        "clothing": "精英商务正装（高管级别）",
+        "expression": "深不可测，突然陨落的神秘感",
+        "gesture": "冰凉触感的暗示，过往创伤的隐喻",
+        "perspective": "职场权力符号，女性仰慕对象，开篇悬念载体"
+      },
+      "visual_anchors": [
+        "极修长的手指",
+        "触手冰凉的暗示",
+        "高管商务正装"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "char_03",
+      "name": "余永麟",
+      "aliases": [
+        "Tony",
+        "Yu Yonglin"
+      ],
+      "role": "supporting",
+      "dna": {
+        "identity": "MPL前销售总监，30-35岁，跳槽至FSK北方区销售总监",
+        "appearance": "精英版君越座驾；T恤+短裤；头发剃得紧贴头皮；像街边小痞子",
+        "clothing": "便装休闲（T恤+短裤），与高管形象形成反差",
+        "expression": "幽默自嘲掩饰失落，被招安的苦涩，不甘心的笑容",
+        "gesture": "用笑话掩饰真实情绪，主动联系谭斌的微妙举动",
+        "perspective": "职场背叛者/旧情人的双重身份"
+      },
+      "visual_anchors": [
+        "紧贴头皮短发",
+        "君越座驾",
+        "休闲便装"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "char_04",
+      "name": "方芳",
+      "aliases": [
+        "Fang Fang"
+      ],
+      "role": "supporting",
+      "dna": {
+        "identity": "MPL北京地区销售代表，25-28岁，谭斌下属+战友",
+        "appearance": "粉扑扑的圆脸，努力做同情状却幸灾乐祸",
+        "clothing": "职场新人装扮（偏休闲）",
+        "expression": "八卦但不恶意，贴心来送热普洱，减安心态",
+        "gesture": "送热普洱的温暖举动，职场减压阀角色",
+        "perspective": "职场盟友视角"
+      },
+      "visual_anchors": [
+        "粉扑扑圆脸",
+        "年轻职场新人形象"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "char_05",
+      "name": "乔利维",
+      "aliases": [
+        "Qiao Liwei"
+      ],
+      "role": "supporting",
+      "dna": {
+        "identity": "MPL内部晋升候选（销售经理），谭斌的直接竞争对手",
+        "appearance": "职场精英形象",
+        "clothing": "职业正装",
+        "expression": "竞争者姿态",
+        "gesture": "东北三省业绩优于谭斌，晋升优势明显",
+        "perspective": "竞争对手视角"
+      },
+      "visual_anchors": [
+        "职业正装",
+        "职场精英形象"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "char_06",
+      "name": "刘秉康",
+      "aliases": [
+        "Kenny Lau",
+        "Liu Bingkang"
+      ],
+      "role": "supporting",
+      "dna": {
+        "identity": "MPL中国公司执行董事长，象征权力顶端",
+        "appearance": "董事长级别权威形象",
+        "clothing": "顶级商务正装",
+        "expression": "权力符号，程睿敏离职邮件的发件人",
+        "gesture": "一人之下，掌控人事大权",
+        "perspective": "权力顶端视角（隔着三层关系）"
+      },
+      "visual_anchors": [
+        "顶级商务正装",
+        "权威高管形象"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    }
+  ],
+  "locations": [
+    {
+      "id": "loc_01",
+      "name": "MPL办公室",
+      "aliases": [
+        "MPL中国总部办公室",
+        "大开间办公室"
+      ],
+      "category": "interior",
+      "lighting": "夜间冷白荧光，职场冷宫氛围，灯火阑珊中仅剩一人的空间感",
+      "props": [
+        "格子间工位",
+        "电脑屏幕蓝光",
+        "冷白荧光灯",
+        "大披肩（谭斌）"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "loc_02",
+      "name": "MPL大厦",
+      "aliases": [
+        "MPL中国总部",
+        "CBD地标建筑"
+      ],
+      "category": "exterior",
+      "lighting": "城市夜景，CBD不夜城，灯火辉煌",
+      "props": [
+        "CBD地标建筑外观",
+        "现代玻璃幕墙"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    },
+    {
+      "id": "loc_03",
+      "name": "北京街头",
+      "aliases": [
+        "北京CBD街头",
+        "立交桥下"
+      ],
+      "category": "exterior",
+      "lighting": "城市夜景，立交桥，灯火",
+      "props": [
+        "立交桥",
+        "城市路灯",
+        "CBD夜景"
+      ],
+      "reference_images": [],
+      "usage_count": 1,
+      "last_used": "2026-03-25T00:00:00+08:00",
+      "projects": [
+        "格子间女人"
+      ]
+    }
+  ],
+  "items": []
+}

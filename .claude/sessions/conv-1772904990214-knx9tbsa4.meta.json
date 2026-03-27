@@ -1,0 +1,19 @@
+{
+  "id": "conv-1772904990214-knx9tbsa4",
+  "title": "开始新对话",
+  "titleGenerationStatus": "success",
+  "createdAt": 1772904990215,
+  "updatedAt": 1774337685138,
+  "lastResponseAt": 1774337685138,
+  "sessionId": "94789475-b5c8-452b-88ed-af0bc3aa69af",
+  "sdkSessionId": "94789475-b5c8-452b-88ed-af0bc3aa69af",
+  "usage": {
+    "model": "sonnet",
+    "inputTokens": 0,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 0,
+    "contextWindow": 200000,
+    "contextTokens": 0,
+    "percentage": 0
+  }
+}
