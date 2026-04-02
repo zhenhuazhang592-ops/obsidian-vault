@@ -1,5 +1,11 @@
 {
   "dependencies": {
     "ws": "^8.20.0"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "^0.1.97",
+    "fabric": "^7.2.0",
+    "pnpm": "^10.33.0",
+    "sharp": "^0.34.5"
   }
 }
