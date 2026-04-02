@@ -16,7 +16,7 @@ Qwen3-Max + prompts/product-analysis.md（作为 system prompt）
 ```
 上传实拍图 + 产品信息：
 - 品名：[品名]
-- 品类：[品类 avodaco|durian|blueberry|other]
+- 品类：[品类 avocado|durian|blueberry|other]
 - 产地：[产地]
 - 核心卖点：[卖点描述]
 - 规格：[规格]
@@ -109,6 +109,7 @@ Qwen3-Max + prompts/product-analysis.md（作为 system prompt）
 | 榴莲 | 越南林同省 | 高山榴莲园、热带植被、云雾缭绕、清新空气 |
 | 蓝莓 | 智利 | 南美高原蓝莓灌木丛、蓝天、山脉轮廓、充沛阳光 |
 | 蓝莓 | 云南 | 云南高原蓝莓大棚、梯田、山脉背景、高原晴空 |
+| 其他 | [通用] | [地形] + [植被] + [气候] 组合描述 |
 
 ---
 
