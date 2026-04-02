@@ -1,0 +1,58 @@
+<!-- 漠玫品牌水印 · 平铺版 -->
+<!-- 使用说明：将 opacity 设为 0.05-0.1 后平铺作为背景 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300" width="300" height="300">
+  <defs>
+    <!-- 漠玫绿，透明度 8% 效果 -->
+    <style>
+      .wm-bg { fill: #2E7D32; opacity: 0.08; }
+      .wm-text-zh {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', serif;
+        font-weight: 700;
+        font-size: 24px;
+        fill: #2E7D32;
+        letter-spacing: 0.1em;
+      }
+      .wm-text-en {
+        font-family: 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+        font-weight: 400;
+        font-size: 11px;
+        fill: #2E7D32;
+        letter-spacing: 0.15em;
+        opacity: 0.7;
+      }
+    </style>
+  </defs>
+
+  <!-- 背景（透明，可直接平铺） -->
+  <rect width="300" height="300" fill="white" opacity="0"/>
+
+  <!-- 左上角漠玫标记 -->
+  <g transform="translate(20, 20)">
+    <rect width="3" height="18" rx="1.5" class="wm-bg" style="fill: #2E7D32;"/>
+    <text x="10" y="16" class="wm-text-zh" opacity="0.08">漠玫</text>
+    <text x="10" y="30" class="wm-text-en" opacity="0.06">MoMei</text>
+  </g>
+
+  <!-- 右侧漠玫标记（旋转 90°） -->
+  <g transform="translate(260, 20) rotate(90)">
+    <text x="0" y="16" class="wm-text-zh" opacity="0.06">漠玫</text>
+    <text x="0" y="30" class="wm-text-en" opacity="0.04">MoMei</text>
+  </g>
+
+  <!-- 右下角漠玫标记 -->
+  <g transform="translate(260, 260)">
+    <text x="0" y="16" class="wm-text-zh" opacity="0.08">漠玫</text>
+    <text x="0" y="30" class="wm-text-en" opacity="0.06">MoMei</text>
+    <rect x="-8" y="3" width="3" height="18" rx="1.5" style="fill: #2E7D32; opacity: 0.06;"/>
+  </g>
+
+  <!-- 左下角漠玫标记（旋转 -90°） -->
+  <g transform="translate(20, 280) rotate(-90)">
+    <text x="0" y="16" class="wm-text-zh" opacity="0.06">漠玫</text>
+    <text x="0" y="30" class="wm-text-en" opacity="0.04">MoMei</text>
+  </g>
+
+  <!-- 中心淡化标记 -->
+  <text x="150" y="158" text-anchor="middle" class="wm-text-zh" opacity="0.04" font-size="80">漠玫</text>
+  <text x="150" y="185" text-anchor="middle" class="wm-text-en" opacity="0.03" font-size="32">MoMei</text>
+</svg>

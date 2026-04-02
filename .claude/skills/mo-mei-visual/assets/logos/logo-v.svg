@@ -1,0 +1,35 @@
+<!-- 漠玫品牌 Logo · 竖向版 -->
+<!-- 漠玫绿底白字，适用于竖版海报底部中央 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 80" width="120" height="80">
+  <defs>
+    <style>
+      .bg { fill: #2E7D32; }
+      .wordmark-zh {
+        font-family: 'Noto Serif SC', 'Source Han Serif SC', serif;
+        font-weight: 700;
+        font-size: 36px;
+        fill: #FFFFFF;
+        letter-spacing: 0.1em;
+      }
+      .wordmark-en {
+        font-family: 'Noto Sans SC', 'Source Han Sans SC', sans-serif;
+        font-weight: 400;
+        font-size: 14px;
+        fill: rgba(255,255,255,0.8);
+        letter-spacing: 0.2em;
+      }
+    </style>
+  </defs>
+
+  <!-- 背景色块：漠玫绿，圆角 -->
+  <rect width="120" height="80" rx="8" class="bg"/>
+
+  <!-- 顶部装饰横线 -->
+  <rect x="40" y="12" width="40" height="3" rx="1.5" fill="#D4A853"/>
+
+  <!-- 中文品名（居中） -->
+  <text x="60" y="48" text-anchor="middle" class="wordmark-zh">漠玫</text>
+
+  <!-- 英文副标（居中） -->
+  <text x="60" y="67" text-anchor="middle" class="wordmark-en">MoMei</text>
+</svg>

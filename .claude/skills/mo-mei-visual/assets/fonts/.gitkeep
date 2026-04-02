@@ -1,0 +1,14 @@
+# 字体文件占位目录
+#
+# 请从 Google Fonts 下载以下字体文件放置于此目录：
+#
+# 1. NotoSerifSC-Bold.ttf   — 思源宋体 Bold，用于品名/大标题
+#    下载地址：https://fonts.google.com/specimen/Noto+Serif+SC
+#    选择 "Download family" → 解压 → 找 NotoSerifSC-Bold.ttf
+#
+# 2. NotoSansSC-Regular.ttf  — 思源黑体 Regular，用于正文/副标题
+#    下载地址：https://fonts.google.com/specimen/Noto+Sans+SC
+#    选择 "Download family" → 解压 → 找 NotoSansSC-Regular.ttf
+#
+# 注意：Google Fonts 下载的是 ZIP 包，内含多个字重文件，
+#       选择 Bold（700）和 Regular（400）即可。
