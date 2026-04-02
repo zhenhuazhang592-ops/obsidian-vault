@@ -285,7 +285,14 @@
       "Bash(npx:*)",
       "Bash(ARK_API_KEY=\"$ARK_API_KEY\" npx -y bun .claude/skills/baoyu-image-gen/scripts/main.ts --provider doubao --model doubao-seedream-4-5-251128 --prompt \"Anthropomorphic rose flower fox character, cute fox with pink fur and golden flower crown, human-like expressive eyes, personified animal mascot, detailed digital art, fantasy cute creature, soft rose pink #E8A0B4 and gold #D4A843 colors, elegant fantasy illustration\" --image \"/Users/huage/Obsidian Vault/AI短视频创作/漠玫IP形象/05-动物拟人形象.png\" --ar 16:9 --quality standard)",
       "Bash(ARK_API_KEY=\"$ARK_API_KEY\" npx -y bun .claude/skills/baoyu-image-gen/scripts/main.ts --provider doubao --model doubao-seedream-4-5-251128 --prompt \"Anthropomorphic rose flower fox character, cute fox with pink fur and golden flower crown, human-like expressive eyes, personified animal mascot, detailed digital art, fantasy cute creature, soft rose pink #E8A0B4 and gold #D4A843 colors, elegant fantasy illustration\" --image \"/Users/huage/Obsidian Vault/AI短视频创作/漠玫IP形象/05-动物拟人形象.png\" --ar 16:9 --quality 2k)",
-      "Bash(ARK_API_KEY=\"134fcd44-2136-42bb-a2ae-8f3ad1182caf\" npx -y bun .claude/skills/baoyu-image-gen/scripts/main.ts --provider doubao --model doubao-seedream-4-5-251128 --prompt \"Anthropomorphic rose flower fox character, cute fox with pink fur and golden flower crown, human-like expressive eyes, personified animal mascot, detailed digital art, fantasy cute creature, soft rose pink #E8A0B4 and gold #D4A843 colors, elegant fantasy illustration\" --image \"/Users/huage/Obsidian Vault/AI短视频创作/漠玫IP形象/05-动物拟人形象.png\" --ar 16:9 --quality 2k)"
+      "Bash(ARK_API_KEY=\"134fcd44-2136-42bb-a2ae-8f3ad1182caf\" npx -y bun .claude/skills/baoyu-image-gen/scripts/main.ts --provider doubao --model doubao-seedream-4-5-251128 --prompt \"Anthropomorphic rose flower fox character, cute fox with pink fur and golden flower crown, human-like expressive eyes, personified animal mascot, detailed digital art, fantasy cute creature, soft rose pink #E8A0B4 and gold #D4A843 colors, elegant fantasy illustration\" --image \"/Users/huage/Obsidian Vault/AI短视频创作/漠玫IP形象/05-动物拟人形象.png\" --ar 16:9 --quality 2k)",
+      "Bash(node -e \"require\\(''sharp''\\)\")",
+      "Bash(bun run:*)",
+      "Bash(bun scripts/poster-compose.ts test-fixtures/test-avocado.png \"墨西哥哈斯牛油果\" \"奶油般绵密口感\" \"68-128元\" test-fixtures/output/)",
+      "Bash(rm -rf .claude/skills/mo-mei-visual/test-fixtures/output)",
+      "Bash(mkdir -p .claude/skills/mo-mei-visual/test-fixtures/output)",
+      "Bash(bun .claude/skills/mo-mei-visual/scripts/smart-crop.ts .claude/skills/mo-mei-visual/test-fixtures/test-avocado.png .claude/skills/mo-mei-visual/test-fixtures/output/)",
+      "Bash(bun:*)"
     ]
   }
 }

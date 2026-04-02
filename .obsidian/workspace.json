@@ -70,7 +70,7 @@
                   },
                   "pinned": true,
                   "icon": "terminal",
-                  "title": "终端：✳ Claude Code"
+                  "title": "终端：⠐ Claude Code"
                 }
               }
             ]
@@ -243,18 +243,19 @@
   },
   "active": "6ff7484f0dab94ea",
   "lastOpenFiles": [
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/06-暗黑种草.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/05-邪魅狂狷.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/04-眼神杀.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/03-魔童气场.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/02-水墨侧面.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格/01-正面态度.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格",
     "AI短视频创作/漠玫IP形象/角色外观卡/06-手持产品.png",
     "AI短视频创作/漠玫IP形象/角色外观卡/05-微笑表情.png",
     "AI短视频创作/漠玫IP形象/角色外观卡/04-面部特写.png",
     "AI短视频创作/漠玫IP形象/角色外观卡/03-全身照.png",
     "AI短视频创作/漠玫IP形象/角色外观卡/02-侧面照.png",
-    "AI短视频创作/漠玫IP形象/角色外观卡/01-正面标准照.png",
     "AI短视频创作/漠玫IP形象/角色外观卡",
-    "AI短视频创作/漠玫IP形象/04-日系动漫二次元.png",
-    "AI短视频创作/漠玫IP形象/03-扁平插画人物.png",
-    "AI短视频创作/漠玫IP形象/02-Q版人物.png",
-    "test-output/main-douyin-9:16.png",
-    "test-output/main-douyin-3:4.png",
     "test-output",
     "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include/glibconfig.h",
     "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include",
@@ -263,7 +264,6 @@
     "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0",
     "node_modules/@img/sharp-darwin-arm64/lib/sharp-darwin-arm64.node",
     "node_modules/@img/sharp-libvips-darwin-arm64/package.json",
-    "node_modules/@img/sharp-libvips-darwin-arm64/versions.json",
     "node_modules/@img/sharp-libvips-darwin-arm64/README.md",
     "node_modules/@img/sharp-darwin-arm64/README.md",
     "node_modules/@img/colour/LICENSE.md",

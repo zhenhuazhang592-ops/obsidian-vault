@@ -47,9 +47,9 @@ Step 2: 场景合成
 
 Step 3: 智能裁切（✅ Phase 1）
   · 调用 scripts/smart-crop.ts
-  · 基础图 → 全平台 7 种尺寸
+  · 基础图 → 全平台 8 种尺寸
 
-Step 4: 海报合成（📅 Phase 2）
+Step 4: 海报合成（✅ Phase 2）
   · 调用 scripts/poster-compose.ts
   · 输出：横版 + 竖版
 
@@ -66,12 +66,13 @@ output/<slug>/
 ├── main-taobao-1:1.png      # 淘宝 800×800
 ├── main-taobao-3:4.png      # 淘宝 800×1066
 ├── main-jd-1:1.png          # 京东 800×800
+├── main-jd-sub.png          # 京东 480×480
 ├── main-pdd-1:1.png         # 拼多多 800×800
 ├── main-pdd-3:4.png         # 拼多多 800×1200
 ├── main-douyin-3:4.png      # 抖音 800×1066
 ├── main-douyin-9:16.png    # 抖音 1080×1920
-├── poster-h.png             # 横版海报 1920×800（📅 Phase 2）
-├── poster-v.png             # 竖版海报 1080×1920（📅 Phase 2）
+├── poster-h.png             # 横版海报 1920×800（✅ Phase 2）
+├── poster-v.png             # 竖版海报 1080×1920（✅ Phase 2）
 └── index.html               # 详情页（📅 Phase 2）
 ```
 
@@ -91,8 +92,8 @@ output/<slug>/
 
 | 脚本 | 用途 | 状态 |
 |------|------|------|
-| `scripts/smart-crop.ts` | 智能裁切（Sharp） | ✅ Phase 1 |
-| `scripts/poster-compose.ts` | 海报合成（Sharp） | 📅 Phase 2 |
+| `scripts/smart-crop.ts` | 智能裁切（Sharp，8种尺寸） | ✅ Phase 1 |
+| `scripts/poster-compose.ts` | 海报合成（Sharp） | ✅ Phase 2 |
 
 ## 参考文档
 

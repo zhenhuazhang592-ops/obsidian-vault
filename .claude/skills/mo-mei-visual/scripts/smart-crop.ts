@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * 智能裁切脚本 - 使用 Sharp 将基础合成图裁切为全平台 7 种尺寸
+ * 智能裁切脚本 - 使用 Sharp 将基础合成图裁切为全平台 8 种尺寸
  *
  * 技术选型说明：
  * - 任务原计划使用 Fabric.js，但 Fabric.js 6.x 需要完整 DOM 环境
@@ -29,6 +29,7 @@ const CROP_SPECS: CropSpec[] = [
   { name: "main-taobao-1:1", width: 800, height: 800, ratio: "1:1", mode: "center", platform: "taobao", usage: "淘宝主图" },
   { name: "main-taobao-3:4", width: 800, height: 1066, ratio: "3:4", mode: "center", platform: "taobao", usage: "淘宝长图" },
   { name: "main-jd-1:1", width: 800, height: 800, ratio: "1:1", mode: "center", platform: "jd", usage: "京东白底主图" },
+  { name: "main-jd-sub", width: 480, height: 480, ratio: "1:1", mode: "center", platform: "jd", usage: "京东副图" },
   { name: "main-pdd-1:1", width: 800, height: 800, ratio: "1:1", mode: "center", platform: "pdd", usage: "拼多多主图" },
   { name: "main-pdd-3:4", width: 800, height: 1200, ratio: "2:3", mode: "center", platform: "pdd", usage: "拼多多长图" },
   { name: "main-douyin-3:4", width: 800, height: 1066, ratio: "3:4", mode: "top", platform: "douyin", usage: "抖音主图" },
