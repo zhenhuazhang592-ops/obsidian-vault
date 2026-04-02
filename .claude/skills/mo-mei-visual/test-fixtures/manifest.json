@@ -1,0 +1,13 @@
+[
+  {
+    "slug": "test-avocado",
+    "name": "测试牛油果",
+    "品类": "avocado",
+    "产地": "墨西哥",
+    "核心卖点": "测试卖点",
+    "规格": "1kg",
+    "价格": "68元",
+    "image": "test-avocado.png",
+    "styles": ["minimal"]
+  }
+]
