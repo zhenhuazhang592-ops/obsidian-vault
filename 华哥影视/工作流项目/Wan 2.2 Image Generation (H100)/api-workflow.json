@@ -1,0 +1,31 @@
+const workflow_id = "g2ND8SPTgqjvmC_b-42qX"
+
+// Workflow JSON in API Format
+const prompt = {"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["75",0],"text":"A dramatic, stylized portrait in a flowing black velvet blazer with intricate embroidered details, capturing an air of timeless elegance and mystery. Her light-skinned complexion glows under the soft studio lighting, emphasized by a meticulously styled voluminous updo and long, cascading iridescent crystal earrings that refract light with subtle brilliance. She gazes directly into the camera with a thoughtful expression, her lips painted a soft rose hue, framed by delicate blush and expertly applied eyeshadow. The background is a deep charcoal gray, subtly textured with soft fabric folds, creating a dramatic contrast that highlights the blazer's intricate beading and embroidery and her captivating presence. Conceptual art.\n\n"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["75",0],"text":"色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["58",0]},"class_type":"VAEDecode"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"wan_2.1_vae.safetensors"},"class_type":"VAELoader"},"54":{"_meta":{"title":"ModelSamplingSD3"},"inputs":{"model":["67",0],"shift":1},"class_type":"ModelSamplingSD3"},"55":{"_meta":{"title":"ModelSamplingSD3"},"inputs":{"model":["68",0],"shift":1},"class_type":"ModelSamplingSD3"},"57":{"_meta":{"title":"KSampler (Advanced)"},"inputs":{"cfg":1,"model":["54",0],"steps":8,"negative":["7",0],"positive":["6",0],"add_noise":"enable","scheduler":"beta","noise_seed":1123204478764538,"end_at_step":4,"latent_image":["77",0],"sampler_name":"euler","start_at_step":0,"return_with_leftover_noise":"enable"},"class_type":"KSamplerAdvanced"},"58":{"_meta":{"title":"KSampler (Advanced)"},"inputs":{"cfg":1,"model":["55",0],"steps":8,"negative":["7",0],"positive":["6",0],"add_noise":"disable","scheduler":"beta","noise_seed":0,"end_at_step":10000,"latent_image":["57",0],"sampler_name":"euler","start_at_step":4,"return_with_leftover_noise":"disable"},"class_type":"KSamplerAdvanced"},"63":{"_meta":{"title":"Unet Loader (GGUF)"},"inputs":{"unet_name":"Wan2.2-T2V-A14B-HighNoise-Q6_K.gguf"},"class_type":"UnetLoaderGGUF"},"65":{"_meta":{"title":"Unet Loader (GGUF)"},"inputs":{"unet_name":"Wan2.2-T2V-A14B-LowNoise-Q6_K.gguf"},"class_type":"UnetLoaderGGUF"},"67":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["63",0],"lora_name":"lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank128_bf16.safetensors","strength_model":3},"class_type":"LoraLoaderModelOnly"},"68":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["65",0],"lora_name":"lightx2v_T2V_14B_cfg_step_distill_v2_lora_rank128_bf16.safetensors","strength_model":1.5},"class_type":"LoraLoaderModelOnly"},"71":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"WAN22_txt2img_wan22"},"class_type":"SaveImage"},"75":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"wan","device":"default","clip_name":"umt5_xxl_fp8_e4m3fn_scaled.safetensors"},"class_type":"CLIPLoader"},"77":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":1280,"height":720,"batch_size":1},"class_type":"EmptyLatentImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

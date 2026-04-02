@@ -1,0 +1,12 @@
+{
+  "id": "BlxfI083kYGr3IOT6bp04",
+  "name": "Wan2.2 14B T2V Text-to-Video (H100)",
+  "description": null,
+  "created_at": "2025-07-31T13:00:24.058Z",
+  "updated_at": "2025-07-31T23:18:05.730Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "H100",
+  "models": null
+}

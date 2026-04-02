@@ -1,0 +1,34 @@
+const workflow_id = "pYvxVfMFBjzt-5ktUJnFA"
+
+// Workflow JSON in API Format
+const prompt = {"42":{"_meta":{"title":"Load Image"},"inputs":{"image":"image_flux2_input_ref_image.png"},"class_type":"LoadImage"},"46":{"_meta":{"title":"Load Image"},"inputs":{"image":"image_flux2_input_Illustration.png"},"class_type":"LoadImage"},"64":{"_meta":{"title":"Save Image"},"inputs":{"images":["71",0],"filename_prefix":"Flux2"},"class_type":"SaveImage"},"65":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["80",0],"conditioning":["75",0]},"class_type":"BasicGuider"},"66":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux2-vae.safetensors"},"class_type":"VAELoader"},"67":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["66",0],"pixels":["69",0]},"class_type":"VAEEncode"},"68":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["66",0],"pixels":["82",0]},"class_type":"VAEEncode"},"69":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["46",0],"megapixels":1,"upscale_method":"area","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"70":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":4,"conditioning":["77",0]},"class_type":"FluxGuidance"},"71":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["66",0],"samples":["72",0]},"class_type":"VAEDecode"},"72":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["78",0],"guider":["65",0],"sigmas":["81",0],"sampler":["73",0],"latent_image":["83",0]},"class_type":"SamplerCustomAdvanced"},"73":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"74":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["68",0],"conditioning":["70",0]},"class_type":"ReferenceLatent"},"75":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["67",0],"conditioning":["74",0]},"class_type":"ReferenceLatent"},"77":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["85",0],"text":"Apply the design from Reference Image 1 onto objects in Reference Image 2.\n"},"class_type":"CLIPTextEncode"},"78":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":120396708981006},"class_type":"RandomNoise"},"79":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux2_dev_fp8mixed.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"80":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["79",0],"lora_name":"Flux2TurboComfyv2.safetensors","strength_model":1},"class_type":"LoraLoaderModelOnly"},"81":{"_meta":{"title":"Flux2Scheduler"},"inputs":{"steps":8,"width":["84",0],"height":["84",1]},"class_type":"Flux2Scheduler"},"82":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["42",0],"megapixels":1,"upscale_method":"area","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"83":{"_meta":{"title":"Empty Flux 2 Latent"},"inputs":{"width":["84",0],"height":["84",1],"batch_size":1},"class_type":"EmptyFlux2LatentImage"},"84":{"_meta":{"title":"Get Image Size"},"inputs":{"image":["82",0]},"class_type":"GetImageSize"},"85":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"flux2","device":"default","clip_name":"mistral_3_small_flux2_fp8.safetensors"},"class_type":"CLIPLoader"}};
+
+// Input files
+const files = {
+    "/input/image_flux2_input_ref_image.png": "https://comfy.icu/api/v1/view/workflows/pYvxVfMFBjzt-5ktUJnFA/input/image_flux2_input_ref_image.png",
+    "/input/image_flux2_input_Illustration.png": "https://comfy.icu/api/v1/view/workflows/pYvxVfMFBjzt-5ktUJnFA/input/image_flux2_input_Illustration.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

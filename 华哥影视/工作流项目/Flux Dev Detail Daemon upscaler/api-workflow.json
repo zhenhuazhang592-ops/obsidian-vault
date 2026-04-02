@@ -1,0 +1,33 @@
+const workflow_id = "Rv5KxSIGUhLhfCVgIpkWQ"
+
+// Workflow JSON in API Format
+const prompt = {"10":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"30":{"_meta":{"title":"ModelSamplingFlux"},"inputs":{"model":["65",0],"width":1024,"height":1024,"max_shift":1.15,"base_shift":0.5},"class_type":"ModelSamplingFlux"},"56":{"_meta":{"title":"Image Comparer (rgthree)"},"inputs":{"image_a":["135",0],"image_b":["77",0],"rgthree_comparer":{"images":[{"url":"https://r2.comfy.icu/workflows/Rv5KxSIGUhLhfCVgIpkWQ/temp/rgthree.compare._temp_pupou_00001_.png","name":"A","selected":true},{"url":"https://r2.comfy.icu/workflows/Rv5KxSIGUhLhfCVgIpkWQ/temp/rgthree.compare._temp_pupou_00002_.png","name":"B","selected":true}]}},"class_type":"Image Comparer (rgthree)"},"65":{"_meta":{"title":"Unet Loader (GGUF)"},"inputs":{"unet_name":"flux1-dev-Q8_0.gguf"},"class_type":"UnetLoaderGGUF"},"72":{"_meta":{"title":"ConditioningZeroOut"},"inputs":{"conditioning":["101",0]},"class_type":"ConditioningZeroOut"},"77":{"_meta":{"title":"Load Image"},"inputs":{"image":"2.png","upload":"image"},"class_type":"LoadImage"},"84":{"_meta":{"title":"DualCLIPLoader (GGUF)"},"inputs":{"type":"flux","clip_name1":"t5xxl_fp8_e4m3fn.safetensors","clip_name2":"clip_l.safetensors"},"class_type":"DualCLIPLoaderGGUF"},"101":{"_meta":{"title":"CLIPTextEncodeFlux"},"inputs":{"clip":["84",0],"t5xxl":"a photograph of a majestic lion resting in the savannah at dusk. The lion's golden fur shimmers under the soft, fading light of the setting sun, casting long shadows across the grasslands. Using a Canon EOS-1D X Mark III paired with a Canon EF 70-200mm f/2.8L IS III USM lens, every detail of the lion's face is crisp, from its piercing amber eyes to the intricate texture of its mane. The backdrop features a hazy orange sky with silhouettes of distant acacia trees, creating a breathtaking scene that encapsulates the wild beauty of the African savannah","clip_l":"a photograph of a majestic lion resting in the savannah at dusk. The lion's golden fur shimmers under the soft, fading light of the setting sun, casting long shadows across the grasslands. Using a Canon EOS-1D X Mark III paired with a Canon EF 70-200mm f/2.8L IS III USM lens, every detail of the lion's face is crisp, from its piercing amber eyes to the intricate texture of its mane. The backdrop features a hazy orange sky with silhouettes of distant acacia trees, creating a breathtaking scene that encapsulates the wild beauty of the African savannah","guidance":3},"class_type":"CLIPTextEncodeFlux"},"135":{"_meta":{"title":"Ultimate SD Upscale (Custom Sample)"},"inputs":{"cfg":1,"vae":["10",0],"seed":64171703981794,"image":["77",0],"model":["30",0],"steps":8,"denoise":0.4,"negative":["72",0],"positive":["101",0],"mask_blur":32,"mode_type":"Linear","scheduler":"beta","tile_width":1024,"upscale_by":2,"tile_height":1024,"sampler_name":"dpmpp_2m","tile_padding":64,"tiled_decode":false,"custom_sigmas":["138",0],"seam_fix_mode":"None","custom_sampler":["143",0],"seam_fix_width":64,"seam_fix_denoise":1,"seam_fix_padding":16,"seam_fix_mask_blur":8,"force_uniform_tiles":true},"class_type":"UltimateSDUpscaleCustomSample"},"136":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"dpmpp_2m"},"class_type":"KSamplerSelect"},"138":{"_meta":{"title":"BasicScheduler"},"inputs":{"model":["65",0],"steps":8,"denoise":0.4,"scheduler":"beta"},"class_type":"BasicScheduler"},"143":{"_meta":{"title":"Detail Daemon Sampler"},"inputs":{"end":0.9,"bias":0.5,"fade":0,"start":0,"smooth":true,"sampler":["136",0],"exponent":0.25,"end_offset":0,"start_offset":0,"detail_amount":1,"cfg_scale_override":0},"class_type":"DetailDaemonSamplerNode"},"144":{"_meta":{"title":"Save Image"},"inputs":{"images":["135",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {
+    "/input/2.png": "https://comfy.icu/api/v1/view/workflows/Rv5KxSIGUhLhfCVgIpkWQ/input/2.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

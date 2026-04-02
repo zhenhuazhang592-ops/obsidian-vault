@@ -1,0 +1,37 @@
+const workflow_id = "BnJRsgZmCXDVQ5-EUQfc-"
+
+// Workflow JSON in API Format
+const prompt = {"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["38",0],"text":"Using this elegant style, create a portrait of a swan wearing a pearl tiara and lace collar, maintaining the same refined quality and soft color tones."},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["31",0]},"class_type":"VAEDecode"},"31":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":846485616866196,"model":["37",0],"steps":20,"denoise":1,"negative":["135",0],"positive":["35",0],"scheduler":"simple","latent_image":["124",0],"sampler_name":"euler"},"class_type":"KSampler"},"35":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":2.5,"conditioning":["177",0]},"class_type":"FluxGuidance"},"37":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-dev-kontext_fp8_scaled.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"38":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"clip_l.safetensors","clip_name2":"t5xxl_fp8_e4m3fn_scaled.safetensors"},"class_type":"DualCLIPLoader"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"42":{"_meta":{"title":"FluxKontextImageScale"},"inputs":{"image":["146",0]},"class_type":"FluxKontextImageScale"},"124":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["39",0],"pixels":["42",0]},"class_type":"VAEEncode"},"135":{"_meta":{"title":"ConditioningZeroOut"},"inputs":{"conditioning":["6",0]},"class_type":"ConditioningZeroOut"},"136":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"146":{"_meta":{"title":"Image Stitch"},"inputs":{"image1":["189",0],"direction":"right","spacing_color":"white","spacing_width":0,"match_image_size":true},"class_type":"ImageStitch"},"177":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["124",0],"conditioning":["6",0]},"class_type":"ReferenceLatent"},"189":{"_meta":{"title":"Load Image"},"inputs":{"image":"rabbit.jpg","upload":"image"},"class_type":"LoadImage"}};
+
+// Input files
+const files = {
+    "/input/rabbit.jpg": "https://comfy.icu/api/v1/view/workflows/BnJRsgZmCXDVQ5-EUQfc-/input/rabbit.jpg",
+    "/models/vae/flux1-ae.safetensors": "https://huggingface.co/fofr/comfyui/resolve/main/vae/ae.safetensors",
+    "/models/text_encoders/clip_l.safetensors": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/clip_l.safetensors",
+    "/models/text_encoders/t5xxl_fp8_e4m3fn_scaled.safetensors": "https://huggingface.co/comfyanonymous/flux_text_encoders/resolve/main/t5xxl_fp8_e4m3fn_scaled.safetensors",
+    "/models/diffusion_models/flux1-dev-kontext_fp8_scaled.safetensors": "https://huggingface.co/Comfy-Org/flux1-kontext-dev_ComfyUI/resolve/main/split_files/diffusion_models/flux1-dev-kontext_fp8_scaled.safetensors"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

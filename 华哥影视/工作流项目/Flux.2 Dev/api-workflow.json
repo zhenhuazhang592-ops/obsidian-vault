@@ -1,0 +1,33 @@
+const workflow_id = "SFp9XnKIUb42mumOIrZtc"
+
+// Workflow JSON in API Format
+const prompt = {"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["85",0],"filename_prefix":"Flux2"},"class_type":"SaveImage"},"45":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["46",0],"megapixels":1,"upscale_method":"lanczos","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"46":{"_meta":{"title":"Load Image"},"inputs":{"image":"image_flux2_input_image.png"},"class_type":"LoadImage"},"72":{"_meta":{"title":"Flux2Scheduler"},"inputs":{"steps":20,"width":["83",0],"height":["83",1]},"class_type":"Flux2Scheduler"},"73":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["80",0],"conditioning":["82",0]},"class_type":"BasicGuider"},"74":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":4,"conditioning":["78",0]},"class_type":"FluxGuidance"},"75":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"76":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux2-vae.safetensors"},"class_type":"VAELoader"},"77":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["84",0],"guider":["73",0],"sigmas":["72",0],"sampler":["75",0],"latent_image":["86",0]},"class_type":"SamplerCustomAdvanced"},"78":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["79",0],"text":"The woman is wearing a small pale yellow knitted beanie, with a white fabric patch on the front right, embroidered with big gray text “FLUX.2 COMFY.” Keep the face"},"class_type":"CLIPTextEncode"},"79":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"flux2","device":"default","clip_name":"mistral_3_small_flux2_bf16.safetensors"},"class_type":"CLIPLoader"},"80":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux2_dev_fp8mixed.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"81":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["76",0],"pixels":["45",0]},"class_type":"VAEEncode"},"82":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["81",0],"conditioning":["74",0]},"class_type":"ReferenceLatent"},"83":{"_meta":{"title":"Get Image Size"},"inputs":{"image":["45",0]},"class_type":"GetImageSize"},"84":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":649422536169327},"class_type":"RandomNoise"},"85":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["76",0],"samples":["77",0]},"class_type":"VAEDecode"},"86":{"_meta":{"title":"Empty Flux 2 Latent"},"inputs":{"width":["83",0],"height":["83",1],"batch_size":1},"class_type":"EmptyFlux2LatentImage"}};
+
+// Input files
+const files = {
+    "/input/image_flux2_input_image.png": "https://comfy.icu/api/v1/view/workflows/SFp9XnKIUb42mumOIrZtc/input/image_flux2_input_image.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

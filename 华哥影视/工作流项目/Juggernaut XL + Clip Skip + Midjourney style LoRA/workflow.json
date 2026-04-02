@@ -1,0 +1,21 @@
+{
+  "id": "gbVXM65kMO8bzAPRwzwaP",
+  "name": "Juggernaut XL + Clip Skip + Midjourney style LoRA",
+  "description": null,
+  "created_at": "2024-04-03T15:31:58.475Z",
+  "updated_at": "2024-08-27T18:29:57.630Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "A100_40GB",
+  "models": [
+    {
+      "type": "checkpoints",
+      "url": "https://civitai.com/api/download/models/471120?type=Model&format=SafeTensor&size=full&fp=fp16",
+      "filename": "Juggernaut_X_RunDiffusion_Hyper.safetensors",
+      "source": "civitai",
+      "model_version_id": 471120,
+      "model_id": 133005
+    }
+  ]
+}

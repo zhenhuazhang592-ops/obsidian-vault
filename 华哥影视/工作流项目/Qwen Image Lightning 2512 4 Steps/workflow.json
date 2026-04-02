@@ -1,0 +1,12 @@
+{
+  "id": "eb7n6ZDGelB5gtQ7aFbe-",
+  "name": "Qwen Image Lightning 2512 4 Steps",
+  "description": null,
+  "created_at": "2026-01-17T13:21:16.975Z",
+  "updated_at": "2026-01-19T14:27:58.124Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L40S",
+  "models": null
+}

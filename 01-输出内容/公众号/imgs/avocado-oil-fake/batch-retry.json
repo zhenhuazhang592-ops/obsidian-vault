@@ -1,0 +1,29 @@
+{
+  "jobs": 3,
+  "tasks": [
+    {
+      "id": "01-infographic",
+      "promptFiles": ["prompts/01-infographic-avocado-oil-stat.md"],
+      "image": "01-infographic-avocado-oil-stat.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "03-scene",
+      "promptFiles": ["prompts/03-scene-money-wasted.md"],
+      "image": "03-scene-money-wasted.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "05-scene-final",
+      "promptFiles": ["prompts/05-scene-skeptical-mind.md"],
+      "image": "05-scene-skeptical-mind.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    }
+  ]
+}

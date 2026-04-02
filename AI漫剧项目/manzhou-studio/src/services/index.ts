@@ -1,1 +1,0 @@
-export { sendToDashScope } from './dashscope';

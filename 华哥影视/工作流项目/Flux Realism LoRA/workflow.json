@@ -1,0 +1,19 @@
+{
+  "id": "Q6r7nw4KWz2n1cmuOpJ-b",
+  "name": "Flux Realism LoRA",
+  "description": null,
+  "created_at": "2024-08-17T06:15:40.708Z",
+  "updated_at": "2025-03-22T17:20:25.015Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L4",
+  "models": [
+    {
+      "type": "loras",
+      "url": "https://huggingface.co/comfyanonymous/flux_RealismLora_converted_comfyui/resolve/main/flux_realism_lora.safetensors?download=true",
+      "filename": "flux_realism_lora.safetensors",
+      "source": "huggingface"
+    }
+  ]
+}

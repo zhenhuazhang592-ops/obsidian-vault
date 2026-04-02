@@ -1,0 +1,31 @@
+const workflow_id = "Psjak-bJwaoR7l80GQTQq"
+
+// Workflow JSON in API Format
+const prompt = {"4":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"dreamshaper_8.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":512,"height":512,"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"portrait of a girl, the most beautiful in the world, (medieval armor), metal reflections, upper body, outdoors, intense sunlight, far away castle, professional photograph of a stunning woman detailed, sharp focus, dramatic, award winning, cinematic lighting, octane render unreal engine, volumetrics dtx, film grain, blurry background, blurry foreground, bokeh, depth of field, sunset, motion blur, chainmail\n"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"worst quality, greyscale, watermark, username, signature, text,"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["4",2],"samples":["20",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyICU"},"class_type":"SaveImage"},"15":{"_meta":{"title":"Ultimate SD Upscale"},"inputs":{"cfg":6,"vae":["4",2],"seed":172900375898833,"image":["8",0],"model":["4",0],"steps":10,"denoise":0.5,"negative":["7",0],"positive":["17",0],"mask_blur":16,"mode_type":"Linear","scheduler":"karras","tile_width":512,"upscale_by":2,"tile_height":512,"sampler_name":"dpmpp_2m","tile_padding":32,"tiled_decode":false,"seam_fix_mode":"Half Tile","upscale_model":["19",0],"seam_fix_width":64,"seam_fix_denoise":0.5,"seam_fix_padding":32,"seam_fix_mask_blur":16,"force_uniform_tiles":true},"class_type":"UltimateSDUpscale"},"16":{"_meta":{"title":"Load ControlNet Model"},"inputs":{"control_net_name":"control_v11f1e_sd15_tile.pth"},"class_type":"ControlNetLoader"},"17":{"_meta":{"title":"Apply ControlNet (OLD)"},"inputs":{"image":["8",0],"strength":1,"control_net":["16",0],"conditioning":["6",0]},"class_type":"ControlNetApply"},"18":{"_meta":{"title":"Save Image"},"inputs":{"images":["15",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"19":{"_meta":{"title":"Load Upscale Model"},"inputs":{"model_name":"4x-UltraSharp.pth"},"class_type":"UpscaleModelLoader"},"20":{"_meta":{"title":"KSampler (Advanced)"},"inputs":{"cfg":6,"model":["4",0],"steps":11,"negative":["7",0],"positive":["6",0],"add_noise":"enable","scheduler":"karras","noise_seed":763340524812218,"end_at_step":10,"latent_image":["5",0],"sampler_name":"dpmpp_2m","start_at_step":0,"return_with_leftover_noise":"disable"},"class_type":"KSamplerAdvanced"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

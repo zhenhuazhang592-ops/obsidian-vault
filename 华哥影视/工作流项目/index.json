@@ -1,0 +1,356 @@
+{
+  "total": 88,
+  "scraped": 87,
+  "with_api_workflow": 86,
+  "scraped_at": "2026-03-27T22:58:58",
+  "workflows": [
+    {
+      "id": "FFcUffIbFPxG0B-SgleLU",
+      "name": "Nano Banana Pro (API Node)"
+    },
+    {
+      "id": "_HFd9w85j2T9hjLQfhPZc",
+      "name": "Nano Banana (API Node)"
+    },
+    {
+      "id": "Nxt6unSatP3h2-F_s1gq8",
+      "name": "LTX2 Text-to-Video"
+    },
+    {
+      "id": "IeZvjqELo6XM4pjWr3cK0",
+      "name": "LTX2 Distilled Text to Video"
+    },
+    {
+      "id": "Do7sUTYLCkUb_q8c31tH3",
+      "name": "LTX2 Image to Video"
+    },
+    {
+      "id": "ZZcmOtSI8IuI8tC-BVs7i",
+      "name": "LTX2 Distilled Image to Video"
+    },
+    {
+      "id": "upRBI-AZG6mRHiJUWvZR6",
+      "name": "Z-Image"
+    },
+    {
+      "id": "gFRGii7gQ4eJWDBilx9U5",
+      "name": "Z Image Turbo"
+    },
+    {
+      "id": "SFp9XnKIUb42mumOIrZtc",
+      "name": "Flux.2 Dev"
+    },
+    {
+      "id": "fg2RAffaUhmtUKMKpSQ8F",
+      "name": "Flux.2 Dev Text-to-Image"
+    },
+    {
+      "id": "pYvxVfMFBjzt-5ktUJnFA",
+      "name": "Flux.2 Dev Edit 8Steps Turbo"
+    },
+    {
+      "id": "K4hqn5L_F8jcVvmQelLHg",
+      "name": "Flux.2 Klein 4B Edit"
+    },
+    {
+      "id": "d9Y4eVqa2DwMrvSU7RZVS",
+      "name": "Flux.2 Klein 4B Edit Distilled"
+    },
+    {
+      "id": "eB5kWFmtyU6I_FChYmilw",
+      "name": "Flux.2 Klein 4B Text-to-Image"
+    },
+    {
+      "id": "QLI1OlSt8jvf7T4Xj8H1g",
+      "name": "Flux.2 Klein 9B Edit"
+    },
+    {
+      "id": "0VOYSy8rk2ZhksX7m4mkn",
+      "name": "Flux.2 Klein 9B Edit Distilled"
+    },
+    {
+      "id": "lElVvQJLCQ7dzDZrt4SYP",
+      "name": "Qwen Edit Model v2509"
+    },
+    {
+      "id": "YKZhO5cDp6Buq9D1EFruO",
+      "name": "Qwen Image ControlNet DiffSynth"
+    },
+    {
+      "id": "J1wy9gl2fOHgJP-V7F8dL",
+      "name": "Qwen image 2512"
+    },
+    {
+      "id": "J_oGQ4I4Ec40NbUAH9dvI",
+      "name": "Qwen Image Lightning - 8 Step"
+    },
+    {
+      "id": "Rt8Du2ETeUTfoGQlxQ0If",
+      "name": "Qwen Image InstantX ControlNet"
+    },
+    {
+      "id": "yJEvTIEsFDKOHsCYRQRsx",
+      "name": "Qwen Image Edit 2511 Lightning 4 Steps"
+    },
+    {
+      "id": "eb7n6ZDGelB5gtQ7aFbe-",
+      "name": "Qwen Image Lightning 2512 4 Steps"
+    },
+    {
+      "id": "Ee7RK1hgfe8os8LWUe9ZV",
+      "name": "Qwen Image Edit 2511"
+    },
+    {
+      "id": "_KrQjGjJGveyJlYLmQ_1k",
+      "name": "Qwen Image"
+    },
+    {
+      "id": "_O2eBetjaVH0JewdACqb3",
+      "name": "Qwen Image Union ControlNet LoRA"
+    },
+    {
+      "id": "4qq0nsefHGMfgeKrPNDkw",
+      "name": "Qwen Image Edit"
+    },
+    {
+      "id": "naxted6DuOCfnO7cmShVG",
+      "name": "Wan2.2 14B First Frame Last Frame"
+    },
+    {
+      "id": "BlxfI083kYGr3IOT6bp04",
+      "name": "Wan2.2 14B T2V Text-to-Video (H100)"
+    },
+    {
+      "id": "0zQf5p2RqiUtFRbs6BSl7",
+      "name": "Wan2.2 14B I2V Image-to-Video (H100)"
+    },
+    {
+      "id": "Zd4su_Em6EMfE-by7wyjs",
+      "name": "Wan2.2 Lightning T2V V1.1 KJ Nodes"
+    },
+    {
+      "id": "g2ND8SPTgqjvmC_b-42qX",
+      "name": "Wan 2.2 Image Generation (H100)"
+    },
+    {
+      "id": "puFuSXmmu9BceOReTWzpk",
+      "name": "Wan 2.2 TI2V 5B Hybrid"
+    },
+    {
+      "id": "x5vFZ-5-h0DybXL92wgLl",
+      "name": "Wan2.1 Fun Control"
+    },
+    {
+      "id": "VSl05cx0aghnmZO0Hkg4j",
+      "name": "Wan2.1 FLF2V 720p (H100)"
+    },
+    {
+      "id": "vdvh8jZIOZrRDj_wseJy0",
+      "name": "Wan 2.1 VACE Text-to-Video (H100)"
+    },
+    {
+      "id": "8_-1rDFfgo2MiyF71BtXn",
+      "name": "Wan2.1 Fun Camera 14B (H100)"
+    },
+    {
+      "id": "nLxlg_-PXMaDDxnSDyRn5",
+      "name": "Wan2.1 Fun InP"
+    },
+    {
+      "id": "4J3NEMOu8muH_aTGeJQ-e",
+      "name": "Wan 2.1 Image to Video 720p (H100)"
+    },
+    {
+      "id": "4cCZEOEv5blcDbFiArCuh",
+      "name": "Wan 2.1 Image to Video 480p"
+    },
+    {
+      "id": "gb7pTSVL0pFd-lNUyYgNP",
+      "name": "Wan 2.1 Text to Video 480p"
+    },
+    {
+      "id": "MQCKzGkMDZtrWDwGxD2-x",
+      "name": "Flux Hed ControlNet V3"
+    },
+    {
+      "id": "dWF0z5mkxirgvmZfafWmJ",
+      "name": "Flux Dev Redux Remix"
+    },
+    {
+      "id": "X5NFr009rIu1AuzgzwPAa",
+      "name": "Ace++ Character Consistency"
+    },
+    {
+      "id": "cRTqDTHlaI0HVhnkvUMFZ",
+      "name": "Flux Krea Dev"
+    },
+    {
+      "id": "Rv5KxSIGUhLhfCVgIpkWQ",
+      "name": "Flux Dev Detail Daemon upscaler"
+    },
+    {
+      "id": "03h-A1ZZ44cMcdgL--Z_t",
+      "name": "Flux.1 Dev"
+    },
+    {
+      "id": "FKQuwgqbiSKdrAApHJGuG",
+      "name": "Flux Dev Character Sheet"
+    },
+    {
+      "id": "F8tgbnWG-iXRSVfj96q3n",
+      "name": "CatVTON Flux"
+    },
+    {
+      "id": "3QKIoK3CcryTx9pC6oPSR",
+      "name": "Flux.1 Dev Simple"
+    },
+    {
+      "id": "Q6r7nw4KWz2n1cmuOpJ-b",
+      "name": "Flux Realism LoRA"
+    },
+    {
+      "id": "nLh4C-SO7AnanIHh_Lpky",
+      "name": "Flux.1 Dev InstantX ControlNet Union (OpenPose)"
+    },
+    {
+      "id": "pXG3tHo17HSbKadfVz0Wo",
+      "name": "Flux 1 Depth LoRA"
+    },
+    {
+      "id": "185TIx6I_OTQKua1N-oTZ",
+      "name": "Flux1 Fill Dev outpainting"
+    },
+    {
+      "id": "BnJRsgZmCXDVQ5-EUQfc-",
+      "name": "Flux.1 Kontext Dev Basic"
+    },
+    {
+      "id": "xuBBTeRpF5my1_UC-roW7",
+      "name": "Flux Canny ControlNet V3"
+    },
+    {
+      "id": "5vvjfjrrwcpXy4Hf5l6P3",
+      "name": "Flux.1 Schnell"
+    },
+    {
+      "id": "lImcILRvZitYqLZI-mUNF",
+      "name": "Flux.1 Schnell Simple"
+    },
+    {
+      "id": "KW_L7slR9_9AS2UfzfMEz",
+      "name": "Flux Depth ControlNet V3"
+    },
+    {
+      "id": "XrqFWU1BSrKYSboKRZzMW",
+      "name": "Ace++ FaceSwap"
+    },
+    {
+      "id": "VUB4r2Y0bPVHfw9vCzxqQ",
+      "name": "Flux LoRA"
+    },
+    {
+      "id": "clVUBrPVpQogrzxEUkRLk",
+      "name": "Flux 1 Dev Redux"
+    },
+    {
+      "id": "vTX16IPSCEt9lz9HZyUEx",
+      "name": "In-Context Lora - Product Logo"
+    },
+    {
+      "id": "WifmzwlMbrgROWyk3H_LH",
+      "name": "Flux.1 Dev Canny"
+    },
+    {
+      "id": "cuzaYRIogeRpzNpTdz-2_",
+      "name": "Flux 2"
+    },
+    {
+      "id": "ZYaDLtiQmTFDYWbk70J9Y",
+      "name": "Juggernaut XL Lightning"
+    },
+    {
+      "id": "gbVXM65kMO8bzAPRwzwaP",
+      "name": "Juggernaut XL + Clip Skip + Midjourney style LoRA"
+    },
+    {
+      "id": "lm-hKWGLXWt6xnH47vCm7",
+      "name": "SUPIR Lightning ⚡️ Upscale"
+    },
+    {
+      "id": "RecUNzbnxBo5fnZfLFqjU",
+      "name": "style-transfer"
+    },
+    {
+      "id": "_DXXUgkbJ1rIqQG_Q7Lmx",
+      "name": "Stickers"
+    },
+    {
+      "id": "rUa62gE0qVZgiVK1fr5BX",
+      "name": "SDXL Lighting 4 Steps"
+    },
+    {
+      "id": "r2PGtcE1T0g8lz4dIkvGz",
+      "name": "wf_r2PGtcE1"
+    },
+    {
+      "id": "Dvgm19nZO5TxqB7CAM24a",
+      "name": "SeedVR2 Upscaler"
+    },
+    {
+      "id": "Psjak-bJwaoR7l80GQTQq",
+      "name": "SD1.5 Ultimate SD Upscaler"
+    },
+    {
+      "id": "PKmjYRGLz6JjcKVpTlDZp",
+      "name": "Latent Upscale SD1.5"
+    },
+    {
+      "id": "6ikm40vAioRHmvO81qADB",
+      "name": "Clarity _ Magnific Creative Upscaler"
+    },
+    {
+      "id": "f0qw3wMmguMbsV1dkEnKv",
+      "name": "VTON"
+    },
+    {
+      "id": "ScHsZ5bYBAQjARJ2PNiLs",
+      "name": "Marigold Depth Estimation"
+    },
+    {
+      "id": "i9jQ0nrtUPxKKvRnwRkMP",
+      "name": "Stable Diffusion 3 (SD3)"
+    },
+    {
+      "id": "4wyZFeGN2-0Z_Jzlc2pEy",
+      "name": "HiDream i1 Full"
+    },
+    {
+      "id": "mV51t3g_DcTcIHhwBU7p1",
+      "name": "LivePortrait"
+    },
+    {
+      "id": "jRM_W44",
+      "name": "IPAdapter"
+    },
+    {
+      "id": "dyhnZYLJjqJ2e6wlStQHq",
+      "name": "FaceID basic"
+    },
+    {
+      "id": "PMiuimqEwxWR6H4kdOf9z",
+      "name": "HiDream i1 Dev"
+    },
+    {
+      "id": "ECezpzDW7Z_izj9ki5joi",
+      "name": "HiDream-i1 Fast"
+    },
+    {
+      "id": "NETMlwNaF-rYvVZpGGGwU",
+      "name": "Controlnet depth midas"
+    },
+    {
+      "id": "02_u2tsrI3MT2UirlXet4",
+      "name": "IC-Light Basic"
+    }
+  ]
+}

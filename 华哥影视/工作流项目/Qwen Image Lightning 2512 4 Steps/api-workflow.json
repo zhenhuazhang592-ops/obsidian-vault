@@ -1,0 +1,31 @@
+const workflow_id = "eb7n6ZDGelB5gtQ7aFbe-"
+
+// Workflow JSON in API Format
+const prompt = {"90":{"_meta":{"title":"Save Image"},"inputs":{"images":["107",0],"filename_prefix":"Qwen-Image-2512"},"class_type":"SaveImage"},"103":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader"},"104":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"qwen_image","device":"default","clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors"},"class_type":"CLIPLoader"},"105":{"_meta":{"title":"ModelSamplingAuraFlow"},"inputs":{"model":["110",0],"shift":3.100000000000001},"class_type":"ModelSamplingAuraFlow"},"106":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["104",0],"text":"Urban alleyway at dusk. Tall, statuesque high-fashion model striding elegantly, mid distant full body shot from an angular perspective, cinematic/editorial with bold contrasts and tactile materials. They wear a rose-gold metallic trench coat with deconstructed elements over a black long-sleeved turtleneck with subtle texture; paired with forest-green pleated pants with raw hems and a soft texture. Long braided dark hair, medium complexion. They carry a vibrant yellow designer handbag with geometric details and a structured silhouette. White architectural sneakers with bold geometric cutouts. Bold, high-contrast, tactile, urban-grit meets high-fashion impact, extreme clarity, extreme layering, post-processing with transparent light-transmitting ultra-smooth high-definition film effect, removing all noise and grain, removing all blur, removing all vintage feel, removing all roughness, drawn with 32K pixel precision, unparalleled fine line drawing of every single detail, the entire image like a brand new photograph, photorealistic\n"},"class_type":"CLIPTextEncode"},"107":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["103",0],"samples":["112",0]},"class_type":"VAEDecode"},"108":{"_meta":{"title":"EmptySD3LatentImage"},"inputs":{"width":1328,"height":1328,"batch_size":1},"class_type":"EmptySD3LatentImage"},"109":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["104",0],"text":"低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲"},"class_type":"CLIPTextEncode"},"110":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["111",0],"lora_name":"Qwen-Image-Lightning-4steps-V1.0.safetensors","strength_model":1},"class_type":"LoraLoaderModelOnly"},"111":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"qwen_image_2512_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"112":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":1041120295771489,"model":["105",0],"steps":4,"denoise":1,"negative":["109",0],"positive":["106",0],"scheduler":"simple","latent_image":["108",0],"sampler_name":"euler"},"class_type":"KSampler"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

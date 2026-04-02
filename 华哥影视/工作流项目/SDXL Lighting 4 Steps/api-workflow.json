@@ -1,0 +1,31 @@
+const workflow_id = "rUa62gE0qVZgiVK1fr5BX"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":896583259473684,"model":["4",0],"steps":4,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"sgm_uniform","latent_image":["5",0],"sampler_name":"euler"},"class_type":"KSampler"},"4":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"sdxl_lightning_4step.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"tiger lily, Detailed, Digital painting, Artstation, Dark lighting, Concept art, Intricate"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"watermark, text, bright, sunlight, overexposed, white"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["4",2],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

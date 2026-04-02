@@ -1,0 +1,33 @@
+const workflow_id = "jRM_W44"
+
+// Workflow JSON in API Format
+const prompt = {"1":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"realisticVisionV60B1_v51VAE.safetensors"},"class_type":"CheckpointLoaderSimple"},"2":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"vae-ft-mse-840000-ema-pruned.safetensors"},"class_type":"VAELoader"},"3":{"_meta":{"title":"IPAdapter Model Loader"},"inputs":{"ipadapter_file":"ip-adapter-plus-face_sd15.safetensors"},"class_type":"IPAdapterModelLoader"},"4":{"_meta":{"title":"Load CLIP Vision"},"inputs":{"clip_name":"model.15.safetensors"},"class_type":"CLIPVisionLoader"},"7":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["1",1],"text":"cinematic, closeup portrait of a guy, cyberpunk, city in the background, bokeh, neon colors, digital painting, dramatic lighting,"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["1",1],"text":"blurry, horror, black and white, monochrome"},"class_type":"CLIPTextEncode"},"9":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6,"seed":1118596825214500,"model":["21",0],"steps":35,"denoise":1,"negative":["8",0],"positive":["7",0],"scheduler":"ddim_uniform","latent_image":["10",0],"sampler_name":"ddim"},"class_type":"KSampler"},"10":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":512,"height":512,"batch_size":1},"class_type":"EmptyLatentImage"},"11":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["2",0],"samples":["9",0]},"class_type":"VAEDecode"},"12":{"_meta":{"title":"Save Image"},"inputs":{"images":["11",0],"filename_prefix":"IPAdapter"},"class_type":"SaveImage"},"14":{"_meta":{"title":"Load Image"},"inputs":{"image":"Albert_Einstein_Head.jpg","upload":"image"},"class_type":"LoadImage"},"19":{"_meta":{"title":"Image Crop Face"},"inputs":{"image":["14",0],"cascade_xml":"haarcascade_frontalface_default.xml","crop_padding_factor":0.25},"class_type":"Image Crop Face"},"20":{"_meta":{"title":"Preview Image"},"inputs":{"images":["19",0]},"class_type":"PreviewImage"},"21":{"_meta":{"title":"IPAdapter Advanced"},"inputs":{"image":["19",0],"model":["1",0],"end_at":1,"weight":0.6,"start_at":0,"ipadapter":["3",0],"clip_vision":["4",0],"weight_type":"linear","combine_embeds":"concat","embeds_scaling":"V only"},"class_type":"IPAdapterAdvanced"}};
+
+// Input files
+const files = {
+    "/input/Albert_Einstein_Head.jpg": "https://comfy.icu/api/v1/view/workflows/jRM_W44/input/Albert_Einstein_Head.jpg"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

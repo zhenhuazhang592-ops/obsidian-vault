@@ -1,0 +1,34 @@
+const workflow_id = "d9Y4eVqa2DwMrvSU7RZVS"
+
+// Workflow JSON in API Format
+const prompt = {"76":{"_meta":{"title":"Load Image"},"inputs":{"image":"handbag_white.png"},"class_type":"LoadImage"},"81":{"_meta":{"title":"Load Image"},"inputs":{"image":"ComfyICU_Logo_Closeup.png"},"class_type":"LoadImage"},"94":{"_meta":{"title":"Save Image"},"inputs":{"images":["103",0],"filename_prefix":"Flux2-Klein"},"class_type":"SaveImage"},"99":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"100":{"_meta":{"title":"Flux2Scheduler"},"inputs":{"steps":4,"width":["115",0],"height":["115",1]},"class_type":"Flux2Scheduler"},"101":{"_meta":{"title":"CFGGuider"},"inputs":{"cfg":1,"model":["105",0],"negative":["112:76",0],"positive":["112:77",0]},"class_type":"CFGGuider"},"102":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["104",0],"guider":["101",0],"sigmas":["100",0],"sampler":["99",0],"latent_image":["114",0]},"class_type":"SamplerCustomAdvanced"},"103":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["108",0],"samples":["102",0]},"class_type":"VAEDecode"},"104":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":212607965090070},"class_type":"RandomNoise"},"105":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux-2-klein-9b-fp8.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"106":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"flux2","device":"default","clip_name":"qwen_3_8b_fp8mixed.safetensors"},"class_type":"CLIPLoader"},"107":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["106",0],"text":"stylize the handbag in image1 with the colours and logo from image 2"},"class_type":"CLIPTextEncode"},"108":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux2-vae.safetensors"},"class_type":"VAELoader"},"109":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["76",0],"megapixels":1,"upscale_method":"nearest-exact","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"110":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["81",0],"megapixels":1,"upscale_method":"nearest-exact","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"113":{"_meta":{"title":"ConditioningZeroOut"},"inputs":{"conditioning":["107",0]},"class_type":"ConditioningZeroOut"},"114":{"_meta":{"title":"Empty Flux 2 Latent"},"inputs":{"width":["115",0],"height":["115",1],"batch_size":1},"class_type":"EmptyFlux2LatentImage"},"115":{"_meta":{"title":"Get Image Size"},"inputs":{"image":["109",0]},"class_type":"GetImageSize"},"111:76":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["111:78",0],"conditioning":["113",0]},"class_type":"ReferenceLatent"},"111:77":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["111:78",0],"conditioning":["107",0]},"class_type":"ReferenceLatent"},"111:78":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["108",0],"pixels":["109",0]},"class_type":"VAEEncode"},"112:76":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["112:78",0],"conditioning":["111:76",0]},"class_type":"ReferenceLatent"},"112:77":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["112:78",0],"conditioning":["111:77",0]},"class_type":"ReferenceLatent"},"112:78":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["108",0],"pixels":["110",0]},"class_type":"VAEEncode"}};
+
+// Input files
+const files = {
+    "/input/handbag_white.png": "https://comfy.icu/api/v1/view/workflows/d9Y4eVqa2DwMrvSU7RZVS/input/handbag_white.png",
+    "/input/ComfyICU_Logo_Closeup.png": "https://comfy.icu/api/v1/view/workflows/d9Y4eVqa2DwMrvSU7RZVS/input/ComfyICU_Logo_Closeup.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

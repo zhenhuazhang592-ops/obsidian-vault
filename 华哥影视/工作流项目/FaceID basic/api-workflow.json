@@ -1,0 +1,43 @@
+const workflow_id = "dyhnZYLJjqJ2e6wlStQHq"
+
+// Workflow JSON in API Format
+const prompt = {"1":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6,"seed":204854763867856,"model":["41",0],"steps":30,"denoise":1,"negative":["5",0],"positive":["4",0],"scheduler":"karras","latent_image":["3",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"2":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"realisticVisionV51_v51VAE.safetensors"},"class_type":"CheckpointLoaderSimple"},"3":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":512,"height":512,"batch_size":1},"class_type":"EmptyLatentImage"},"4":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["2",1],"text":"oil portrait of a man, dramatic lighting, Detailed, Digital painting, Artstation, Dark lighting, Concept art, Intricate,"},"class_type":"CLIPTextEncode"},"5":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["2",1],"text":"blurry, malformed, distorted, watermark, text, monochrome, black and white"},"class_type":"CLIPTextEncode"},"6":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["7",0],"samples":["1",0]},"class_type":"VAEDecode"},"7":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"vae-ft-mse-840000-ema-pruned.safetensors"},"class_type":"VAELoader"},"9":{"_meta":{"title":"IPAdapter Model Loader"},"inputs":{"ipadapter_file":"ip-adapter-faceid_sd15.bin"},"class_type":"IPAdapterModelLoader"},"10":{"_meta":{"title":"Load Image"},"inputs":{"image":"Albert_Einstein_Head (1).jpg"},"class_type":"LoadImage"},"14":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["2",0],"lora_name":"ip-adapter-faceid_sd15_lora.safetensors","strength_model":0.6},"class_type":"LoraLoaderModelOnly"},"31":{"_meta":{"title":"Load CLIP Vision"},"inputs":{"clip_name":"clip_vision_g.safetensors"},"class_type":"CLIPVisionLoader"},"37":{"_meta":{"title":"Save Image"},"inputs":{"images":["6",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"41":{"_meta":{"title":"IPAdapter FaceID"},"inputs":{"image":["43",0],"model":["14",0],"end_at":1,"weight":1,"start_at":0,"ipadapter":["9",0],"clip_vision":["31",0],"insightface":["42",0],"weight_type":"linear","combine_embeds":"concat","embeds_scaling":"V only","weight_faceidv2":1},"class_type":"IPAdapterFaceID"},"42":{"_meta":{"title":"IPAdapter InsightFace Loader"},"inputs":{"provider":"CPU","model_name":"buffalo_l"},"class_type":"IPAdapterInsightFaceLoader"},"43":{"_meta":{"title":"CropFace"},"inputs":{"image":["10",0],"facedetection":"retinaface_resnet50"},"class_type":"CropFace"},"46":{"_meta":{"title":"Preview Image"},"inputs":{"images":["43",0]},"class_type":"PreviewImage"}};
+
+// Input files
+const files = {
+    "/input/Albert_Einstein_Head (1).jpg": "https://comfy.icu/api/v1/view/workflows/dyhnZYLJjqJ2e6wlStQHq/input/Albert_Einstein_Head (1).jpg",
+    "/models/ipadapter/ip-adapter-faceid_sd15.bin": "https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15.bin",
+    "/models/clip_vision/clip_vision_g.safetensors": "https://huggingface.co/comfyanonymous/clip_vision_g/resolve/main/clip_vision_g.safetensors?download=true",
+    "/models/insightface/models/buffalo_l/1k3d68.onnx": "https://huggingface.co/fofr/comfyui/resolve/main/insightface/models/buffalo_l/1k3d68.onnx",
+    "/models/insightface/models/buffalo_l/det_10g.onnx": "https://huggingface.co/fofr/comfyui/resolve/main/insightface/models/buffalo_l/det_10g.onnx",
+    "/models/insightface/models/buffalo_l/2d106det.onnx": "https://huggingface.co/fofr/comfyui/resolve/main/insightface/models/buffalo_l/2d106det.onnx",
+    "/models/insightface/models/buffalo_l/genderage.onnx": "https://huggingface.co/fofr/comfyui/resolve/main/insightface/models/buffalo_l/genderage.onnx",
+    "/models/insightface/models/buffalo_l/w600k_r50.onnx": "https://huggingface.co/fofr/comfyui/resolve/main/insightface/models/buffalo_l/w600k_r50.onnx",
+    "/models/vae/vae-ft-mse-840000-ema-pruned.safetensors": "https://huggingface.co/stabilityai/sd-vae-ft-mse-original/resolve/main/vae-ft-mse-840000-ema-pruned.safetensors?download=true",
+    "/models/loras/ip-adapter-faceid_sd15_lora.safetensors": "https://huggingface.co/h94/IP-Adapter-FaceID/resolve/main/ip-adapter-faceid_sd15_lora.safetensors",
+    "/models/checkpoints/realisticVisionV51_v51VAE.safetensors": "https://huggingface.co/lllyasviel/fav_models/resolve/main/fav/realisticVisionV51_v51VAE.safetensors?download=true"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

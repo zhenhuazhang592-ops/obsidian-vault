@@ -1,0 +1,31 @@
+const workflow_id = "fg2RAffaUhmtUKMKpSQ8F"
+
+// Workflow JSON in API Format
+const prompt = {"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["105",0],"filename_prefix":"Flux2_dev"},"class_type":"SaveImage"},"99":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["104",0],"conditioning":["100",0]},"class_type":"BasicGuider"},"100":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":4,"conditioning":["110",0]},"class_type":"FluxGuidance"},"101":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"102":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux2-vae.safetensors"},"class_type":"VAELoader"},"103":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["109",0],"guider":["99",0],"sigmas":["107",0],"sampler":["101",0],"latent_image":["108",0]},"class_type":"SamplerCustomAdvanced"},"104":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux2_dev_fp8mixed.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"105":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["102",0],"samples":["103",0]},"class_type":"VAEDecode"},"106":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"flux2","device":"default","clip_name":"mistral_3_small_flux2_bf16.safetensors"},"class_type":"CLIPLoader"},"107":{"_meta":{"title":"Flux2Scheduler"},"inputs":{"steps":20,"width":1008,"height":1024},"class_type":"Flux2Scheduler"},"108":{"_meta":{"title":"Empty Flux 2 Latent"},"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptyFlux2LatentImage"},"109":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":0},"class_type":"RandomNoise"},"110":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["106",0],"text":"A dynamic panning shot on Kodak Portra 400, 24mm at f/8. A black sports car with red LED tail lights blurs violently across a wet night highway. The entire city behind it melts into streaks of teal, magenta, and sodium orange light trails. The car’s rear lights smear into neon ribbons, wheels dissolved into circular motion streaks. Reflections stretch across the rain-soaked asphalt like smeared oil paint. Shot at 1/60 second with aggressive pan, producing ghosted highlights and prismatic blur. Rich oversaturated Portra palette, creamy bright signs, cyan-tinted shadows, deep amber street lamps. Overhead highway signs streak into long green-blue bands. Frontier scan look with heavy color correction, visible medium format grain, golden speckled highlights. 1970s action photography aesthetic, extreme directional motion blur, radiant neon trails cutting through darkness."},"class_type":"CLIPTextEncode"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

@@ -1,0 +1,8 @@
+{
+  "id": 3,
+  "subject": "录入漫剧创作核心任务到任务图",
+  "description": "将格子间女人漫剧改编项目拆解为季→集→场景任务，录入 .tasks/",
+  "status": "pending",
+  "blockedBy": [2],
+  "owner": "human"
+}

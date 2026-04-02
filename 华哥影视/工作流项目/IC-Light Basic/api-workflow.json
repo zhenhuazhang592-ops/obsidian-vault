@@ -1,0 +1,34 @@
+const workflow_id = "02_u2tsrI3MT2UirlXet4"
+
+// Workflow JSON in API Format
+const prompt = {"2":{"inputs":{"ckpt_name":"realisticVisionV51_v51VAE.safetensors"},"class_type":"CheckpointLoaderSimple"},"4":{"inputs":{"clip":["2",1],"text":"Buddha, detailed face, sunset"},"class_type":"CLIPTextEncode"},"5":{"inputs":{"clip":["2",1],"text":"lowres, bad anatomy, bad hands, cropped, worst quality"},"class_type":"CLIPTextEncode"},"7":{"inputs":{"vae":["2",2],"samples":["19",0]},"class_type":"VAEDecode"},"9":{"inputs":{"image":"i11.png","upload":"image"},"class_type":"LoadImage"},"19":{"inputs":{"cfg":2,"seed":679037045317889,"model":["37",0],"steps":25,"denoise":0.9,"negative":["77",1],"positive":["77",0],"scheduler":"karras","latent_image":["50",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"22":{"inputs":{"grow":81,"shape":"circle","frames":1,"location_x":125,"location_y":256,"frame_width":["54",1],"shape_width":256,"frame_height":["54",2],"shape_height":512},"class_type":"CreateShapeMask"},"35":{"inputs":{"mask":["75",0]},"class_type":"MaskToImage"},"37":{"inputs":{"model":["2",0],"model_path":"iclight_sd15_fc_unet_ldm.safetensors"},"class_type":"LoadAndApplyICLightUnet"},"42":{"inputs":{"images":["83",0]},"class_type":"PreviewImage"},"50":{"inputs":{"vae":["2",2],"pixels":["35",0]},"class_type":"VAEEncode"},"51":{"inputs":{"image":"15.png","upload":"image"},"class_type":"LoadImage"},"52":{"inputs":{"width":512,"height":768,"batch_size":1},"class_type":"EmptyLatentImage"},"53":{"inputs":{"image":["83",0],"width":512,"height":768,"method":"fill / crop","condition":"always","multiple_of":0,"interpolation":"lanczos"},"class_type":"ImageResize+"},"54":{"inputs":{"image":["51",0],"width":["53",1],"height":["53",2],"method":"stretch","condition":"always","multiple_of":0,"interpolation":"nearest"},"class_type":"ImageResize+"},"75":{"inputs":{"mask":["22",0],"expand":0,"fill_holes":false,"flip_input":false,"lerp_alpha":1,"blur_radius":28.1,"decay_factor":1,"tapered_corners":true,"incremental_expandrate":0},"class_type":"GrowMaskWithBlur"},"76":{"inputs":{"images":["35",0]},"class_type":"PreviewImage"},"77":{"inputs":{"vae":["2",2],"negative":["5",0],"positive":["4",0],"foreground":["78",0],"multiplier":0.18215},"class_type":"ICLightConditioning"},"78":{"inputs":{"vae":["2",2],"pixels":["53",0]},"class_type":"VAEEncode"},"80":{"inputs":{"vae":["2",2],"pixels":["54",0]},"class_type":"VAEEncode"},"82":{"inputs":{"images":["7",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"83":{"inputs":{"fp16":true,"version":"v1.4","bg_color":"#d1d1d1","batch_size":1,"video_frames":["9",0]},"class_type":"BRIAAI Matting"}};
+
+// Input files
+const files = {
+    "/input/i11.png": "https://comfy.icu/api/v1/view/workflows/02_u2tsrI3MT2UirlXet4/input/i11.png",
+    "/input/15.png": "https://comfy.icu/api/v1/view/workflows/02_u2tsrI3MT2UirlXet4/input/15.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

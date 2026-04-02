@@ -1,0 +1,12 @@
+{
+  "id": "8_-1rDFfgo2MiyF71BtXn",
+  "name": "Wan2.1 Fun Camera 14B (H100)",
+  "description": null,
+  "created_at": "2025-08-01T00:16:59.427Z",
+  "updated_at": "2025-08-01T00:32:38.911Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "H100",
+  "models": null
+}

@@ -1,0 +1,31 @@
+const workflow_id = "PKmjYRGLz6JjcKVpTlDZp"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6.5,"seed":197937942094812,"model":["4",0],"steps":25,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"karras","latent_image":["5",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"4":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"dreamshaper_8.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":512,"height":512,"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Positive)"},"inputs":{"clip":["4",1],"text":"a photo of an anthropomorphic fox wearing a spacesuit inside a sci-fi spaceship\n\ncinematic, dramatic lighting, high resolution, detailed, 4k"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative)"},"inputs":{"clip":["4",1],"text":"blurry, illustration, toy, clay, low quality, flag, nasa, mission patch"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["15",0],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["23",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"15":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"vae-ft-mse-840000-ema-pruned.safetensors"},"class_type":"VAELoader"},"22":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6.5,"seed":904,"model":["4",0],"steps":25,"denoise":0.6,"negative":["7",0],"positive":["6",0],"scheduler":"karras","latent_image":["24",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"23":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["15",0],"samples":["22",0]},"class_type":"VAEDecode"},"24":{"_meta":{"title":"Upscale Latent By"},"inputs":{"samples":["3",0],"scale_by":1.5,"upscale_method":"bislerp"},"class_type":"LatentUpscaleBy"},"26":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

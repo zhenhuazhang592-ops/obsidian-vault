@@ -1,0 +1,45 @@
+{
+  "jobs": 5,
+  "tasks": [
+    {
+      "id": "01-nutrition-density",
+      "promptFiles": ["prompts/01-infographic-nutrition-density.md"],
+      "image": "配图/01-infographic-nutrition-density.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "02-cardiovascular",
+      "promptFiles": ["prompts/02-infographic-cardiovascular.md"],
+      "image": "配图/02-infographic-cardiovascular.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "03-weight-loss",
+      "promptFiles": ["prompts/03-infographic-weight-loss.md"],
+      "image": "配图/03-infographic-weight-loss.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "04-avocado-banana",
+      "promptFiles": ["prompts/04-comparison-avocado-banana.md"],
+      "image": "配图/04-comparison-avocado-banana.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    },
+    {
+      "id": "05-risks",
+      "promptFiles": ["prompts/05-infographic-risks.md"],
+      "image": "配图/05-infographic-risks.png",
+      "provider": "seedream",
+      "ar": "16:9",
+      "size": "1920x1080"
+    }
+  ]
+}

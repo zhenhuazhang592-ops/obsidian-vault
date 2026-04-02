@@ -1,0 +1,31 @@
+const workflow_id = "ZYaDLtiQmTFDYWbk70J9Y"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":2,"seed":985203121030779,"model":["4",0],"steps":5,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"karras","latent_image":["5",0],"sampler_name":"dpmpp_sde"},"class_type":"KSampler"},"4":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"juggernautXL_v9Rdphoto2Lightning.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"ink illustration, (masterpiece:1.2) detailed, bright natural lighting, shadows, high contrast, a tropical island with jungle and ancient ruins, lovebirds, mountain, majestic, in the caribbean, sunrise, trees, vines, overgrown, ink stains, ink splatters, ink runs, ink spots, faded ink, linquivera\n"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"text, watermark, low quality, worst quality"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["4",2],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

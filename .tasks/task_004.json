@@ -1,0 +1,8 @@
+{
+  "id": 4,
+  "subject": "完善 manju-skill 漫剧创作技能包",
+  "description": "基于 learn-claude-code 的 skill-loading 模式，完善剧本规范/分镜设计/配音规范等 Skill",
+  "status": "pending",
+  "blockedBy": [3],
+  "owner": "agent"
+}

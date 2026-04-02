@@ -1,0 +1,33 @@
+const workflow_id = "FKQuwgqbiSKdrAApHJGuG"
+
+// Workflow JSON in API Format
+const prompt = {"157":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["160",0],"text":"a character sheet of a middle aged man in disney style, wearing black clothes with red highlights, white background, multiple views, from multiple angles, visible face, portrait, neutral expression, it is a masterpiece, photography, american woman, blonde"},"class_type":"CLIPTextEncode"},"159":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"160":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"t5xxl_fp8_e4m3fn.safetensors","clip_name2":"clip_l.safetensors"},"class_type":"DualCLIPLoader"},"161":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-dev-fp8.safetensors","weight_dtype":"fp8_e4m3fn"},"class_type":"UNETLoader"},"162":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"deis"},"class_type":"KSamplerSelect"},"163":{"_meta":{"title":"BasicScheduler"},"inputs":{"model":["169",0],"steps":25,"denoise":1,"scheduler":"beta"},"class_type":"BasicScheduler"},"164":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["169",0],"conditioning":["166",0]},"class_type":"BasicGuider"},"165":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":671983948663894},"class_type":"RandomNoise"},"166":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":3.5,"conditioning":["173",0]},"class_type":"FluxGuidance"},"167":{"_meta":{"title":"EmptySD3LatentImage"},"inputs":{"width":1280,"height":1280,"batch_size":1},"class_type":"EmptySD3LatentImage"},"169":{"_meta":{"title":"ModelSamplingFlux"},"inputs":{"model":["161",0],"width":1280,"height":1280,"max_shift":1.15,"base_shift":0.5},"class_type":"ModelSamplingFlux"},"173":{"_meta":{"title":"Apply Controlnet with VAE"},"inputs":{"vae":["159",0],"image":["348",0],"negative":["175",0],"positive":["157",0],"strength":0.63,"control_net":["350",0],"end_percent":0.4,"start_percent":0},"class_type":"ControlNetApplySD3"},"175":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["160",0],"text":""},"class_type":"CLIPTextEncode"},"177":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["159",0],"samples":["178",1]},"class_type":"VAEDecode"},"178":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["165",0],"guider":["164",0],"sigmas":["163",0],"sampler":["162",0],"latent_image":["167",0]},"class_type":"SamplerCustomAdvanced"},"180":{"_meta":{"title":"Load Image"},"inputs":{"image":"16b55a07-990b-4928-a9a0-b475135cd0cd.png","upload":"image"},"class_type":"LoadImage"},"196":{"_meta":{"title":"Save Image"},"inputs":{"images":["177",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"348":{"_meta":{"title":"Upscale Image"},"inputs":{"crop":"disabled","image":["180",0],"width":1280,"height":1280,"upscale_method":"lanczos"},"class_type":"ImageScale"},"349":{"_meta":{"title":"Load ControlNet Model"},"inputs":{"control_net_name":"flux.1-dev-controlnet-union.safetensors"},"class_type":"ControlNetLoader"},"350":{"_meta":{"title":"SetUnionControlNetType"},"inputs":{"type":"auto","control_net":["349",0]},"class_type":"SetUnionControlNetType"}};
+
+// Input files
+const files = {
+    "/input/16b55a07-990b-4928-a9a0-b475135cd0cd.png": "https://comfy.icu/api/v1/view/workflows/FKQuwgqbiSKdrAApHJGuG/input/16b55a07-990b-4928-a9a0-b475135cd0cd.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

@@ -1,0 +1,35 @@
+const workflow_id = "F8tgbnWG-iXRSVfj96q3n"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":655847197293197,"model":["71",0],"steps":30,"denoise":1,"negative":["38",1],"positive":["38",0],"scheduler":"normal","latent_image":["38",2],"sampler_name":"euler"},"class_type":"KSampler"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["34",0],"text":""},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["32",0],"samples":["3",0]},"class_type":"VAEDecode"},"23":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["34",0],"text":"The pair of images highlights a clothing and its styling on a model, high resolution, 4K, 8K; [IMAGE1] Detailed product shot of a clothing [IMAGE2] The same cloth is worn by a model in a lifestyle setting."},"class_type":"CLIPTextEncode"},"26":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":30,"conditioning":["23",0]},"class_type":"FluxGuidance"},"31":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-fill-dev.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"32":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"34":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"clip_l.safetensors","clip_name2":"t5xxl_fp16.safetensors"},"class_type":"DualCLIPLoader"},"38":{"_meta":{"title":"InpaintModelConditioning"},"inputs":{"vae":["32",0],"mask":["49",1],"pixels":["49",0],"negative":["7",0],"positive":["26",0],"noise_mask":true},"class_type":"InpaintModelConditioning"},"47":{"_meta":{"title":"Preview Image"},"inputs":{"images":["48",0]},"class_type":"PreviewImage"},"48":{"_meta":{"title":"Convert Mask to Image"},"inputs":{"mask":["49",1]},"class_type":"MaskToImage"},"49":{"_meta":{"title":"Add Mask For IC Lora"},"inputs":{"patch_mode":"patch_right","first_image":["50",0],"patch_color":"#FF0000","second_mask":["59",1],"second_image":["75",0],"output_length":1536},"class_type":"AddMaskForICLora"},"50":{"_meta":{"title":"Load Image"},"inputs":{"image":"00069_00.jpg","upload":"image"},"class_type":"LoadImage"},"59":{"_meta":{"title":"Load Image"},"inputs":{"image":"clipspace/clipspace-mask-653132.png [input]","upload":"image"},"class_type":"LoadImage"},"71":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["31",0],"lora_name":"pytorch_lora_weights.safetensors","strength_model":1},"class_type":"LoraLoaderModelOnly"},"74":{"_meta":{"title":"Save Image"},"inputs":{"images":["76",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"75":{"_meta":{"title":"Load Image"},"inputs":{"image":"00055_00.jpg","upload":"image"},"class_type":"LoadImage"},"76":{"_meta":{"title":"🔧 Image Crop"},"inputs":{"image":["8",0],"width":["49",4],"height":["49",5],"position":"top-left","x_offset":["49",2],"y_offset":["49",3]},"class_type":"ImageCrop+"}};
+
+// Input files
+const files = {
+    "/input/00069_00.jpg": "https://comfy.icu/api/v1/view/workflows/F8tgbnWG-iXRSVfj96q3n/input/00069_00.jpg",
+    "/input/00055_00.jpg": "https://comfy.icu/api/v1/view/workflows/F8tgbnWG-iXRSVfj96q3n/input/00055_00.jpg",
+    "/models/loras/pytorch_lora_weights.safetensors": "https://huggingface.co/xiaozaa/catvton-flux-lora-alpha/resolve/main/pytorch_lora_weights.safetensors"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

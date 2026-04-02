@@ -1,0 +1,33 @@
+const workflow_id = "WifmzwlMbrgROWyk3H_LH"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":716170046417675,"model":["31",0],"steps":30,"denoise":1,"negative":["35",1],"positive":["35",0],"scheduler":"normal","latent_image":["35",2],"sampler_name":"euler"},"class_type":"KSampler"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["34",0],"text":""},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["32",0],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"17":{"_meta":{"title":"Load Image"},"inputs":{"image":"house-768x768.webp","upload":"image"},"class_type":"LoadImage"},"18":{"_meta":{"title":"Canny"},"inputs":{"image":["17",0],"low_threshold":0.15,"high_threshold":0.3},"class_type":"Canny"},"19":{"_meta":{"title":"Preview Image"},"inputs":{"images":["18",0]},"class_type":"PreviewImage"},"23":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["34",0],"text":"a modern house in tropical forest, surrounded by tropical plants and trees, golden hour lighting"},"class_type":"CLIPTextEncode"},"26":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":30,"conditioning":["23",0]},"class_type":"FluxGuidance"},"31":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-canny-dev.safetensors","weight_dtype":"fp8_e5m2"},"class_type":"UNETLoader"},"32":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"34":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"clip_l.safetensors","clip_name2":"t5xxl_fp16.safetensors"},"class_type":"DualCLIPLoader"},"35":{"_meta":{"title":"InstructPixToPixConditioning"},"inputs":{"vae":["32",0],"pixels":["18",0],"negative":["7",0],"positive":["26",0]},"class_type":"InstructPixToPixConditioning"}};
+
+// Input files
+const files = {
+    "/input/house-768x768.webp": "https://comfy.icu/api/v1/view/workflows/WifmzwlMbrgROWyk3H_LH/input/house-768x768.webp"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

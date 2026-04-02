@@ -1,0 +1,33 @@
+const workflow_id = "vTX16IPSCEt9lz9HZyUEx"
+
+// Workflow JSON in API Format
+const prompt = {"22":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"23":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"t5xxl_fp16.safetensors","clip_name2":"clip_l.safetensors"},"class_type":"DualCLIPLoader"},"24":{"_meta":{"title":"Load LoRA"},"inputs":{"clip":["23",0],"model":["25",0],"lora_name":"in-context-visual-identity-design.safetensors","strength_clip":0.9,"strength_model":0.9},"class_type":"LoraLoader"},"25":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-dev-fp8-e4m3fn.safetensors","weight_dtype":"fp8_e4m3fn"},"class_type":"UNETLoader"},"28":{"_meta":{"title":"ModelSamplingFlux"},"inputs":{"model":["24",0],"width":["64",6],"height":["64",7],"max_shift":1.15,"base_shift":0.5},"class_type":"ModelSamplingFlux"},"29":{"_meta":{"title":"BasicScheduler"},"inputs":{"model":["28",0],"steps":40,"denoise":1,"scheduler":"simple"},"class_type":"BasicScheduler"},"30":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"31":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["28",0],"conditioning":["66",0]},"class_type":"BasicGuider"},"32":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":63057682488978},"class_type":"RandomNoise"},"37":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["22",0],"samples":["40",0]},"class_type":"VAEDecode"},"38":{"_meta":{"title":"🔧 Image Crop"},"inputs":{"image":["37",0],"width":["64",4],"height":["64",5],"position":"top-left","x_offset":["64",2],"y_offset":["64",3]},"class_type":"ImageCrop+"},"39":{"_meta":{"title":"Mask Red Area To Denoise"},"inputs":{"mask":["64",1],"samples":["41",0]},"class_type":"SetLatentNoiseMask"},"40":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["32",0],"guider":["31",0],"sigmas":["29",0],"sampler":["30",0],"latent_image":["39",0]},"class_type":"SamplerCustomAdvanced"},"41":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["22",0],"pixels":["64",0]},"class_type":"VAEEncode"},"64":{"_meta":{"title":"Add Mask For IC Lora"},"inputs":{"patch_mode":"auto","first_image":["67",0],"patch_color":"#FF0000","output_length":1536},"class_type":"AddMaskForICLora"},"66":{"_meta":{"title":"CLIPTextEncodeFlux"},"inputs":{"clip":["24",1],"t5xxl":["70",0],"clip_l":["70",0],"guidance":3.5},"class_type":"CLIPTextEncodeFlux"},"67":{"_meta":{"title":"Load Image"},"inputs":{"image":"ComfyICU_Logo_Closeup.png","upload":"image"},"class_type":"LoadImage"},"70":{"_meta":{"title":"String Constant Multiline"},"inputs":{"string":"This pair of images shows a pattern as [IMAGE1] women holding a packaging bag [IMAGE2]; the pattern on the packaging bag in [IMAGE2] must refer to [IMAGE1]; [IMAGE1] women holding a packaging bag; the packaging bag in [IMAGE2] is printed with [IMAGE1]; [IMAGE2] women holds a packaging bag with the [IMAGE1] pattern printed on it.","strip_newlines":true},"class_type":"StringConstantMultiline"},"71":{"_meta":{"title":"Save Image"},"inputs":{"images":["38",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {
+    "/input/ComfyICU_Logo_Closeup.png": "https://comfy.icu/api/v1/view/workflows/vTX16IPSCEt9lz9HZyUEx/input/ComfyICU_Logo_Closeup.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

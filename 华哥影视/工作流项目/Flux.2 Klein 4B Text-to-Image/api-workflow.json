@@ -1,0 +1,31 @@
+const workflow_id = "eB5kWFmtyU6I_FChYmilw"
+
+// Workflow JSON in API Format
+const prompt = {"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["84",0],"filename_prefix":"Flux2-Klein"},"class_type":"SaveImage"},"80":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"81":{"_meta":{"title":"Flux2Scheduler"},"inputs":{"steps":20,"width":["87",0],"height":["88",0]},"class_type":"Flux2Scheduler"},"82":{"_meta":{"title":"CFGGuider"},"inputs":{"cfg":5,"model":["90",0],"negative":["86",0],"positive":["93",0]},"class_type":"CFGGuider"},"83":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["89",0],"guider":["82",0],"sigmas":["81",0],"sampler":["80",0],"latent_image":["85",0]},"class_type":"SamplerCustomAdvanced"},"84":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["92",0],"samples":["83",0]},"class_type":"VAEDecode"},"85":{"_meta":{"title":"Empty Flux 2 Latent"},"inputs":{"width":["87",0],"height":["88",0],"batch_size":1},"class_type":"EmptyFlux2LatentImage"},"86":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["91",0],"text":""},"class_type":"CLIPTextEncode"},"87":{"_meta":{"title":"Width"},"inputs":{"value":1024},"class_type":"PrimitiveInt"},"88":{"_meta":{"title":"Height"},"inputs":{"value":1024},"class_type":"PrimitiveInt"},"89":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":1014526226174128},"class_type":"RandomNoise"},"90":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux-2-klein-base-4b-fp8.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"91":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"flux2","device":"default","clip_name":"qwen_3_4b.safetensors"},"class_type":"CLIPLoader"},"92":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux2-vae.safetensors"},"class_type":"VAELoader"},"93":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["91",0],"text":"A hedgehog wearing a tiny party hat surrounded by confetti, early digital camera style, slight noise, flash photography, candid moment, 2000s digicam aesthetic, festive birthday celebration atmosphere\n"},"class_type":"CLIPTextEncode"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

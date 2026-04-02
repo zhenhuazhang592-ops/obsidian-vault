@@ -1,0 +1,31 @@
+const workflow_id = "gbVXM65kMO8bzAPRwzwaP"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"inputs":{"cfg":5,"seed":522613701238857,"model":["10",0],"steps":30,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"karras","latent_image":["5",0],"sampler_name":"dpmpp_2m_sde"},"class_type":"KSampler"},"4":{"inputs":{"ckpt_name":"juggernautXL_v9Rundiffusionphoto2.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"inputs":{"width":1024,"height":1024,"batch_size":4},"class_type":"EmptyLatentImage"},"6":{"inputs":{"clip":["10",1],"text":"(Infrared Photography by Geneviève Élisabeth Disdéri and Larry Fink:1.2), award winning, spadefoot toad,\n(aesthetic of romantic landscape with checkout lines atmosphere:0.5), global illumination, sharp focus,\ntrailblazing outstanding magnum with precise details,\n(phthalocyanine blue and contrasting colors:0.1)"},"class_type":"CLIPTextEncode"},"7":{"inputs":{"clip":["10",1],"text":"low quality, worst quality, bad quality, lowres, bad photo, bad art, bad anatomy, bad hands, signature, text, error, cropped, jpeg artifacts,\n\n"},"class_type":"CLIPTextEncode"},"8":{"inputs":{"vae":["4",2],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"10":{"inputs":{"clip":["11",0],"model":["4",0],"lora_name":"MJ52.safetensors","strength_clip":0.7000000000000001,"strength_model":1},"class_type":"LoraLoader"},"11":{"inputs":{"clip":["4",1],"stop_at_clip_layer":-2},"class_type":"CLIPSetLastLayer"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

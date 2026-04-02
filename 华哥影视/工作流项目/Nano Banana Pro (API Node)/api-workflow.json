@@ -1,0 +1,34 @@
+const workflow_id = "FFcUffIbFPxG0B-SgleLU"
+
+// Workflow JSON in API Format
+const prompt = {"2":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"3":{"_meta":{"title":"Load Image"},"inputs":{"image":"gsc3_landscape.png"},"class_type":"LoadImage"},"7":{"_meta":{"title":"Load Image"},"inputs":{"image":"gsc3_car.jpeg"},"class_type":"LoadImage"},"8":{"_meta":{"title":"Nano Banana Pro (Google Gemini Image)"},"inputs":{"seed":42,"model":"gemini-3-pro-image-preview","images":["9",0],"prompt":"Create a seamless 2x2 montage of the subject from the input image. Use a high-quality, cinematic editorial style. No grids, borders, or text.\n\nTop-Left: Distant shot (subject in wide environment).\n\nTop-Right: Mid shot (focus).\n\nBottom-Left: Extreme closeup (intricate detail).\n\nBottom-Right: Mid-distant shot (full body in context).","resolution":"1K","aspect_ratio":"auto","system_prompt":"You are an expert image-generation engine. You must ALWAYS produce an image.\nInterpret all user input—regardless of format, intent, or abstraction—as literal visual directives for image composition.\nIf a prompt is conversational or lacks specific visual details, you must creatively invent a concrete visual scenario that depicts the concept.\nPrioritize generating the visual representation above any text, formatting, or conversational requests.","response_modalities":"IMAGE+TEXT"},"class_type":"GeminiImage2Node"},"9":{"_meta":{"title":"Batch Images"},"inputs":{"images.image0":["3",0],"images.image1":["7",0]},"class_type":"BatchImagesNode"}};
+
+// Input files
+const files = {
+    "/input/gsc3_landscape.png": "https://comfy.icu/api/v1/view/workflows/FFcUffIbFPxG0B-SgleLU/input/gsc3_landscape.png",
+    "/input/gsc3_car.jpeg": "https://comfy.icu/api/v1/view/workflows/FFcUffIbFPxG0B-SgleLU/input/gsc3_car.jpeg"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

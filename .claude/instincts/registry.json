@@ -1,0 +1,43 @@
+{
+  "$schema": "./registry.schema.json",
+  "version": "1.1",
+  "global": {
+    "count": 5,
+    "domains": [
+      "Claude Code 配置"
+    ],
+    "instincts": {
+      "cookbook-memory-cross-session": {
+        "file": "global/cookbook-memory-cross-session.md",
+        "domain": "Claude Code 配置",
+        "confidence": 0.8,
+        "source": "claude-cookbooks/tool_use/memory_cookbook.ipynb"
+      },
+      "cookbook-context-engineering": {
+        "file": "global/cookbook-context-engineering.md",
+        "domain": "Claude Code 配置",
+        "confidence": 0.8,
+        "source": "claude-cookbooks/tool_use/context_engineering_tools.ipynb"
+      },
+      "claude-code-architecture": {
+        "file": "global/claude-code-architecture.md",
+        "domain": "Claude Code 配置",
+        "confidence": 0.8,
+        "source": "claude_code_src-master v2.1.88 source analysis"
+      },
+      "cookbook-agent-patterns": {
+        "file": "global/cookbook-agent-patterns.md",
+        "domain": "Claude Code 配置",
+        "confidence": 0.8,
+        "source": "claude-cookbooks/patterns/agents/"
+      },
+      "cookbook-evaluator-optimizer": {
+        "file": "global/cookbook-evaluator-optimizer.md",
+        "domain": "Claude Code 配置",
+        "confidence": 0.8,
+        "source": "claude-cookbooks/patterns/agents/evaluator_optimizer.ipynb"
+      }
+    }
+  },
+  "projects": {}
+}

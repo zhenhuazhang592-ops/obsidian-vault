@@ -1,0 +1,31 @@
+const workflow_id = "J_oGQ4I4Ec40NbUAH9dvI"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6,"seed":70205271993755,"model":["4",0],"steps":30,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"karras","latent_image":["5",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"4":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"juggernautXL_juggernautX.safetensors"},"class_type":"CheckpointLoaderSimple"},"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"a woman with a skeleton face and a red rose, artstationhd, (heart), dia de los muertos!!, by loish, by Gabriel Ba, coraline, behance art, wrapped in flowers, painted in the style arcane, amy sol in the style of, ribcage, dead old, miraculous ladybug, art »"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["4",1],"text":"worst quality, greyscale, watermark, username, signature, text,"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["4",2],"samples":["3",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyICU"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

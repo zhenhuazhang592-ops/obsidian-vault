@@ -1,0 +1,21 @@
+{
+  "id": "VUB4r2Y0bPVHfw9vCzxqQ",
+  "name": "Flux  LoRA",
+  "description": null,
+  "created_at": "2024-11-13T13:58:23.530Z",
+  "updated_at": "2025-08-22T11:29:47.744Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L4",
+  "models": [
+    {
+      "type": "loras",
+      "url": "https://civitai.com/api/download/models/1005353?type=Model&format=SafeTensor",
+      "filename": "zavy-spctrlglw-flx.safetensors",
+      "source": "civitai",
+      "model_version_id": 1005353,
+      "model_id": 898482
+    }
+  ]
+}

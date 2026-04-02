@@ -1,0 +1,34 @@
+const workflow_id = "mV51t3g_DcTcIHhwBU7p1"
+
+// Workflow JSON in API Format
+const prompt = {"1":{"inputs":{"mode":"human","precision":"auto"},"class_type":"DownloadAndLoadLivePortraitModels"},"8":{"inputs":{"video":"d1.mp4","force_rate":0,"force_size":"Disabled","custom_width":512,"custom_height":512,"frame_load_cap":128,"select_every_nth":1,"skip_first_frames":0},"class_type":"VHS_LoadVideo"},"78":{"inputs":{"image":["165",0]},"class_type":"GetImageSizeAndCount"},"81":{"inputs":{"mask":["83",0],"expand":0,"fill_holes":false,"flip_input":false,"lerp_alpha":1,"blur_radius":13.9,"decay_factor":1,"tapered_corners":true,"incremental_expandrate":0},"class_type":"GrowMaskWithBlur"},"82":{"inputs":{"mask":["81",0]},"class_type":"MaskPreview+"},"83":{"inputs":{"grow":0,"shape":"square","frames":1,"location_x":256,"location_y":256,"frame_width":512,"shape_width":480,"frame_height":512,"shape_height":480},"class_type":"CreateShapeMask"},"129":{"inputs":{"onnx_device":"CPU","keep_model_loaded":true,"detection_threshold":0.5},"class_type":"LivePortraitLoadCropper"},"134":{"inputs":{"image":["197",0]},"class_type":"GetImageSizeAndCount"},"165":{"inputs":{"image":["196",0],"width":512,"height":512,"divisible_by":2,"upscale_method":"lanczos","keep_proportion":true},"class_type":"ImageResizeKJ"},"168":{"inputs":{"crf":19,"format":"video/h264-mp4","images":["181",0],"pix_fmt":"yuv420p","pingpong":false,"frame_rate":16,"loop_count":0,"save_image":true,"save_output":true,"save_metadata":true,"filename_prefix":"LivePortrait"},"class_type":"VHS_VideoCombine"},"180":{"inputs":{"eye_retargeting":true,"lip_retargeting":true,"driving_crop_info":["197",1],"lip_retargeting_multiplier":1,"eyes_retargeting_multiplier":1},"class_type":"LivePortraitRetargeting"},"181":{"inputs":{"image":["191",0]},"class_type":"GetImageSizeAndCount"},"182":{"inputs":{"image":["8",0]},"class_type":"GetImageSizeAndCount"},"189":{"inputs":{"dsize":512,"scale":2.3,"rotate":true,"cropper":["198",0],"pipeline":["1",0],"vx_ratio":0,"vy_ratio":-0.125,"face_index":0,"source_image":["78",0],"face_index_order":"large-small"},"class_type":"LivePortraitCropper"},"190":{"inputs":{"lip_zero":false,"pipeline":["1",0],"crop_info":["189",1],"stitching":true,"source_image":["78",0],"driving_images":["182",0],"mismatch_method":"constant","delta_multiplier":1,"lip_zero_threshold":0.03,"expression_friendly":true,"relative_motion_mode":"relative","expression_friendly_multiplier":1,"driving_smooth_observation_variance":0.000003},"class_type":"LivePortraitProcess"},"191":{"inputs":{"mask":["81",0],"source_image":["78",0],"cropped_image":["190",0],"liveportrait_out":["190",1]},"class_type":"LivePortraitComposite"},"196":{"inputs":{"image":"monolisa.jpg","upload":"image"},"class_type":"LoadImage"},"197":{"inputs":{"dsize":512,"scale":2.3,"rotate":true,"cropper":["198",0],"pipeline":["1",0],"vx_ratio":0,"vy_ratio":-0.125,"face_index":0,"source_image":["182",0],"face_index_order":"large-small"},"class_type":"LivePortraitCropper"},"198":{"inputs":{"keep_model_loaded":true,"landmarkrunner_onnx_device":"CPU"},"class_type":"LivePortraitLoadMediaPipeCropper"},"201":{"inputs":{"face_detector":"blazeface_back_camera","keep_model_loaded":true,"face_detector_dtype":"fp16","face_detector_device":"cuda","landmarkrunner_device":"torch_gpu"},"class_type":"LivePortraitLoadFaceAlignmentCropper"}};
+
+// Input files
+const files = {
+    "/input/d1.mp4": "https://comfy.icu/api/v1/view/workflows/mV51t3g_DcTcIHhwBU7p1/input/d1.mp4",
+    "/input/monolisa.jpg": "https://comfy.icu/api/v1/view/workflows/mV51t3g_DcTcIHhwBU7p1/input/monolisa.jpg"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

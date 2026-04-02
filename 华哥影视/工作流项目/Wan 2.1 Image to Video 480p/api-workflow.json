@@ -1,0 +1,33 @@
+const workflow_id = "4cCZEOEv5blcDbFiArCuh"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":6,"seed":141972465350659,"model":["54",0],"steps":20,"denoise":1,"negative":["50",1],"positive":["50",0],"scheduler":"simple","latent_image":["50",2],"sampler_name":"uni_pc"},"class_type":"KSampler"},"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["38",0],"text":"a cute anime girl with massive fennec ears and a big fluffy tail wearing a maid outfit walking towards the camera"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["38",0],"text":"色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走"},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["3",0]},"class_type":"VAEDecode"},"37":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"wan2.1_i2v_480p_14B_fp8_e4m3fn.safetensors","weight_dtype":"fp8_e4m3fn"},"class_type":"UNETLoader"},"38":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"wan","device":"default","clip_name":"umt5_xxl_fp8_e4m3fn_scaled.safetensors"},"class_type":"CLIPLoader"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"wan_2.1_vae.safetensors"},"class_type":"VAELoader"},"49":{"_meta":{"title":"Load CLIP Vision"},"inputs":{"clip_name":"clip_vision_h.safetensors"},"class_type":"CLIPVisionLoader"},"50":{"_meta":{"title":"WanImageToVideo"},"inputs":{"vae":["39",0],"width":512,"height":512,"length":33,"negative":["7",0],"positive":["6",0],"batch_size":1,"start_image":["52",0],"clip_vision_output":["51",0]},"class_type":"WanImageToVideo"},"51":{"_meta":{"title":"CLIP Vision Encode"},"inputs":{"crop":"none","image":["52",0],"clip_vision":["49",0]},"class_type":"CLIPVisionEncode"},"52":{"_meta":{"title":"Load Image"},"inputs":{"image":"flux_dev_example.png","upload":"image"},"class_type":"LoadImage"},"54":{"_meta":{"title":"ModelSamplingSD3"},"inputs":{"model":["37",0],"shift":8},"class_type":"ModelSamplingSD3"},"55":{"_meta":{"title":"Video Combine 🎥🅥🅗🅢"},"inputs":{"crf":19,"format":"video/h264-mp4","images":["8",0],"pix_fmt":"yuv420p","pingpong":false,"frame_rate":16,"loop_count":0,"save_image":true,"save_output":true,"save_metadata":true,"trim_to_audio":false,"filename_prefix":"ComfyUI"},"class_type":"VHS_VideoCombine"}};
+
+// Input files
+const files = {
+    "/input/flux_dev_example.png": "https://comfy.icu/api/v1/view/workflows/4cCZEOEv5blcDbFiArCuh/input/flux_dev_example.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

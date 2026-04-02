@@ -1,0 +1,33 @@
+const workflow_id = "lm-hKWGLXWt6xnH47vCm7"
+
+// Workflow JSON in API Format
+const prompt = {"2":{"inputs":{"image":"c8772136-8b7d-49ba-9775-15b6742cbce0.png","upload":"image"},"class_type":"LoadImage"},"5":{"inputs":{"image":["25",0],"SUPIR_VAE":["21",1],"encoder_dtype":"auto","use_tiled_vae":true,"decoder_tile_size":512,"encoder_tile_size":512},"class_type":"SUPIR_first_stage"},"7":{"inputs":{"seed":738382499450604,"steps":10,"latents":["11",0],"s_noise":1.003,"sampler":"RestoreDPMPP2MSampler","negative":["9",1],"positive":["9",0],"DPMPP_eta":1,"EDM_s_churn":5,"SUPIR_model":["21",0],"restore_cfg":1,"cfg_scale_end":1.5,"cfg_scale_start":2,"control_scale_end":0.9,"keep_model_loaded":false,"sampler_tile_size":1024,"control_scale_start":1,"sampler_tile_stride":512},"class_type":"SUPIR_sample"},"9":{"inputs":{"latents":["5",2],"SUPIR_model":["21",0],"negative_prompt":"bad quality, blurry, messy","positive_prompt":"high quality, detailed"},"class_type":"SUPIR_conditioner"},"10":{"inputs":{"latents":["7",0],"SUPIR_VAE":["21",1],"use_tiled_vae":true,"decoder_tile_size":512},"class_type":"SUPIR_decode"},"11":{"inputs":{"image":["5",1],"SUPIR_VAE":["5",0],"encoder_dtype":"auto","use_tiled_vae":true,"encoder_tile_size":512},"class_type":"SUPIR_encode"},"14":{"inputs":{"method":"mkl","strength":1,"image_ref":["2",0],"image_target":["10",0]},"class_type":"ColorMatch"},"21":{"inputs":{"vae":["22",2],"clip":["22",1],"model":["22",0],"fp8_unet":false,"high_vram":false,"supir_model":"SUPIR-v0Q.ckpt","diffusion_dtype":"auto"},"class_type":"SUPIR_model_loader_v2"},"22":{"inputs":{"ckpt_name":"Juggernaut_RunDiffusionPhoto2_Lightning_4Steps.safetensors"},"class_type":"CheckpointLoaderSimple"},"25":{"inputs":{"mode":"rescale","image":["2",0],"resampling":"lanczos","supersample":"true","resize_width":1024,"resize_height":1536,"rescale_factor":2},"class_type":"Image Resize"},"26":{"inputs":{"images":["14",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {
+    "/input/c8772136-8b7d-49ba-9775-15b6742cbce0.png": "https://comfy.icu/api/v1/view/workflows/lm-hKWGLXWt6xnH47vCm7/input/c8772136-8b7d-49ba-9775-15b6742cbce0.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

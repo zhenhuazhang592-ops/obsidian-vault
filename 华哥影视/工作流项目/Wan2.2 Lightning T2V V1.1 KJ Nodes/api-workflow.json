@@ -1,0 +1,31 @@
+const workflow_id = "Zd4su_Em6EMfE-by7wyjs"
+
+// Workflow JSON in API Format
+const prompt = {"11":{"_meta":{"title":"WanVideo T5 Text Encoder Loader"},"inputs":{"precision":"bf16","model_name":"umt5-xxl-enc-bf16.safetensors","load_device":"offload_device","quantization":"disabled"},"class_type":"LoadWanVideoT5TextEncoder"},"16":{"_meta":{"title":"WanVideo TextEncode"},"inputs":{"t5":["11",0],"device":"gpu","force_offload":true,"use_disk_cache":false,"negative_prompt":"","positive_prompt":"In a warmly lit living room, an elderly man with gray hair sits in a wooden armchair adorned with a blue cushion. He wears a gray cardigan over a white shirt, engrossed in reading a book. As he turns the pages, he subtly adjusts his posture, ensuring his glasses stay in place. He then removes his glasses, holding them in his hand, and turns his head to the right, maintaining his grip on the book. The soft glow of a bedside lamp bathes the scene, creating a calm and serene atmosphere, with gentle shadows enhancing the intimate setting."},"class_type":"WanVideoTextEncode"},"22":{"_meta":{"title":"WanVideo Model Loader"},"inputs":{"model":"wan2.2_t2v_high_noise_14B_fp16.safetensors","load_device":"offload_device","compile_args":["35",0],"quantization":"disabled","attention_mode":"sageattn","base_precision":"fp16","rms_norm_function":"default"},"class_type":"WanVideoModelLoader"},"27":{"_meta":{"title":"WanVideo Sampler"},"inputs":{"cfg":1,"seed":42,"model":["80",0],"shift":1,"steps":["94",0],"sigmas":["99",0],"end_step":["91",0],"scheduler":"euler","start_step":0,"batched_cfg":false,"text_embeds":["16",0],"image_embeds":["98",0],"force_offload":true,"rope_function":"comfy","denoise_strength":1,"riflex_freq_index":0,"add_noise_to_samples":""},"class_type":"WanVideoSampler"},"28":{"_meta":{"title":"WanVideo Decode"},"inputs":{"vae":["38",0],"tile_x":272,"tile_y":272,"samples":["90",0],"normalization":"default","tile_stride_x":144,"tile_stride_y":128,"enable_vae_tiling":false},"class_type":"WanVideoDecode"},"35":{"_meta":{"title":"WanVideo Torch Compile Settings"},"inputs":{"mode":"default","backend":"inductor","dynamic":false,"fullgraph":false,"dynamo_recompile_limit":128,"dynamo_cache_size_limit":64,"compile_transformer_blocks_only":true},"class_type":"WanVideoTorchCompileSettings"},"38":{"_meta":{"title":"WanVideo VAE Loader"},"inputs":{"precision":"bf16","model_name":"Wan2_1_VAE_bf16.safetensors"},"class_type":"WanVideoVAELoader"},"39":{"_meta":{"title":"WanVideo Block Swap"},"inputs":{"blocks_to_swap":0,"offload_img_emb":false,"offload_txt_emb":false,"prefetch_blocks":0,"block_swap_debug":false,"use_non_blocking":false,"vace_blocks_to_swap":1},"class_type":"WanVideoBlockSwap"},"56":{"_meta":{"title":"WanVideo Lora Select"},"inputs":{"lora":"Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1/high_noise_model.safetensors","strength":1,"merge_loras":false,"low_mem_load":false},"class_type":"WanVideoLoraSelect"},"60":{"_meta":{"title":"Video Combine 🎥🅥🅗🅢"},"inputs":{"crf":19,"format":"video/h264-mp4","images":["28",0],"pix_fmt":"yuv420p","pingpong":false,"frame_rate":16,"loop_count":0,"save_image":true,"save_output":true,"save_metadata":true,"trim_to_audio":false,"filename_prefix":"ComfyUI"},"class_type":"VHS_VideoCombine"},"71":{"_meta":{"title":"WanVideo Model Loader"},"inputs":{"model":"wan2.2_t2v_low_noise_14B_fp16.safetensors","load_device":"offload_device","compile_args":["35",0],"quantization":"disabled","attention_mode":"sageattn","base_precision":"fp16","rms_norm_function":"default"},"class_type":"WanVideoModelLoader"},"79":{"_meta":{"title":"WanVideo Set LoRAs"},"inputs":{"lora":["97",0],"model":["93",0]},"class_type":"WanVideoSetLoRAs"},"80":{"_meta":{"title":"WanVideo Set LoRAs"},"inputs":{"lora":["56",0],"model":["92",0]},"class_type":"WanVideoSetLoRAs"},"90":{"_meta":{"title":"WanVideo Sampler"},"inputs":{"cfg":1,"seed":42,"model":["79",0],"shift":1,"steps":["94",0],"sigmas":["99",0],"samples":["27",0],"end_step":-1,"scheduler":"euler","start_step":["91",0],"batched_cfg":false,"text_embeds":["16",0],"image_embeds":["98",0],"force_offload":true,"rope_function":"comfy","denoise_strength":1,"riflex_freq_index":0,"add_noise_to_samples":""},"class_type":"WanVideoSampler"},"91":{"_meta":{"title":"Split_step"},"inputs":{"value":2},"class_type":"INTConstant"},"92":{"_meta":{"title":"WanVideo Set BlockSwap"},"inputs":{"model":["22",0],"block_swap_args":["39",0]},"class_type":"WanVideoSetBlockSwap"},"93":{"_meta":{"title":"WanVideo Set BlockSwap"},"inputs":{"model":["71",0],"block_swap_args":["39",0]},"class_type":"WanVideoSetBlockSwap"},"94":{"_meta":{"title":"Steps"},"inputs":{"value":4},"class_type":"INTConstant"},"97":{"_meta":{"title":"WanVideo Lora Select"},"inputs":{"lora":"Wan2.2-T2V-A14B-4steps-lora-rank64-Seko-V1.1/low_noise_model.safetensors","strength":1,"merge_loras":false,"low_mem_load":false},"class_type":"WanVideoLoraSelect"},"98":{"_meta":{"title":"WanVideo Empty Embeds"},"inputs":{"width":1280,"height":720,"num_frames":81},"class_type":"WanVideoEmptyEmbeds"},"99":{"_meta":{"title":"Float To Sigmas"},"inputs":{"float_list":["100",0]},"class_type":"FloatToSigmas"},"100":{"_meta":{"title":"String to Float List"},"inputs":{"string":"1.0, 0.9375001, 0.8333333, 0.625, 0.0000"},"class_type":"StringToFloatList"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

@@ -1,0 +1,15 @@
+{
+  "id": "KW_L7slR9_9AS2UfzfMEz",
+  "name": "Flux Depth ControlNet V3",
+  "description": null,
+  "created_at": "2024-08-22T18:02:55.870Z",
+  "updated_at": "2024-10-07T09:00:33.190Z",
+  "tags": [
+    "featured",
+    "flux"
+  ],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L4",
+  "models": null
+}

@@ -1,0 +1,33 @@
+const workflow_id = "X5NFr009rIu1AuzgzwPAa"
+
+// Workflow JSON in API Format
+const prompt = {"144":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-fill-dev.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"145":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"clip_l.safetensors","clip_name2":"t5xxl_fp16.safetensors"},"class_type":"DualCLIPLoader"},"146":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"147":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["274",1],"text":"Maintain the face. Man in a red shirt in a tropical forest"},"class_type":"CLIPTextEncode"},"148":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["274",1],"text":""},"class_type":"CLIPTextEncode"},"149":{"_meta":{"title":"KSampler"},"inputs":{"cfg":1,"seed":312326455127470,"model":["155",0],"steps":20,"denoise":1,"negative":["150",1],"positive":["150",0],"scheduler":"normal","latent_image":["150",2],"sampler_name":"euler"},"class_type":"KSampler"},"150":{"_meta":{"title":"InpaintModelConditioning"},"inputs":{"vae":["146",0],"mask":["165",1],"pixels":["165",0],"negative":["148",0],"positive":["152",0],"noise_mask":false},"class_type":"InpaintModelConditioning"},"152":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":50,"conditioning":["147",0]},"class_type":"FluxGuidance"},"153":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["146",0],"samples":["149",0]},"class_type":"VAEDecode"},"155":{"_meta":{"title":"Differential Diffusion"},"inputs":{"model":["274",0]},"class_type":"DifferentialDiffusion"},"165":{"_meta":{"title":"Pad Image for Outpainting"},"inputs":{"top":0,"left":0,"image":["242",0],"right":["242",1],"bottom":0,"feathering":0},"class_type":"ImagePadForOutpaint"},"168":{"_meta":{"title":"Image Crop"},"inputs":{"x":["242",1],"y":0,"image":["153",0],"width":["242",1],"height":["242",2]},"class_type":"ImageCrop"},"242":{"_meta":{"title":"🔧 Image Resize"},"inputs":{"image":["259",0],"width":1024,"height":1024,"method":"fill / crop","condition":"always","multiple_of":0,"interpolation":"nearest"},"class_type":"ImageResize+"},"243":{"_meta":{"title":"Save Image"},"inputs":{"images":["168",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"259":{"_meta":{"title":"Load Image"},"inputs":{"image":"1116_00001_.png","upload":"image"},"class_type":"LoadImage"},"273":{"_meta":{"title":"ImageAndMaskPreview"},"inputs":{"mask":["165",1],"image":["165",0],"mask_color":"255, 0, 255","mask_opacity":0.5,"pass_through":false},"class_type":"ImageAndMaskPreview"},"274":{"_meta":{"title":"Load LoRA"},"inputs":{"clip":["145",0],"model":["144",0],"lora_name":"acepp_portrait_lora64.safetensors","strength_clip":1,"strength_model":1},"class_type":"LoraLoader"}};
+
+// Input files
+const files = {
+    "/input/1116_00001_.png": "https://comfy.icu/api/v1/view/workflows/X5NFr009rIu1AuzgzwPAa/input/1116_00001_.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

@@ -1,0 +1,37 @@
+const workflow_id = "_O2eBetjaVH0JewdACqb3"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":2.5,"seed":978118730334759,"model":["66",0],"steps":20,"denoise":1,"negative":["71",0],"positive":["70",0],"scheduler":"simple","latent_image":["72",0],"sampler_name":"euler"},"class_type":"KSampler"},"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["38",0],"text":"Extreme close-up shot, realistic digital illustration, close eyes, peaceful,oil painting with thick application, girl with curly hair, large black flower, black nail polish, ring details, soft light and shadow, dark green backdrop, delicate hair texture, smooth skin rendering, fine artistic details, dreamy and elegant atmosphere, dark style, grotesque. White hair, huge black flower behind her (with yellow stamens, green stems and leaves), black turtleneck clothing, green leaves and black flowers around, artistic illustration style, sharp color contrast, mysterious atmosphere, delicate brushstrokes, thick oil painting, thickly applied oil painting, the whole picture is filled with layered flowers, huge, petals spreading, beautiful composition, unexpected angle, layered background. Macro, eyes looking down, thick application, brushstrokes, splatters, mottled, old, extremely romantic, light and shadow, strong contrast, maximalist style, full-frame composition."},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["38",0],"text":" "},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["3",0]},"class_type":"VAEDecode"},"37":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"qwen_image_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"38":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"qwen_image","device":"default","clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors"},"class_type":"CLIPLoader"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader"},"60":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"66":{"_meta":{"title":"ModelSamplingAuraFlow"},"inputs":{"model":["69",0],"shift":3.1},"class_type":"ModelSamplingAuraFlow"},"69":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["37",0],"lora_name":"qwen_image_union_diffsynth_lora.safetensors","strength_model":1},"class_type":"LoraLoaderModelOnly"},"70":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["72",0],"conditioning":["6",0]},"class_type":"ReferenceLatent"},"71":{"_meta":{"title":"ReferenceLatent"},"inputs":{"latent":["72",0],"conditioning":["7",0]},"class_type":"ReferenceLatent"},"72":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["39",0],"pixels":["74",0]},"class_type":"VAEEncode"},"73":{"_meta":{"title":"Load Image"},"inputs":{"image":"qwen-image-union-control-lora-input.png"},"class_type":"LoadImage"},"74":{"_meta":{"title":"Canny"},"inputs":{"image":["77",0],"low_threshold":0.4,"high_threshold":0.8},"class_type":"Canny"},"75":{"_meta":{"title":"Preview Image"},"inputs":{"images":["74",0]},"class_type":"PreviewImage"},"77":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["73",0],"megapixels":1,"upscale_method":"lanczos","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"}};
+
+// Input files
+const files = {
+    "/input/qwen-image-union-control-lora-input.png": "https://comfy.icu/api/v1/view/workflows/_O2eBetjaVH0JewdACqb3/input/qwen-image-union-control-lora-input.png",
+    "/models/vae/qwen_image_vae.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
+    "/models/loras/qwen_image_union_diffsynth_lora.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image-DiffSynth-ControlNets/resolve/main/split_files/loras/qwen_image_union_diffsynth_lora.safetensors",
+    "/models/diffusion_models/qwen_image_fp8_e4m3fn.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors",
+    "/models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors": "https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

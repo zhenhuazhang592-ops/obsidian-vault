@@ -1,0 +1,37 @@
+const workflow_id = "YKZhO5cDp6Buq9D1EFruO"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":2.5,"seed":91832422759220,"model":["69",0],"steps":20,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"simple","latent_image":["76",0],"sampler_name":"euler"},"class_type":"KSampler"},"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["38",0],"text":"Conceptual makeup, a fairy girl with pink hair, pink shimmery scales dotted at the corners of her eyes, starry eyeshadow, makeup painting, thin eyebrows, three-dimensional features, a glossy finish, dazzling gold powder, silver fine glitter, a sense of layering and depth in the makeup, decorated with gold ornaments, pearlescent eyeshadow, dreamy makeup, soft pastels and subtle sparkles, a mysterious and fantasy-filled atmosphere, high-end makeup, dappled light on the face, soft lighting, optimal shadows, complex depth of field, dramatic lighting, clear focus, 8k, high quality, Fujifilm filter, surreal, a dreamy pastel wonderland, bright colors, a starry pink background, realistic.\n"},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["38",0],"text":" "},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["3",0]},"class_type":"VAEDecode"},"37":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"qwen_image_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"38":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"qwen_image","device":"default","clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors"},"class_type":"CLIPLoader"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader"},"60":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"66":{"_meta":{"title":"ModelSamplingAuraFlow"},"inputs":{"model":["37",0],"shift":3.100000000000001},"class_type":"ModelSamplingAuraFlow"},"69":{"_meta":{"title":"QwenImageDiffsynthControlnet"},"inputs":{"vae":["39",0],"image":["72",0],"model":["66",0],"strength":1,"model_patch":["70",0]},"class_type":"QwenImageDiffsynthControlnet"},"70":{"_meta":{"title":"ModelPatchLoader"},"inputs":{"name":"qwen_image_canny_diffsynth_controlnet.safetensors"},"class_type":"ModelPatchLoader"},"71":{"_meta":{"title":"Load Image"},"inputs":{"image":"qwen-image-controlent-diffsynth-input.png"},"class_type":"LoadImage"},"72":{"_meta":{"title":"Canny"},"inputs":{"image":["75",0],"low_threshold":0.1,"high_threshold":0.2},"class_type":"Canny"},"73":{"_meta":{"title":"Preview Image"},"inputs":{"images":["72",0]},"class_type":"PreviewImage"},"75":{"_meta":{"title":"ImageScaleToTotalPixels"},"inputs":{"image":["71",0],"megapixels":1.68,"upscale_method":"area","resolution_steps":1},"class_type":"ImageScaleToTotalPixels"},"76":{"_meta":{"title":"VAE Encode"},"inputs":{"vae":["39",0],"pixels":["75",0]},"class_type":"VAEEncode"}};
+
+// Input files
+const files = {
+    "/input/qwen-image-controlent-diffsynth-input.png": "https://comfy.icu/api/v1/view/workflows/YKZhO5cDp6Buq9D1EFruO/input/qwen-image-controlent-diffsynth-input.png",
+    "/models/vae/qwen_image_vae.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/vae/qwen_image_vae.safetensors",
+    "/models/diffusion_models/qwen_image_fp8_e4m3fn.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image_ComfyUI/resolve/main/split_files/diffusion_models/qwen_image_fp8_e4m3fn.safetensors",
+    "/models/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors": "https://huggingface.co/Comfy-Org/HunyuanVideo_1.5_repackaged/resolve/main/split_files/text_encoders/qwen_2.5_vl_7b_fp8_scaled.safetensors",
+    "/models/model_patches/qwen_image_canny_diffsynth_controlnet.safetensors": "https://huggingface.co/Comfy-Org/Qwen-Image-DiffSynth-ControlNets/resolve/main/split_files/model_patches/qwen_image_canny_diffsynth_controlnet.safetensors"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

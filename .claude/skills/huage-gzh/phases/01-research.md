@@ -91,37 +91,90 @@ date: YYYY-MM-DD
 
 ### Step 1.3：YouTube 视频研究（并行 Track B）
 
-**目标**：搜索相关 YouTube 视频，提取核心观点。
+**目标**：主动搜索主题相关视频，提取字幕内容，整理为 Obsidian 笔记。
 
-使用 `youtube-research-flow`（如已配置）：
-
+**依赖安装**：
 ```bash
-cd /Users/huage/Obsidian\ Vault
-python3 01-输出内容/youtube-research-flow/scripts/main.py \
-  "[topic] 相关视频" \
-  --max-results 10 \
-  --analysis-type tutorial
+# YouTube API（已有）
+pip install google-api-python-client
+
+# 字幕提取（新增）
+brew install yt-dlp
 ```
 
-或者使用 YouTube Data API v3 直接搜索。
+**执行命令**：
+```bash
+cd /Users/huage/Obsidian\ Vault
+
+python3 .claude/skills/huage-gzh/scripts/youtube_video_research.py \
+  "[topic]" \
+  --max 5 \
+  --lang zh \
+  --output "写作知识库/01-资源库/${DATE}/[slug]/02-视频研究/"
+```
+
+**脚本能力**（三步合一）：
+1. **搜索** — YouTube Data API v3 主动搜索关键词，返回视频列表
+2. **字幕** — yt-dlp 抓 auto-subtitle（中文优先，含英文兜底）
+3. **输出** — 每个视频生成一个 Obsidian 格式 Markdown，含 frontmatter + 关键观点 + 字幕正文
+
+**降级方案**：如果 `yt-dlp` 不可用：
+```bash
+python3 .claude/skills/huage-gzh/scripts/youtube_video_research.py \
+  "[topic]" \
+  --max 5 \
+  --lang zh \
+  --no-subtitle \
+  --output "写作知识库/01-资源库/${DATE}/[slug]/02-视频研究/"
+```
 
 **入库**：`02-视频研究/`
 
-```markdown
-# YouTube 视频：[视频标题]
-
-## 基本信息
-- 频道：[频道名]
-- 时长：[时长]
-- 观看：[播放量]
-- 链接：[URL]
-
-## 核心观点
-[视频传达的主要观点，3-5条]
-
-## 对文章有用的内容
-[具体可以引用的内容、数据或故事]
+输出结构：
 ```
+02-视频研究/
+├── 00-索引_xxx_YYYYMMDD_HHMMSS.md   # 视频清单索引
+├── 01_youtube_title_1.md            # 视频笔记（含字幕）
+├── 02_youtube_title_2.md
+└── ...
+```
+
+单个视频笔记格式：
+```markdown
+---
+source: "https://www.youtube.com/watch?v=xxx"
+type: youtube-video
+channel: "频道名"
+date: 2026-04-02
+views: 12345
+tags: ["tag1", "tag2"]
+subtitle_length: 1234
+---
+
+# 视频标题
+
+**频道**: [频道名](链接)
+**链接**: [YouTube](链接)
+**发布日期**: 2026-04-02
+**播放量**: 12,345
+
+## 视频描述
+...
+
+## 关键观点
+- 观点1
+- 观点2
+
+## 字幕内容
+[字幕正文，最多 3000 字截断]
+```
+
+**字幕语言优先级**：`zh-Hans` → `zh` → `en`（无中文自动字幕则用英文）
+
+**质量门控**：
+- `00-索引_xxx.md` 存在
+- 视频笔记 ≥ 3 个
+- 如字幕获取率 < 50%，提示用户手动补充视频链接
 
 ### Step 1.4：Qwen3-Max 综合研究摘要
 

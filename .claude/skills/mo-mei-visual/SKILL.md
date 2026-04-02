@@ -45,15 +45,15 @@ Step 2: 场景合成
   · 调用 baoyu-image-gen（--provider doubao --ref <实拍图>）
   · 4 种场景各生成 1 张
 
-Step 3: 智能裁切
+Step 3: 智能裁切（✅ Phase 1）
   · 调用 scripts/smart-crop.ts
-  · 基础图 → 全平台尺寸
+  · 基础图 → 全平台 7 种尺寸
 
-Step 4: 海报合成
+Step 4: 海报合成（📅 Phase 2）
   · 调用 scripts/poster-compose.ts
   · 输出：横版 + 竖版
 
-Step 5: 详情页文案 + HTML
+Step 5: 详情页文案 + HTML（📅 Phase 2）
   · 读取 prompts/detail-copy.md
   · 调用 Qwen3-Max 生成详情页内容
   · 调用 baoyu-markdown-to-html 输出 HTML
@@ -67,10 +67,12 @@ output/<slug>/
 ├── main-taobao-3:4.png      # 淘宝 800×1066
 ├── main-jd-1:1.png          # 京东 800×800
 ├── main-pdd-1:1.png         # 拼多多 800×800
+├── main-pdd-3:4.png         # 拼多多 800×1200
+├── main-douyin-3:4.png      # 抖音 800×1066
 ├── main-douyin-9:16.png    # 抖音 1080×1920
-├── poster-h.png             # 横版海报 1920×800
-├── poster-v.png             # 竖版海报 1080×1920
-└── index.html               # 详情页
+├── poster-h.png             # 横版海报 1920×800（📅 Phase 2）
+├── poster-v.png             # 竖版海报 1080×1920（📅 Phase 2）
+└── index.html               # 详情页（📅 Phase 2）
 ```
 
 ## Prompt 文件
@@ -87,10 +89,10 @@ output/<slug>/
 
 ## 脚本
 
-| 脚本 | 用途 |
-|------|------|
-| `scripts/smart-crop.ts` | 智能裁切（Fabric.js） |
-| `scripts/poster-compose.ts` | 海报合成（Fabric.js） |
+| 脚本 | 用途 | 状态 |
+|------|------|------|
+| `scripts/smart-crop.ts` | 智能裁切（Sharp） | ✅ Phase 1 |
+| `scripts/poster-compose.ts` | 海报合成（Sharp） | 📅 Phase 2 |
 
 ## 参考文档
 

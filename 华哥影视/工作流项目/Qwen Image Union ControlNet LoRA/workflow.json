@@ -1,0 +1,12 @@
+{
+  "id": "_O2eBetjaVH0JewdACqb3",
+  "name": "Qwen Image Union ControlNet LoRA",
+  "description": null,
+  "created_at": "2026-01-13T02:17:56.724Z",
+  "updated_at": "2026-01-13T02:25:15.150Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L40S",
+  "models": null
+}

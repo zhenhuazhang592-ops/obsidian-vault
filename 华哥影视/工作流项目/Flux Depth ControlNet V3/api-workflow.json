@@ -1,0 +1,33 @@
+const workflow_id = "KW_L7slR9_9AS2UfzfMEz"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"inputs":{"model":["10",0],"steps":25,"true_gs":3.5,"noise_seed":737704647780505,"conditioning":["5",0],"latent_image":["6",0],"denoise_strength":1,"neg_conditioning":["19",0],"controlnet_condition":["14",0],"timestep_to_start_cfg":1,"image_to_image_strength":0},"class_type":"XlabsSampler"},"4":{"inputs":{"type":"flux","clip_name1":"clip_l.safetensors","clip_name2":"t5xxl_fp16.safetensors"},"class_type":"DualCLIPLoader"},"5":{"inputs":{"clip":["4",0],"t5xxl":"A women walking on mars","clip_l":"A women walking on mars","guidance":4},"class_type":"CLIPTextEncodeFlux"},"6":{"inputs":{"width":768,"height":768,"batch_size":1},"class_type":"EmptyLatentImage"},"7":{"inputs":{"vae":["8",0],"samples":["3",0]},"class_type":"VAEDecode"},"8":{"inputs":{"vae_name":"ae.safetensors"},"class_type":"VAELoader"},"10":{"inputs":{"unet_name":"flux1-dev-fp8.safetensors","weight_dtype":"fp8_e4m3fn"},"class_type":"UNETLoader"},"13":{"inputs":{"model_name":"flux-dev","controlnet_path":"flux-depth-controlnet-v3.safetensors"},"class_type":"LoadFluxControlNet"},"14":{"inputs":{"image":["23",0],"strength":0.86,"controlnet":["13",0]},"class_type":"ApplyFluxControlNet"},"16":{"inputs":{"image":"0 (16) (1).webp","upload":"image"},"class_type":"LoadImage"},"17":{"inputs":{"images":["23",0]},"class_type":"PreviewImage"},"19":{"inputs":{"clip":["4",0],"t5xxl":"","clip_l":"","guidance":4},"class_type":"CLIPTextEncodeFlux"},"23":{"inputs":{"a":6.283185307179586,"image":["16",0],"resolution":768,"bg_threshold":0.1},"class_type":"MiDaS-DepthMapPreprocessor"},"24":{"inputs":{"images":["7",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {
+    "/input/0 (16) (1).webp": "https://comfy.icu/api/v1/view/workflows/KW_L7slR9_9AS2UfzfMEz/input/0 (16) (1).webp"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

@@ -1,0 +1,12 @@
+{
+  "id": "g2ND8SPTgqjvmC_b-42qX",
+  "name": "Wan 2.2 Image Generation (H100)",
+  "description": null,
+  "created_at": "2025-08-22T14:16:15.399Z",
+  "updated_at": "2025-09-14T10:56:38.221Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "H100",
+  "models": null
+}

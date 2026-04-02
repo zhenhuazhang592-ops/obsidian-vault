@@ -1,0 +1,33 @@
+const workflow_id = "ScHsZ5bYBAQjARJ2PNiLs"
+
+// Workflow JSON in API Format
+const prompt = {"1":{"_meta":{"title":"MarigoldDepthEstimation"},"inputs":{"tol":0.001,"seed":904467591362851,"image":["16",0],"model":"Marigold","invert":true,"max_iter":5,"n_repeat":10,"use_fp16":true,"normalize":true,"scheduler":"DDIMScheduler","denoise_steps":10,"reduction_method":"median","keep_model_loaded":true,"n_repeat_batch_size":1,"regularizer_strength":0.02},"class_type":"MarigoldDepthEstimation"},"3":{"_meta":{"title":"Load Image"},"inputs":{"image":"1116_00001_.png","upload":"image"},"class_type":"LoadImage"},"5":{"_meta":{"title":"Colorize Depthmap"},"inputs":{"image":["9",0],"colorize_method":"Spectral"},"class_type":"ColorizeDepthmap"},"6":{"_meta":{"title":"Remap Depth"},"inputs":{"max":1,"min":0,"clamp":true,"image":["1",0]},"class_type":"RemapDepth"},"7":{"_meta":{"title":"Preview Image"},"inputs":{"images":["5",0]},"class_type":"PreviewImage"},"8":{"_meta":{"title":"Preview Image"},"inputs":{"images":["6",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"9":{"_meta":{"title":"Invert Image"},"inputs":{"image":["6",0]},"class_type":"ImageInvert"},"16":{"_meta":{"title":"🔧 Image Resize"},"inputs":{"image":["3",0],"width":768,"height":768,"method":"fill / crop","condition":"always","multiple_of":0,"interpolation":"nearest"},"class_type":"ImageResize+"}};
+
+// Input files
+const files = {
+    "/input/1116_00001_.png": "https://comfy.icu/api/v1/view/workflows/ScHsZ5bYBAQjARJ2PNiLs/input/1116_00001_.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

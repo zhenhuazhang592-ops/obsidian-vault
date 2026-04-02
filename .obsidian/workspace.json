@@ -4,37 +4,35 @@
     "type": "split",
     "children": [
       {
-        "id": "4e7a1c0505fb0b96",
+        "id": "79e59517faf6eeaf",
         "type": "split",
         "children": [
           {
-            "id": "ad560bb4dae0a93d",
+            "id": "ce191423e5901122",
             "type": "tabs",
-            "dimension": 22.701475595913735,
+            "dimension": 27.24177071509648,
             "children": [
               {
-                "id": "ec47258c9723c122",
+                "id": "9a041f754c4bf58a",
                 "type": "leaf",
                 "state": {
-                  "type": "markdown",
+                  "type": "image",
                   "state": {
-                    "file": "独立站项目/品牌独立站落地方案.md",
-                    "mode": "source",
-                    "source": false
+                    "file": "写作知识库/01-资源库/2026-04-02/牛油果神仙吃法/06-封面图/cover-wx.png"
                   },
-                  "icon": "lucide-file",
-                  "title": "品牌独立站落地方案"
+                  "icon": "lucide-image",
+                  "title": "cover-wx"
                 }
               }
             ]
           },
           {
-            "id": "3a9f30109753fcc5",
+            "id": "b49525ad122a21ef",
             "type": "tabs",
-            "dimension": 77.29852440408627,
+            "dimension": 72.75822928490352,
             "children": [
               {
-                "id": "90a2bb87bdce1312",
+                "id": "6ff7484f0dab94ea",
                 "type": "leaf",
                 "pinned": true,
                 "state": {
@@ -220,19 +218,9 @@
               "icon": "lucide-list",
               "title": "大纲"
             }
-          },
-          {
-            "id": "be560c07902514ec",
-            "type": "leaf",
-            "state": {
-              "type": "claudian-view",
-              "state": {},
-              "icon": "bot",
-              "title": "Claudian"
-            }
           }
         ],
-        "currentTab": 5
+        "currentTab": 4
       }
     ],
     "direction": "horizontal",
@@ -253,54 +241,54 @@
       "terminal:Open terminal": false
     }
   },
-  "active": "90a2bb87bdce1312",
+  "active": "6ff7484f0dab94ea",
   "lastOpenFiles": [
-    "独立站项目/品牌独立站落地方案.md",
-    "docs/plans/2026-03-27-manzhou-studio-v2-plan.md",
-    "docs/plans/2026-03-27-manzhou-studio-v2-design.md",
-    "独立站项目/总览.md",
-    "独立站项目/Medusa/平台分析.md",
-    "独立站项目/Payload/平台分析.md",
-    "独立站项目/Strapi/平台分析.md",
-    "独立站项目/Saleor/平台分析.md",
-    "独立站项目/Medusa",
-    "独立站项目/Strapi",
-    "独立站项目/Payload",
-    "独立站项目/Saleor",
-    "独立站项目",
-    "AI漫剧项目/活着-v9/05-资产库/02-场景定场图提示词.md",
-    "AI漫剧项目/活着-v9/05-资产库/01-角色参考图提示词.md",
-    "AI漫剧项目/活着-v9/02-剧本/第01集-剧本.md",
-    "AI漫剧项目/活着-v9/02-剧本/第05集-剧本.md",
-    "AI漫剧项目/活着-v9/02-剧本/第04集-剧本.md",
-    "AI漫剧项目/活着-v9/02-剧本/第03集-剧本.md",
-    "AI漫剧项目/活着-v9/02-剧本/第02集-剧本.md",
-    "AI漫剧项目/活着-v9/02-剧本/剧本总览.md",
-    "AI漫剧项目/活着-v9/05-资产库/资产库总索引.md",
-    "AI漫剧项目/活着-v9/00-项目信息/项目配置单.md",
-    "AI漫剧项目/活着-v9/03-分镜/第01集-分镜-v9.0.0.md",
-    "AI漫剧项目/活着-v9/03-分镜/第01集-分镜-v10.1.0.md",
-    "ai-drama-studio/manzhou-agent/manzhou/__pycache__/qwen_client.cpython-312.pyc",
-    "ai-drama-studio/manzhou-agent/manzhou/qwen_client.py",
-    "ai-drama-studio/manzhou-agent/manzhou/__pycache__/claude_client.cpython-312.pyc",
-    "ai-drama-studio/manzhou-agent/manzhou/claude_client.py",
-    "AI漫剧项目/manzhou-studio/index.html",
-    "AI漫剧项目/格子间女人-v1/S1-风格指南-确认版.md",
-    "AI漫剧项目/格子间女人-v1/04-视频生成/视频生成任务清单.md",
-    "AI漫剧项目/格子间女人-v1/03-分镜脚本/第01集-分镜脚本.md",
-    "AI漫剧项目/格子间女人-v1/02-资产库/生成任务表.md",
-    "AI漫剧项目/格子间女人-v1/01-CDP资产包/CDP-JSON.md",
-    "ai-drama-studio/manzhou-agent/docs/plans/2026-03-27-schema-enforcement-plan.md",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/12_胜利饭店场景.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/08_何小勇.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/11_根龙.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/10_阿方.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/09_李血头.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/07_一乐_成年.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/05_许玉兰_中年.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/06_一乐_少年.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/01_许三观_青年.png",
-    "AI漫剧项目/许三观卖血记/05-资产库/角色参考图/02_许三观_中年.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/06-手持产品.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/05-微笑表情.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/04-面部特写.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/03-全身照.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/02-侧面照.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡/01-正面标准照.png",
+    "AI短视频创作/漠玫IP形象/角色外观卡",
+    "AI短视频创作/漠玫IP形象/04-日系动漫二次元.png",
+    "AI短视频创作/漠玫IP形象/03-扁平插画人物.png",
+    "AI短视频创作/漠玫IP形象/02-Q版人物.png",
+    "test-output/main-douyin-9:16.png",
+    "test-output/main-douyin-3:4.png",
+    "test-output",
+    "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include/glibconfig.h",
+    "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include",
+    "node_modules/@img/sharp-libvips-darwin-arm64/lib/libvips-cpp.8.17.3.dylib",
+    "node_modules/@img/sharp-libvips-darwin-arm64/lib/index.js",
+    "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0",
+    "node_modules/@img/sharp-darwin-arm64/lib/sharp-darwin-arm64.node",
+    "node_modules/@img/sharp-libvips-darwin-arm64/package.json",
+    "node_modules/@img/sharp-libvips-darwin-arm64/versions.json",
+    "node_modules/@img/sharp-libvips-darwin-arm64/README.md",
+    "node_modules/@img/sharp-darwin-arm64/README.md",
+    "node_modules/@img/colour/LICENSE.md",
+    "node_modules/@img/colour/README.md",
+    "node_modules/sharp/README.md",
+    "node_modules/@napi-rs/canvas-darwin-arm64/README.md",
+    "node_modules/@napi-rs/canvas/README.md",
+    "node_modules/ieee754/README.md",
+    "node_modules/base64-js/README.md",
+    "node_modules/util-deprecate/README.md",
+    "node_modules/util-deprecate/History.md",
+    "node_modules/string_decoder/README.md",
+    "node_modules/buffer/README.md",
+    "node_modules/buffer/AUTHORS.md",
+    "node_modules/readable-stream/README.md",
+    "node_modules/readable-stream/GOVERNANCE.md",
+    "node_modules/readable-stream/CONTRIBUTING.md",
+    "node_modules/inherits/README.md",
+    "node_modules/fs-constants/README.md",
+    "node_modules/bl/README.md",
+    "node_modules/bl/LICENSE.md",
+    "node_modules/mimic-response/readme.md",
+    "node_modules/wrappy/README.md",
+    "node_modules/punycode/README.md",
+    "node_modules/safer-buffer/Readme.md",
     "未命名.canvas"
   ]
 }

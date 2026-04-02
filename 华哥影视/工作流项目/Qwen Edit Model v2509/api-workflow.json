@@ -1,0 +1,33 @@
+const workflow_id = "lElVvQJLCQ7dzDZrt4SYP"
+
+// Workflow JSON in API Format
+const prompt = {"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["10",0],"samples":["65",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"10":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader"},"12":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"qwen_image_edit_2509_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"41":{"_meta":{"title":"Load Image"},"inputs":{"image":"fennec_girl_sing.png","upload":"image"},"class_type":"LoadImage"},"61":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"qwen_image","device":"default","clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors"},"class_type":"CLIPLoader"},"65":{"_meta":{"title":"KSampler"},"inputs":{"cfg":4,"seed":608765835219222,"model":["67",0],"steps":20,"denoise":1,"negative":["69",0],"positive":["68",0],"scheduler":"simple","latent_image":["66",0],"sampler_name":"euler"},"class_type":"KSampler"},"66":{"_meta":{"title":"EmptySD3LatentImage"},"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptySD3LatentImage"},"67":{"_meta":{"title":"ModelSamplingAuraFlow"},"inputs":{"model":["12",0],"shift":3.1},"class_type":"ModelSamplingAuraFlow"},"68":{"_meta":{"title":"TextEncodeQwenImageEditPlus (Positive)"},"inputs":{"vae":["10",0],"clip":["61",0],"image1":["41",0],"prompt":"the anime girl with massive fennec ears is wearing cargo pants while sitting on a log in the woods biting into a sandwich beside a beautiful alpine lake"},"class_type":"TextEncodeQwenImageEditPlus"},"69":{"_meta":{"title":"TextEncodeQwenImageEditPlus"},"inputs":{"vae":["10",0],"clip":["61",0],"image1":["41",0],"prompt":""},"class_type":"TextEncodeQwenImageEditPlus"}};
+
+// Input files
+const files = {
+    "/input/fennec_girl_sing.png": "https://comfy.icu/api/v1/view/workflows/lElVvQJLCQ7dzDZrt4SYP/input/fennec_girl_sing.png"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

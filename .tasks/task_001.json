@@ -1,0 +1,8 @@
+{
+  "id": 1,
+  "subject": "初始化 Vault Harness 规则系统",
+  "description": "从 learn-claude-code 提炼 6 条核心原则，写入 .claude/rules/",
+  "status": "completed",
+  "blockedBy": [],
+  "owner": "agent"
+}

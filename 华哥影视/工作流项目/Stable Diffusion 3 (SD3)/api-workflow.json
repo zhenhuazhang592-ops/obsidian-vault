@@ -1,0 +1,31 @@
+const workflow_id = "i9jQ0nrtUPxKKvRnwRkMP"
+
+// Workflow JSON in API Format
+const prompt = {"6":{"inputs":{"clip":["11",0],"text":"Cyberpunk style girl with edgy hairstyle, neon background, in cyberpunk city, holding a holographic projection system in her hand, showing the word \"SD3\"."},"class_type":"CLIPTextEncode"},"11":{"inputs":{"clip_name1":"clip_g.safetensors","clip_name2":"clip_l.safetensors","clip_name3":"t5xxl_fp8_e4m3fn.safetensors"},"class_type":"TripleCLIPLoader"},"13":{"inputs":{"model":["252",0],"shift":3},"class_type":"ModelSamplingSD3"},"67":{"inputs":{"conditioning":["71",0]},"class_type":"ConditioningZeroOut"},"68":{"inputs":{"end":1,"start":0.1,"conditioning":["67",0]},"class_type":"ConditioningSetTimestepRange"},"69":{"inputs":{"conditioning_1":["68",0],"conditioning_2":["70",0]},"class_type":"ConditioningCombine"},"70":{"inputs":{"end":0.1,"start":0,"conditioning":["71",0]},"class_type":"ConditioningSetTimestepRange"},"71":{"inputs":{"clip":["11",0],"text":"bad quality, poor quality, doll, disfigured, jpg, toy, bad anatomy, missing limbs, missing fingers, 3d, cgi"},"class_type":"CLIPTextEncode"},"135":{"inputs":{"width":1024,"height":1024,"batch_size":1},"class_type":"EmptySD3LatentImage"},"231":{"inputs":{"vae":["252",2],"samples":["271",0]},"class_type":"VAEDecode"},"252":{"inputs":{"ckpt_name":"sd3_medium.safetensors"},"class_type":"CheckpointLoaderSimple"},"271":{"inputs":{"cfg":4.5,"seed":207749865487071,"model":["13",0],"steps":28,"denoise":1,"negative":["69",0],"positive":["6",0],"scheduler":"sgm_uniform","latent_image":["135",0],"sampler_name":"dpmpp_2m"},"class_type":"KSampler"},"273":{"inputs":{"images":["231",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

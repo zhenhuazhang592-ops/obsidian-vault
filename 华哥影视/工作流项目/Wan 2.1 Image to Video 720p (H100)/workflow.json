@@ -1,0 +1,12 @@
+{
+  "id": "4J3NEMOu8muH_aTGeJQ-e",
+  "name": "Wan 2.1 Image to Video 720p (H100)",
+  "description": "# Wan 2.1 \n\nAlibaba's Wan Video 2.1 represents a significant advancement in artificial intelligence-driven video generation, offering state-of-the-art capabilities in transforming textual and visual inputs into dynamic video content. This open-source model suite builds upon previous iterations through architectural innovations that enhance motion dynamics, spatial relationships, and computational efficiency. With demonstrated performance exceeding 86% on industry-standard benchmarks[2][4], Wan 2.1 establishes new standards for AI-generated video quality while maintaining accessibility through optimized hardware requirements. The following analysis examines the technical foundations, operational capabilities, and competitive positioning of this transformative video generation system.",
+  "created_at": "2025-03-05T15:00:09.450Z",
+  "updated_at": "2025-07-23T22:04:23.116Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "H100",
+  "models": null
+}

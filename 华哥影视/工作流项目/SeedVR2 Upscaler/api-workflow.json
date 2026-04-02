@@ -1,0 +1,33 @@
+const workflow_id = "Dvgm19nZO5TxqB7CAM24a"
+
+// Workflow JSON in API Format
+const prompt = {"10":{"_meta":{"title":"SeedVR2 Video Upscaler (v2.5.24)"},"inputs":{"dit":["14",0],"vae":["13",0],"seed":3022025619,"image":["16",0],"batch_size":1,"resolution":1080,"enable_debug":false,"max_resolution":0,"offload_device":"cpu","prepend_frames":0,"color_correction":"lab","temporal_overlap":0,"input_noise_scale":0,"latent_noise_scale":0,"uniform_batch_size":false},"class_type":"SeedVR2VideoUpscaler"},"13":{"_meta":{"title":"SeedVR2 (Down)Load VAE Model"},"inputs":{"model":"ema_vae_fp16.safetensors","device":"cuda:0","tile_debug":"false","cache_model":false,"decode_tiled":false,"encode_tiled":false,"offload_device":"none","decode_tile_size":1024,"encode_tile_size":1024,"decode_tile_overlap":128,"encode_tile_overlap":128},"class_type":"SeedVR2LoadVAEModel"},"14":{"_meta":{"title":"SeedVR2 (Down)Load DiT Model"},"inputs":{"model":"seedvr2_ema_3b_fp8_e4m3fn.safetensors","device":"cuda:0","cache_model":false,"attention_mode":"sdpa","blocks_to_swap":0,"offload_device":"none","swap_io_components":false},"class_type":"SeedVR2LoadDiTModel"},"15":{"_meta":{"title":"Save Image"},"inputs":{"images":["10",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"16":{"_meta":{"title":"Load Image"},"inputs":{"image":"aurora_night_witch.jpg"},"class_type":"LoadImage"}};
+
+// Input files
+const files = {
+    "/input/aurora_night_witch.jpg": "https://comfy.icu/api/v1/view/workflows/Dvgm19nZO5TxqB7CAM24a/input/aurora_night_witch.jpg"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

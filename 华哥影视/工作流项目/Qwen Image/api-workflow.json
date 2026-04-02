@@ -1,0 +1,31 @@
+const workflow_id = "_KrQjGjJGveyJlYLmQ_1k"
+
+// Workflow JSON in API Format
+const prompt = {"3":{"_meta":{"title":"KSampler"},"inputs":{"cfg":2.5,"seed":784749156730643,"model":["66",0],"steps":20,"denoise":1,"negative":["7",0],"positive":["6",0],"scheduler":"simple","latent_image":["58",0],"sampler_name":"euler"},"class_type":"KSampler"},"6":{"_meta":{"title":"CLIP Text Encode (Positive Prompt)"},"inputs":{"clip":["38",0],"text":"\"A vibrant, warm neon-lit street scene in Hong Kong at the afternoon, with a mix of colorful Chinese and English signs glowing brightly. The atmosphere is lively, cinematic, and rain-washed with reflections on the pavement. The colors are vivid, full of pink, blue, red, and green hues. Crowded buildings with overlapping neon signs. 1980s Hong Kong style. Signs include:\n\"龍鳳冰室\" \"金華燒臘\" \"HAPPY HAIR\" \"鴻運茶餐廳\" \"EASY BAR\" \"永發魚蛋粉\" \"添記粥麵\" \"SUNSHINE MOTEL\" \"美都餐室\" \"富記糖水\" \"太平館\" \"雅芳髮型屋\" \"STAR KTV\" \"銀河娛樂城\" \"百樂門舞廳\" \"BUBBLE CAFE\" \"萬豪麻雀館\" \"CITY LIGHTS BAR\" \"瑞祥香燭莊\" \"文記文具\" \"GOLDEN JADE HOTEL\" \"LOVELY BEAUTY\" \"合興百貨\" \"興旺電器\" And the background is warm yellow street and with all stores' lights on."},"class_type":"CLIPTextEncode"},"7":{"_meta":{"title":"CLIP Text Encode (Negative Prompt)"},"inputs":{"clip":["38",0],"text":""},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["39",0],"samples":["3",0]},"class_type":"VAEDecode"},"37":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"qwen_image_fp8_e4m3fn.safetensors","weight_dtype":"default"},"class_type":"UNETLoader"},"38":{"_meta":{"title":"Load CLIP"},"inputs":{"type":"qwen_image","device":"default","clip_name":"qwen_2.5_vl_7b_fp8_scaled.safetensors"},"class_type":"CLIPLoader"},"39":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"qwen_image_vae.safetensors"},"class_type":"VAELoader"},"58":{"_meta":{"title":"EmptySD3LatentImage"},"inputs":{"width":1328,"height":1328,"batch_size":1},"class_type":"EmptySD3LatentImage"},"60":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"ComfyUI"},"class_type":"SaveImage"},"66":{"_meta":{"title":"ModelSamplingAuraFlow"},"inputs":{"model":["37",0],"shift":3.100000000000001},"class_type":"ModelSamplingAuraFlow"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

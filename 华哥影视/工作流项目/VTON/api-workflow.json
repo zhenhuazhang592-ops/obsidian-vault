@@ -1,0 +1,34 @@
+const workflow_id = "f0qw3wMmguMbsV1dkEnKv"
+
+// Workflow JSON in API Format
+const prompt = {"12":{"_meta":{"title":"Load IDM-VTON Pipeline"},"inputs":{"weight_dtype":"float16"},"class_type":"PipelineLoader"},"14":{"_meta":{"title":"Load Human Image"},"inputs":{"image":"dad.png","upload":"image"},"class_type":"LoadImage"},"15":{"_meta":{"title":"Load Garment Image"},"inputs":{"image":"shirt.webp","upload":"image"},"class_type":"LoadImage"},"21":{"_meta":{"title":"Save Image"},"inputs":{"images":["35",0],"filename_prefix":"try_on"},"class_type":"SaveImage"},"27":{"_meta":{"title":"SAMModelLoader (segment anything)"},"inputs":{"model_name":"sam_hq_vit_h (2.57GB)"},"class_type":"SAMModelLoader (segment anything)"},"28":{"_meta":{"title":"GroundingDinoModelLoader (segment anything)"},"inputs":{"model_name":"GroundingDINO_SwinB (938MB)"},"class_type":"GroundingDinoModelLoader (segment anything)"},"29":{"_meta":{"title":"GroundingDinoSAMSegment (segment anything)"},"inputs":{"image":["14",0],"prompt":"blazer","sam_model":["27",0],"threshold":0.3,"grounding_dino_model":["28",0]},"class_type":"GroundingDinoSAMSegment (segment anything)"},"31":{"_meta":{"title":"Convert Mask to Image"},"inputs":{"mask":["29",1]},"class_type":"MaskToImage"},"32":{"_meta":{"title":"Preview Image"},"inputs":{"images":["31",0]},"class_type":"PreviewImage"},"33":{"_meta":{"title":"DensePose Estimator"},"inputs":{"cmap":"Parula (CivitAI)","image":["14",0],"model":"densepose_r50_fpn_dl.torchscript","resolution":768},"class_type":"DensePosePreprocessor"},"34":{"_meta":{"title":"Preview Image"},"inputs":{"images":["33",0]},"class_type":"PreviewImage"},"35":{"_meta":{"title":"Run IDM-VTON Inference"},"inputs":{"seed":626339019054371,"width":768,"height":1024,"mask_img":["31",0],"pipeline":["12",0],"pose_img":["33",0],"strength":1,"human_img":["14",0],"garment_img":["15",0],"guidance_scale":2,"negative_prompt":"monochrome, lowres, bad anatomy, worst quality, low quality","garment_description":"a shirt","num_inference_steps":30},"class_type":"IDM-VTON"}};
+
+// Input files
+const files = {
+    "/input/dad.png": "https://comfy.icu/api/v1/view/workflows/f0qw3wMmguMbsV1dkEnKv/input/dad.png",
+    "/input/shirt.webp": "https://comfy.icu/api/v1/view/workflows/f0qw3wMmguMbsV1dkEnKv/input/shirt.webp"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

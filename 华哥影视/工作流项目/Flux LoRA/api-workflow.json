@@ -1,0 +1,33 @@
+const workflow_id = "VUB4r2Y0bPVHfw9vCzxqQ"
+
+// Workflow JSON in API Format
+const prompt = {"5":{"_meta":{"title":"Empty Latent Image"},"inputs":{"width":["70",0],"height":["71",0],"batch_size":1},"class_type":"EmptyLatentImage"},"6":{"_meta":{"title":"CLIP Text Encode (Prompt)"},"inputs":{"clip":["11",0],"text":["28",0]},"class_type":"CLIPTextEncode"},"8":{"_meta":{"title":"VAE Decode"},"inputs":{"vae":["10",0],"samples":["13",0]},"class_type":"VAEDecode"},"9":{"_meta":{"title":"Save Image"},"inputs":{"images":["8",0],"filename_prefix":"1116"},"class_type":"SaveImage"},"10":{"_meta":{"title":"Load VAE"},"inputs":{"vae_name":"flux1-ae.safetensors"},"class_type":"VAELoader"},"11":{"_meta":{"title":"DualCLIPLoader"},"inputs":{"type":"flux","device":"default","clip_name1":"t5xxl_fp16.safetensors","clip_name2":"clip_l.safetensors"},"class_type":"DualCLIPLoader"},"12":{"_meta":{"title":"Load Diffusion Model"},"inputs":{"unet_name":"flux1-dev-fp8.safetensors","weight_dtype":"fp8_e4m3fn"},"class_type":"UNETLoader"},"13":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["25",0],"guider":["22",0],"sigmas":["17",0],"sampler":["16",0],"latent_image":["5",0]},"class_type":"SamplerCustomAdvanced"},"16":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler"},"class_type":"KSamplerSelect"},"17":{"_meta":{"title":"BasicScheduler"},"inputs":{"model":["73",0],"steps":33,"denoise":1,"scheduler":"simple"},"class_type":"BasicScheduler"},"22":{"_meta":{"title":"BasicGuider"},"inputs":{"model":["73",0],"conditioning":["60",0]},"class_type":"BasicGuider"},"25":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":180298005931286},"class_type":"RandomNoise"},"28":{"_meta":{"title":"String Literal"},"inputs":{"string":"zavy-spctrlglw, Close-up shot from a low angle, a spectral glow cat with shimmering translucent fur and ethereal wisps emanating from its body, a moonlit rooftop with city skyline in the background, high-contrast photography with a dreamlike quality, iridescent blues and purples complemented by soft pinks."},"class_type":"String Literal"},"60":{"_meta":{"title":"FluxGuidance"},"inputs":{"guidance":3.5,"conditioning":["6",0]},"class_type":"FluxGuidance"},"70":{"_meta":{"title":"Int Literal"},"inputs":{"int":1024},"class_type":"Int Literal"},"71":{"_meta":{"title":"Int Literal"},"inputs":{"int":1024},"class_type":"Int Literal"},"72":{"_meta":{"title":"LoraLoaderModelOnly"},"inputs":{"model":["12",0],"lora_name":"zavy-spctrlglw-flx.safetensors","strength_model":1},"class_type":"LoraLoaderModelOnly"},"73":{"_meta":{"title":"ModelSamplingFlux"},"inputs":{"model":["72",0],"width":1024,"height":1024,"max_shift":0.05,"base_shift":0.5},"class_type":"ModelSamplingFlux"}};
+
+// Input files
+const files = {
+    "/models/loras/zavy-spctrlglw-flx.safetensors": "https://civitai.com/api/download/models/1005353?type=Model&format=SafeTensor"
+};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

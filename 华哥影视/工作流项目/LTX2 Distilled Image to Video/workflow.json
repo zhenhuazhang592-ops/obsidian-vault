@@ -1,0 +1,12 @@
+{
+  "id": "ZZcmOtSI8IuI8tC-BVs7i",
+  "name": "LTX2 Distilled Image to Video",
+  "description": null,
+  "created_at": "2026-01-18T11:05:31.550Z",
+  "updated_at": "2026-01-18T11:53:59.641Z",
+  "tags": [],
+  "visibility": "PUBLIC",
+  "user": "Kornesh Kanan",
+  "accelerator": "L40S",
+  "models": null
+}

@@ -42,6 +42,7 @@ description: 公众号AI写作智能体。强制全链路：深度研究(Tavily+
 | 工具 | 用途 | 环境变量 |
 |------|------|---------|
 | `scripts/qwen_client.py` | Qwen3-Max API | `DASHSCOPE_API_KEY` |
+| `scripts/youtube_video_research.py` | YouTube 搜索 + 字幕抓取 | `YOUTUBE_API_KEY` + `yt-dlp` |
 | `baoyu-image-gen` | 图像生成（含 Doubao-Seedream-4.5） | `ARK_API_KEY` |
 | `baoyu-markdown-to-html` | Markdown → HTML | — |
 | `gstack/browse` | 浏览器预览 | — |
@@ -57,6 +58,7 @@ description: 公众号AI写作智能体。强制全链路：深度研究(Tavily+
 □ ARK_API_KEY 已配置（Doubao-Seedream-4.5）
 □ TAVILY_API_KEY 已配置（深度搜索）
 □ YOUTUBE_API_KEY 已配置（YouTube研究）
+□ yt-dlp 已安装（字幕抓取）：brew install yt-dlp
 □ baoyu-markdown-to-html 已安装
 □ gstack 已配置
 ```

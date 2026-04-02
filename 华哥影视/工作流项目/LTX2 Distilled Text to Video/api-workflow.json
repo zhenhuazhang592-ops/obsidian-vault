@@ -1,0 +1,31 @@
+const workflow_id = "IeZvjqELo6XM4pjWr3cK0"
+
+// Workflow JSON in API Format
+const prompt = {"104":{"_meta":{"title":"Save Video"},"inputs":{"codec":"auto","video":["199",0],"format":"auto","filename_prefix":"video_LTX-2"},"class_type":"SaveVideo"},"181":{"_meta":{"title":"LTXV Audio VAE Loader"},"inputs":{"ckpt_name":"ltx-2-19b-distilled.safetensors"},"class_type":"LTXVAudioVAELoader"},"182":{"_meta":{"title":"enhanced prompt (positive)"},"inputs":{"clip":["185",0],"text":["214",0]},"class_type":"CLIPTextEncode"},"183":{"_meta":{"title":"LTXVConditioning"},"inputs":{"negative":["182",0],"positive":["182",0],"frame_rate":["211",0]},"class_type":"LTXVConditioning"},"184":{"_meta":{"title":"Load Latent Upscale Model"},"inputs":{"model_name":"ltx-2-spatial-upscaler-x2-1.0.safetensors"},"class_type":"LatentUpscaleModelLoader"},"185":{"_meta":{"title":"LTXV Audio Text Encoder Loader"},"inputs":{"device":"default","ckpt_name":"ltx-2-19b-distilled.safetensors","text_encoder":"gemma_3_12B_it_fp4_mixed.safetensors"},"class_type":"LTXAVTextEncoderLoader"},"186":{"_meta":{"title":"LTXV Empty Latent Audio"},"inputs":{"audio_vae":["181",0],"batch_size":1,"frame_rate":["210",0],"frames_number":["209",0]},"class_type":"LTXVEmptyLatentAudio"},"187":{"_meta":{"title":"EmptyLTXVLatentVideo"},"inputs":{"width":["213",0],"height":["213",1],"length":["209",0],"batch_size":1},"class_type":"EmptyLTXVLatentVideo"},"188":{"_meta":{"title":"Upscale Image By"},"inputs":{"image":["212",0],"scale_by":0.5,"upscale_method":"nearest-exact"},"class_type":"ImageScaleBy"},"190":{"_meta":{"title":"Load Checkpoint"},"inputs":{"ckpt_name":"ltx-2-19b-distilled.safetensors"},"class_type":"CheckpointLoaderSimple"},"191":{"_meta":{"title":"CFGGuider"},"inputs":{"cfg":1,"model":["190",0],"negative":["183",1],"positive":["183",0]},"class_type":"CFGGuider"},"192":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler_ancestral"},"class_type":"KSamplerSelect"},"193":{"_meta":{"title":"ManualSigmas"},"inputs":{"sigmas":"1., 0.99375, 0.9875, 0.98125, 0.975, 0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas"},"194":{"_meta":{"title":"ManualSigmas"},"inputs":{"sigmas":"0.909375, 0.725, 0.421875, 0.0"},"class_type":"ManualSigmas"},"195":{"_meta":{"title":"KSamplerSelect"},"inputs":{"sampler_name":"euler_ancestral"},"class_type":"KSamplerSelect"},"196":{"_meta":{"title":"CFGGuider"},"inputs":{"cfg":1,"model":["190",0],"negative":["183",1],"positive":["183",0]},"class_type":"CFGGuider"},"197":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":420},"class_type":"RandomNoise"},"198":{"_meta":{"title":"LTXVConcatAVLatent"},"inputs":{"audio_latent":["201",1],"video_latent":["200",0]},"class_type":"LTXVConcatAVLatent"},"199":{"_meta":{"title":"Create Video"},"inputs":{"fps":["211",0],"audio":["206",0],"images":["205",0]},"class_type":"CreateVideo"},"200":{"_meta":{"title":"LTXVLatentUpsampler"},"inputs":{"vae":["190",2],"samples":["201",0],"upscale_model":["184",0]},"class_type":"LTXVLatentUpsampler"},"201":{"_meta":{"title":"LTXVSeparateAVLatent"},"inputs":{"av_latent":["215",1]},"class_type":"LTXVSeparateAVLatent"},"203":{"_meta":{"title":"RandomNoise"},"inputs":{"noise_seed":45},"class_type":"RandomNoise"},"205":{"_meta":{"title":"VAE Decode (Tiled)"},"inputs":{"vae":["190",2],"overlap":64,"samples":["207",0],"tile_size":512,"temporal_size":4096,"temporal_overlap":8},"class_type":"VAEDecodeTiled"},"206":{"_meta":{"title":"LTXV Audio VAE Decode"},"inputs":{"samples":["207",1],"audio_vae":["181",0]},"class_type":"LTXVAudioVAEDecode"},"207":{"_meta":{"title":"LTXVSeparateAVLatent"},"inputs":{"av_latent":["216",1]},"class_type":"LTXVSeparateAVLatent"},"208":{"_meta":{"title":"LTXVConcatAVLatent"},"inputs":{"audio_latent":["186",0],"video_latent":["187",0]},"class_type":"LTXVConcatAVLatent"},"209":{"_meta":{"title":"Frame Count"},"inputs":{"value":121},"class_type":"PrimitiveInt"},"210":{"_meta":{"title":"Frame Rate (Int)"},"inputs":{"value":24},"class_type":"PrimitiveInt"},"211":{"_meta":{"title":"Frame Rate (Float)"},"inputs":{"value":24},"class_type":"PrimitiveFloat"},"212":{"_meta":{"title":"EmptyImage"},"inputs":{"color":0,"width":1280,"height":720,"batch_size":1},"class_type":"EmptyImage"},"213":{"_meta":{"title":"Get Image Size"},"inputs":{"image":["188",0]},"class_type":"GetImageSize"},"214":{"_meta":{"title":"Positive prompt"},"inputs":{"value":"A man in a black tuxedo stands motionless in a small, red-tiled bathroom, facing a mirror. The camera sits just behind his right shoulder, framing both his back and his solemn reflection. Suddenly, he opens his mouth and begins to sing opera in Italian: \"La donna è mobile, qual piuma al vento.\" Rich, resonant notes echo through the space. As his voice climbs in pitch, his brows lift, and his expression becomes more passionate, almost vulnerable. The overhead lighting casts a sharp glow on his face and tuxedo, reflecting in the glossy red tiles around him. The camera is static"},"class_type":"PrimitiveStringMultiline"},"215":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["203",0],"guider":["191",0],"sigmas":["193",0],"sampler":["192",0],"latent_image":["208",0]},"class_type":"SamplerCustomAdvanced"},"216":{"_meta":{"title":"SamplerCustomAdvanced"},"inputs":{"noise":["197",0],"guider":["196",0],"sigmas":["194",0],"sampler":["195",0],"latent_image":["198",0]},"class_type":"SamplerCustomAdvanced"}};
+
+// Input files
+const files = {};
+
+const fetch = require('node-fetch');
+
+async function runWorkflow(body){
+    const url = "https://comfy.icu/api/v1/workflows/"+body.workflow_id+"/runs"
+    const resp = await fetch(url, {
+      "headers": {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "authorization": "Bearer " + process.env.COMFYICU_API_KEY
+      },
+      "body": JSON.stringify(body),
+      "method": "POST"
+    });
+
+    return await resp.json()
+}
+
+async function main() {
+    const run = await runWorkflow({workflow_id, prompt, files})
+    console.log(run)
+}
+
+main()

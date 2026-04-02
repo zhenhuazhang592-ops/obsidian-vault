@@ -1,0 +1,167 @@
+{
+  "name": "公众号爆款写作",
+  "version": "1.0.0",
+  "description": "一个强大的AI写作助手系统，专为公众号内容创作设计。能够学习作者风格，适配人设，生成高质量文章。",
+  "author": "Article Skill Contributors",
+  "license": "MIT",
+  "tags": [
+    "写作",
+    "公众号",
+    "文章创作",
+    "AI写作",
+    "爆款文章",
+    "内容创作"
+  ],
+  "capabilities": [
+    "自动学习作者写作风格",
+    "生成爆款标题（4种类型）",
+    "提供文章结构模板（3种类型）",
+    "热点话题抓取与分析",
+    "AI文本去人工化处理",
+    "内容优化与质量检查",
+    "多风格适配（亲和力强/专业严谨/幽默风趣/极简干货）"
+  ],
+  "supported_styles": [
+    "亲和力强型",
+    "专业严谨型",
+    "幽默风趣型",
+    "极简干货型"
+  ],
+  "article_types": [
+    "工具介绍型",
+    "方法教程型",
+    "深度思考型"
+  ],
+  "commands": [
+    {
+      "command": "/热点",
+      "description": "抓取热点话题",
+      "usage": "/热点 [关键词]"
+    },
+    {
+      "command": "/标题生成",
+      "description": "生成爆款标题",
+      "usage": "/标题生成 [主题]"
+    },
+    {
+      "command": "/结构生成",
+      "description": "生成文章大纲",
+      "usage": "/结构生成 [类型] [主题]"
+    },
+    {
+      "command": "/内容优化",
+      "description": "优化语言风格",
+      "usage": "/内容优化 [文本]"
+    },
+    {
+      "command": "/金句生成",
+      "description": "生成易传播金句",
+      "usage": "/金句生成 [观点]"
+    },
+    {
+      "command": "/爆款检查",
+      "description": "检查爆款要素",
+      "usage": "/爆款检查 [文章]"
+    },
+    {
+      "command": "/话题推荐",
+      "description": "推荐写作话题",
+      "usage": "/话题推荐 [领域]"
+    },
+    {
+      "command": "/去AI化",
+      "description": "去除AI特征",
+      "usage": "/去AI化 [文本]"
+    }
+  ],
+  "setup": {
+    "required_files": [
+      "skills/作者配置.md"
+    ],
+    "optional_files": [
+      "examples/*.md"
+    ],
+    "setup_steps": [
+      "复制 skills/作者配置模板.md 为 skills/作者配置.md",
+      "填写作者的基本信息、人设标签、写作偏好",
+      "提供1-3篇代表文章供AI学习风格"
+    ]
+  },
+  "files": [
+    {
+      "name": "作者配置模板.md",
+      "type": "template",
+      "required": true,
+      "description": "作者配置模板，必须填写"
+    },
+    {
+      "name": "作者配置示例.md",
+      "type": "example",
+      "required": false,
+      "description": "作者配置填写示例"
+    },
+    {
+      "name": "公众号爆款写作.md",
+      "type": "methodology",
+      "required": true,
+      "description": "核心写作方法论"
+    },
+    {
+      "name": "深度认知写作.md",
+      "type": "methodology",
+      "required": false,
+      "description": "认知升级型内容写作框架"
+    },
+    {
+      "name": "文章创作工作流程.md",
+      "type": "workflow",
+      "required": true,
+      "description": "AI创作工作流程，必须遵循"
+    },
+    {
+      "name": "热点分析工具.md",
+      "type": "tool",
+      "required": true,
+      "description": "热点话题抓取与分析"
+    },
+    {
+      "name": "写作辅助工具.md",
+      "type": "tool",
+      "required": true,
+      "description": "实用工具与命令"
+    },
+    {
+      "name": "去AI化润色.md",
+      "type": "tool",
+      "required": true,
+      "description": "AI文本人工化处理"
+    },
+    {
+      "name": "快速参考.md",
+      "type": "reference",
+      "required": true,
+      "description": "快速查询卡片"
+    },
+    {
+      "name": "系统说明.md",
+      "type": "documentation",
+      "required": true,
+      "description": "系统架构与使用说明"
+    },
+    {
+      "name": "README.md",
+      "type": "documentation",
+      "required": true,
+      "description": "使用指南"
+    }
+  ],
+  "dependencies": {
+    "tools": [
+      "WebSearch"
+    ],
+    "min_version": "1.0.0"
+  },
+  "language": "zh-CN",
+  "platform": "Claude Code",
+  "category": "写作辅助"
+}
