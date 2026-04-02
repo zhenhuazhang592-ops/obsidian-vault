@@ -70,7 +70,7 @@ npx -y bun ${SKILL_DIR}/scripts/main.ts --prompt "一只可爱的猫" --image ou
 # Replicate (google/nano-banana-pro)
 npx -y bun ${SKILL_DIR}/scripts/main.ts --prompt "A cat" --image out.png --provider replicate
 
-# Doubao-Seedream-4.5 (豆包·即梦，火山引擎 ARK)
+# Doubao-Seedream-4.5 (豆包·即梦，doubao-seedream-4-5-251128，火山引擎 ARK)
 npx -y bun ${SKILL_DIR}/scripts/main.ts --prompt "A cat" --image out.png --provider doubao
 
 # Replicate with specific model
@@ -106,7 +106,7 @@ npx -y bun ${SKILL_DIR}/scripts/main.ts --prompt "A cat" --image out.png --provi
 | `OPENAI_IMAGE_MODEL` | OpenAI model override |
 | `GOOGLE_IMAGE_MODEL` | Google model override |
 | `DASHSCOPE_IMAGE_MODEL` | DashScope model override (default: z-image-turbo) |
-| `DOUBAO_IMAGE_MODEL` | Doubao model override (default: doubao-seedream-4.5) |
+| `DOUBAO_IMAGE_MODEL` | Doubao model override (default: doubao-seedream-4-5-251128) |
 | `REPLICATE_IMAGE_MODEL` | Replicate model override (default: google/nano-banana-pro) |
 | `OPENAI_BASE_URL` | Custom OpenAI endpoint |
 | `GOOGLE_BASE_URL` | Custom Google endpoint |
