@@ -94,6 +94,18 @@ output/<slug>/
 |------|------|------|
 | `scripts/smart-crop.ts` | 智能裁切（Sharp，8种尺寸） | ✅ Phase 1 |
 | `scripts/poster-compose.ts` | 海报合成（Sharp） | ✅ Phase 2 |
+| `scripts/batch-process.ts` | 批量处理（多SKU编排） | ✅ Phase 3 |
+| `scripts/incremental-add.ts` | 增量追加（追加新风格） | ✅ Phase 3 |
+
+## 品牌素材
+
+| 文件 | 内容 |
+|------|------|
+| `assets/logos/logo-h.svg` | 横向 Logo（漠玫绿底白字） |
+| `assets/logos/logo-v.svg` | 竖向 Logo |
+| `assets/logos/logo-icon.svg` | 图标 Logo |
+| `assets/watermarks/watermark-tile.svg` | 平铺水印 |
+| `assets/README.md` | 素材使用说明 |
 
 ## 参考文档
 
