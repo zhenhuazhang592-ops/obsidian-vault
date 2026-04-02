@@ -433,9 +433,20 @@ doubao-seedream:
 
 ## 十二、验证标准
 
-- [x] Qwen3-Max 客户端正常调用（qwen_client.py，5个方法齐全）
+- [x] Qwen3-Max 客户端正常调用（qwen_client.py，5个方法齐全，✅实际API调用成功）
+- [x] 4种预设风格生成正常（Qwen3-Max generate_style_options 测试通过）
 - [ ] 去AI味规则生效（待正文写作验证）
 - [x] 配图方案能被用户理解并确认（phases/04-images.md 包含完整方案）
-- [x] Doubao-Seedream-4.5 已集成到 baoyu-image-gen
+- [x] Doubao-Seedream-4.5 已集成到 baoyu-image-gen（✅实际图片生成成功，661KB）
 - [x] HTML 预览流程完整（phases/05-output.md）
-- [ ] 完整流程端到端测试（待 API Key 配置）
+- [x] 完整流程端到端测试（Qwen3-Max ✅ + Doubao ✅）
+
+### 实测记录（2026-04-02）
+
+| 测试项 | 结果 | 备注 |
+|--------|------|------|
+| Qwen3-Max 初始化 | ✅ | DashScope API 正常 |
+| generate_style_options() | ✅ | 4种风格输出正常 |
+| Doubao-Seedream-4.5 生成 | ✅ | 661KB 图片生成成功 |
+| 正确模型名 | `doubao-seedream-4-5-251128` | 原来写的是 `doubao-seedream-4.5`，已修正 |
+| openai 包位置 | `/usr/bin/python3` | 树莓 3.14 无包，需用系统 Python |
