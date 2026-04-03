@@ -4,35 +4,37 @@
     "type": "split",
     "children": [
       {
-        "id": "79e59517faf6eeaf",
+        "id": "1c79f1e93220bbcc",
         "type": "split",
         "children": [
           {
             "id": "ce191423e5901122",
             "type": "tabs",
-            "dimension": 27.24177071509648,
+            "dimension": 22.701475595913735,
             "children": [
               {
                 "id": "9a041f754c4bf58a",
                 "type": "leaf",
                 "state": {
-                  "type": "image",
+                  "type": "markdown",
                   "state": {
-                    "file": "写作知识库/01-资源库/2026-04-02/牛油果神仙吃法/06-封面图/cover-wx.png"
+                    "file": "AI工具箱/huage888/assets/libtv-参考图提示词.md",
+                    "mode": "source",
+                    "source": false
                   },
-                  "icon": "lucide-image",
-                  "title": "cover-wx"
+                  "icon": "lucide-file",
+                  "title": "libtv-参考图提示词"
                 }
               }
             ]
           },
           {
-            "id": "b49525ad122a21ef",
+            "id": "fa6bdc17c55c4282",
             "type": "tabs",
-            "dimension": 72.75822928490352,
+            "dimension": 77.29852440408627,
             "children": [
               {
-                "id": "6ff7484f0dab94ea",
+                "id": "74418c3acca3e698",
                 "type": "leaf",
                 "pinned": true,
                 "state": {
@@ -70,7 +72,7 @@
                   },
                   "pinned": true,
                   "icon": "terminal",
-                  "title": "终端：⠂ Claude Code"
+                  "title": "终端：⠐ Claude Code"
                 }
               }
             ]
@@ -241,54 +243,54 @@
       "terminal:Open terminal": false
     }
   },
-  "active": "6ff7484f0dab94ea",
+  "active": "74418c3acca3e698",
   "lastOpenFiles": [
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/06-蛇蝎种草.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/05-反派高光.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/04-眼神特写.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/03-全身危险.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/02-侧颜算计.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run/01-正面神秘.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing/06-产品特写.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing/05-并肩作战.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing/04-眼神特写.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing/03-全身飘逸.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing/02-侧面挣扎.png",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-run",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-guang",
-    "AI短视频创作/漠玫IP形象/闹海三角色/mo-bing",
-    "AI短视频创作/漠玫IP形象/闹海三角色",
-    "AI短视频创作/漠玫IP形象/角色外观卡-哪吒风格",
-    "AI短视频创作/漠玫IP形象/角色外观卡",
-    "test-output",
-    "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include/glibconfig.h",
-    "node_modules/@img/sharp-libvips-darwin-arm64/lib/glib-2.0/include",
-    "node_modules/@img/sharp-libvips-darwin-arm64/lib/libvips-cpp.8.17.3.dylib",
-    "node_modules/@img/sharp-libvips-darwin-arm64/README.md",
-    "node_modules/@img/sharp-darwin-arm64/README.md",
-    "node_modules/@img/colour/LICENSE.md",
-    "node_modules/@img/colour/README.md",
-    "node_modules/sharp/README.md",
-    "node_modules/@napi-rs/canvas-darwin-arm64/README.md",
-    "node_modules/@napi-rs/canvas/README.md",
-    "node_modules/ieee754/README.md",
-    "node_modules/base64-js/README.md",
-    "node_modules/util-deprecate/README.md",
-    "node_modules/util-deprecate/History.md",
-    "node_modules/string_decoder/README.md",
-    "node_modules/buffer/README.md",
-    "node_modules/buffer/AUTHORS.md",
-    "node_modules/readable-stream/README.md",
-    "node_modules/readable-stream/GOVERNANCE.md",
-    "node_modules/readable-stream/CONTRIBUTING.md",
-    "node_modules/inherits/README.md",
-    "node_modules/fs-constants/README.md",
-    "node_modules/bl/README.md",
-    "node_modules/bl/LICENSE.md",
-    "node_modules/mimic-response/readme.md",
-    "node_modules/wrappy/README.md",
-    "node_modules/punycode/README.md",
-    "node_modules/safer-buffer/Readme.md",
+    "docs/plans/2026-04-03-cyber-ink-ip-design.md",
+    "玫贵人IP",
+    "docs/plans/2026-04-03-meiguiren-implementation-plan.md",
+    "docs/plans/2026-04-03-meiguiren-ip-design.md",
+    "AI工具箱/huage888/scripts/__pycache__/_common.cpython-314.pyc",
+    "AI工具箱/huage888/scripts/__pycache__",
+    "AI工具箱/huage888/assets/libtv-参考图提示词.md",
+    "AI工具箱/huage888/assets/character-prompts.md",
+    "AI工具箱/huage888/assets/prop-prompts.md",
+    "AI工具箱/huage888/scripts/upload_file.py",
+    "AI工具箱/huage888/scripts/query_session.py",
+    "AI工具箱/huage888/scripts/download_results.py",
+    "AI工具箱/huage888/scripts/create_session.py",
+    "AI工具箱/huage888/scripts/change_project.py",
+    "AI工具箱/huage888/scripts/_common.py",
+    "AI工具箱/huage888/scripts",
+    "AI工具箱/huage888/skills/storyboard-skill.md",
+    "AI工具箱/huage888/skills/storyboard-review-skill.md",
+    "AI工具箱/huage888/skills/script-review-skill.md",
+    "AI工具箱/huage888/skills/prop-design-skill.md",
+    "AI工具箱/huage888/skills/libtv-huage-integration.md",
+    "AI工具箱/huage888/skills/director-skill.md",
+    "AI工具箱/huage888/skills/compliance-skill.md",
+    "AI工具箱/huage888/skills/art-review-skill.md",
+    "AI工具箱/huage888/skills/art-design-skill.md",
+    "AI工具箱/huage888/outputs/02-storyboard-script.md",
+    "AI工具箱/huage888/outputs/01-director-analysis.md",
+    "AI工具箱/huage888/config/visual-bible.md",
+    "AI工具箱/huage888/assets/scene-prompts.md",
+    "AI工具箱/huage888/assets/03-asset-registry.md",
+    "AI工具箱/huage888/agents/storyboard-artist.md",
+    "AI工具箱/huage888/agents/prop-designer.md",
+    "AI工具箱/huage888/agents/director.md",
+    "AI工具箱/huage888/agents/art-designer.md",
+    "AI工具箱/huage888/CLAUDE.md",
+    "output/avocado-hass-20260403/poster-v.png",
+    "output/avocado-hass-20260403/poster-ai-origin-v.png",
+    "output/avocado-hass-20260403/poster-ai-origin-h.png",
+    "output/avocado-hass-20260403/detail-copy.md",
+    "output/avocado-hass-20260403/poster-h.png",
+    "output/avocado-hass-20260403/main-ref.jpg",
+    "output/avocado-hass-20260403/crops/main-taobao-1:1.png",
+    "output/avocado-hass-20260403/crops/main-pdd-3:4.png",
+    "output/avocado-hass-20260403/crops/main-pdd-1:1.png",
+    "output/avocado-hass-20260403/crops/main-jd-1:1.png",
+    "output/avocado-hass-20260403/crops/main-douyin-3:4.png",
     "未命名.canvas"
   ]
 }
