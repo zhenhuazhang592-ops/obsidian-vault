@@ -196,7 +196,56 @@ python3 config/qwen_pipeline.py \
 
 ---
 
-## 六、自查清单
+## 七、Pipeline 委托模式
+
+当被 `scripts/run_episode_pipeline.py` 调用时，本 Agent 处于自动委托链的第二环。
+
+### 7.1 调用方式
+
+```bash
+python3 scripts/run_episode_pipeline.py \
+  --script docs/剧本.md \
+  --episode S01E01 \
+  --project 漠玫传
+```
+
+Pipeline 内部等价调用（Stage 2）：
+```bash
+python3 config/qwen_pipeline.py \
+  --agent storyboard \
+  --user "基于以下 outline JSON 生成分镜列表：\n[outline JSON 内容]" \
+  --output outputs/S01E01/S01E01-shots.md
+```
+
+### 7.2 输入约定（自动委托链关键）
+
+Pipeline Stage 2 会自动完成：
+1. 从 `outputs/S01E01/S01E01-outline.md` 提取 ` ```json ` 代码块
+2. 解析为 outline JSON，提取 characters / scenes / props / keyEvents / emotionalCurve
+3. 构建结构化 user prompt 注入上述信息
+4. 调用本 Agent
+
+因此，本 Agent **应假设 user prompt 已包含完整的 outline JSON**，无需再要求用户提供。
+
+### 7.3 输出约定
+
+1. **必须输出单个 ` ```json ` 代码块**（ShotList JSON），用于自动提取
+2. **不得省略 shots 数组中任何 shot 的必填字段**
+3. **` ```json ` 代码块外不得包含其他 JSON 内容**
+
+### 7.4 与 outline-agent 的数据契约
+
+| 来自 outline | 本 Agent 使用方式 |
+|------------|----------------|
+| `characters[].name` | 直接引用，禁止改写 |
+| `scenes[].name` | 直接引用，禁止改写 |
+| `props[].name` | 直接引用，禁止捏造 |
+| `keyEvents` | 作为 segment 分段依据 |
+| `emotionalCurve` | 作为 shot.emotion 分布依据 |
+
+---
+
+## 八、自查清单
 
 输出前逐项核对：
 

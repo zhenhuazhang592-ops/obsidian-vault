@@ -283,7 +283,50 @@ python3 scripts/validate_outline.py outputs/S01E01-outline.md
 
 ---
 
-## 七、自查清单（Pre-Output Checklist）
+## 七、Pipeline 委托模式
+
+当被 `scripts/run_episode_pipeline.py` 调用时，本 Agent 处于自动委托链的第一环。
+
+### 7.1 调用方式
+
+```bash
+python3 scripts/run_episode_pipeline.py \
+  --script docs/剧本.md \
+  --episode S01E01 \
+  --project 漠玫传
+```
+
+Pipeline 内部等价调用：
+```bash
+python3 config/qwen_pipeline.py \
+  --agent outline \
+  --user "项目：漠玫传，集数：S01E01\n\n以下是原始剧本内容，请生成结构化大纲：\n[剧本内容]" \
+  --output outputs/S01E01/S01E01-outline.md
+```
+
+### 7.2 输出约定（自动委托链关键）
+
+Pipeline 脚本会从输出文件中提取 JSON，再注入 storyboard-agent。
+因此：
+
+1. **必须输出单个 ` ```json ` 代码块**，作为自动提取的唯一来源
+2. **不得输出多个 JSON 块**（`validate_outline.py` 会报错）
+3. **JSON 内不得省略任何字段**，必须符合 `EpisodeOutline` 完整 Schema
+4. **characters / scenes / props 的 name 字段**须精确，用于后续一致性校验
+
+### 7.3 与 storyboard-agent 的数据契约
+
+| 本 Agent 输出字段 | → storyboard-agent 引用方式 |
+|-----------------|--------------------------|
+| `characters[].name` | `shot.characters[]` 精确匹配 |
+| `scenes[].name` | `shot.scene` 精确匹配 |
+| `props[].name` | `shot.props[]` 精确匹配 |
+| `keyEvents` | `segmentTitle` 参照 |
+| `emotionalCurve` | `shot.emotion` 分布参照 |
+
+---
+
+## 八、自查清单（Pre-Output Checklist）
 
 在提交 JSON 输出前，逐项核对：
 
