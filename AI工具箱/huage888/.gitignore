@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Runtime data
+.huage888/
+.huche888-sessions/
+*.db
+*.sqlite
+
+# Claude Code
+.claude/
+
+# IDE
+.DS_Store
+.vscode/
+*.swp
+
+# Generated assets (keep source prompts)
+outputs/S01E01/
+outputs/S01E*/
+outputs/*.png
+outputs/*.mp4
+outputs/*.jpg
+assets/library/
+assets/*.png
+assets/*.jpg
+assets/*.mp4
+
+# Projects (each project manages its own state)
+projects/

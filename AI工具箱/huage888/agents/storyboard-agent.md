@@ -258,3 +258,24 @@ Pipeline Stage 2 会自动完成：
 - [ ] 情绪曲线与 shot.emotion 一致
 - [ ] 同一角色连续镜头 appearance 一致
 - [ ] ShotList JSON 可被 `config/outline_schema.py` 的 ShotList Pydantic 模型解析
+
+---
+
+## 九、Sub-Agent 嵌套工具（可选用）
+
+当需要调用子 Agent 完成任务时，使用以下 JSON 格式工具：
+
+**调用 storyline（生成故事线上下文）：**
+```json
+{"tool_call": "storyline", "task": "基于以下剧本生成故事线...\n\n[剧本内容]"}
+```
+
+**调用 outline（生成大纲）：**
+```json
+{"tool_call": "outline", "task": "基于以下故事线生成大纲 JSON...\n\n[故事线内容]"}
+```
+
+**工具调用规则：**
+- 上述 JSON 格式仅供参考，实际由 `qwen_pipeline.py` + `sub_agent_pipeline.py` 解析执行
+- 在 `run_episode_pipeline.py --storyline` 模式下，storyboard-agent 可调用 storyline/outline 作为子 Agent
+- 单独调用 `qwen_pipeline.py --agent storyboard` 时请忽略本节工具定义

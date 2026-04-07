@@ -331,6 +331,106 @@ def call_qwen(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 对话历史集成调用
+# ─────────────────────────────────────────────────────────────────────────────
+
+_CONV_MODULE = None
+
+
+def _lazy_conversation_manager():
+    global _CONV_MODULE
+    if _CONV_MODULE is None:
+        sys.path.insert(0, str(SCRIPTS_DIR))
+        from conversation_manager import ConversationManager
+        _CONV_MODULE = ConversationManager
+    return _CONV_MODULE
+
+
+def call_qwen_with_conversation(
+    agent: str,
+    user: str,
+    session_id: str,
+    conv_mgr=None,
+    skill_name: str | None = None,
+    output_path: str | Path | None = None,
+    model: str = DEFAULT_MODEL,
+    temperature: float | None = None,
+    top_p: float | None = None,
+    max_tokens: int | None = None,
+    max_history: int = 10,
+    emitter=None,
+    task_id: str | None = None,
+    task_name: str | None = None,
+) -> str:
+    """
+    带对话历史注入的 qwen-max 调用。
+
+    调用流程：
+    1. 从 ConversationManager 读取历史 context（build_context）
+    2. 将历史 context 拼入 user prompt 前缀
+    3. 调用 call_qwen()
+    4. 自动 append(user + assistant) 到 ConversationManager
+
+    与 call_qwen() 的区别：
+    - 自动注入历史上下文（对话续接）
+    - 自动记录每轮对话（可追溯）
+    - 新 session_id 可继承父 session（Sub-Agent 嵌套时）
+
+    Args:
+        agent:          Agent 名称（用于 ConversationManager 路径）
+        user:           当前任务的用户 prompt
+        session_id:     对话 session ID（来自 ConversationManager.new_session）
+        conv_mgr:       ConversationManager 实例（None 时自动创建）
+        skill_name:     Skill 名称（传 None 则默认等于 agent）
+        output_path:    输出文件路径
+        max_history:    注入的历史条数上限（默认 10，设为 0 跳过历史注入）
+        emitter/task_id/task_name: 事件追踪参数（透传给 call_qwen）
+    """
+    ConversationManager = _lazy_conversation_manager()
+    if conv_mgr is None:
+        conv_mgr = ConversationManager()
+
+    system = build_system_prompt(agent, skill_name)
+
+    # 构建历史 context
+    history_ctx = ""
+    if max_history > 0:
+        history_ctx = conv_mgr.build_context(agent, session_id, max_entries=max_history)
+
+    # 完整 user prompt（含历史注入）
+    full_user = user
+    if history_ctx:
+        full_user = f"{history_ctx}\n\n<当前任务>\n{user}\n</当前任务>"
+
+    # 调用 API
+    tn = task_name or f"qwen-{agent}"
+    content = call_qwen(
+        system=system,
+        user=full_user,
+        model=model,
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
+        emitter=emitter,
+        task_id=task_id,
+        task_name=tn,
+    )
+
+    # 记录对话（API 调用后写入，非调用前）
+    conv_mgr.append(agent, session_id, "user", user)
+    if content:
+        conv_mgr.append(agent, session_id, "assistant", content)
+
+    # 写入输出文件
+    if output_path:
+        out_path = Path(output_path)
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        out_path.write_text(content, encoding="utf-8")
+
+    return content
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 测试模式
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -452,6 +552,30 @@ def parse_args():
         help="任务状态持久化目录（默认 .huage888/tasks）"
     )
 
+    # ── 对话历史参数 ─────────────────────────────────────────────────────
+    conv = parser.add_argument_group("对话历史参数")
+    conv.add_argument(
+        "--session-id",
+        default=None,
+        help="对话 session ID（开启后自动注入历史 context 并记录本次对话）"
+    )
+    conv.add_argument(
+        "--conv-dir",
+        default=None,
+        help="对话历史存储目录（默认 .huage888/conversations）"
+    )
+    conv.add_argument(
+        "--max-history",
+        type=int,
+        default=10,
+        help="注入的历史对话条数上限（默认 10，设为 0 禁用历史注入）"
+    )
+    conv.add_argument(
+        "--new-session",
+        action="store_true",
+        help="强制创建新 session（--session-id 已指定时）"
+    )
+
     return parser.parse_args()
 
 
@@ -503,6 +627,25 @@ def main():
                 },
             )
             print(f"\n📊 任务追踪已开启（ID: {task_id}）", file=sys.stderr)
+
+    # ── 对话历史初始化 ───────────────────────────────────────────────
+    conv_mgr = None
+    session_id = args.session_id
+    use_conversation = bool(session_id)
+
+    if use_conversation:
+        ConversationManager = _lazy_conversation_manager()
+        conv_dir = args.conv_dir or (str(BASE_DIR / ".huage888" / "conversations"))
+        conv_mgr = ConversationManager(base_dir=conv_dir)
+        if args.new_session or not session_id:
+            session_id = conv_mgr.new_session(args.agent or "adhoc")
+            print(f"\n💬 对话 session 已创建：{session_id}", file=sys.stderr)
+        else:
+            print(f"\n💬 对话 session：{session_id}", file=sys.stderr)
+        if args.max_history > 0:
+            hist_preview = conv_mgr.build_context(args.agent or "adhoc", session_id, args.max_history)
+            if hist_preview:
+                print(f"  历史注入：{min(args.max_history, len(hist_preview)//100)} 条历史", file=sys.stderr)
 
     # ── 构建 system prompt ────────────────────────────────────────────
 
@@ -594,17 +737,36 @@ def main():
     # ── 调用 API ─────────────────────────────────────────────────────
 
     print(f"\n🤖 调用 qwen-max（model={args.model}, temp={temperature}）", file=sys.stderr)
-    content = call_qwen(
-        system=system,
-        user=user,
-        model=args.model,
-        temperature=temperature,
-        top_p=top_p,
-        max_tokens=max_tokens,
-        emitter=emitter,
-        task_id=task_id,
-        task_name=task_name,
-    )
+
+    if use_conversation:
+        content = call_qwen_with_conversation(
+            agent=args.agent or "adhoc",
+            user=user,
+            session_id=session_id,
+            conv_mgr=conv_mgr,
+            skill_name=args.skill,
+            output_path=args.output,
+            model=args.model,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            max_history=args.max_history,
+            emitter=emitter,
+            task_id=task_id,
+            task_name=task_name,
+        )
+    else:
+        content = call_qwen(
+            system=system,
+            user=user,
+            model=args.model,
+            temperature=temperature,
+            top_p=top_p,
+            max_tokens=max_tokens,
+            emitter=emitter,
+            task_id=task_id,
+            task_name=task_name,
+        )
 
     # ── 追踪：发射 task_end ──────────────────────────────────────────
 
