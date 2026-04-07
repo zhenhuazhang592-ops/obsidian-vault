@@ -43,6 +43,9 @@ VALIDATE_OUTLINE = BASE_DIR / "scripts" / "validate_outline.py"
 CHECK_ASSET = BASE_DIR / "scripts" / "check_asset_consistency.py"
 GENERATE_SHOTS = BASE_DIR / "scripts" / "generate_shot_images.py"
 BATCH_PIPELINE = BASE_DIR / "scripts" / "batch_image_pipeline.py"
+STORYLINE_PIPELINE = BASE_DIR / "scripts" / "storyline_pipeline.py"
+ASSET_IMAGE_PIPELINE = BASE_DIR / "scripts" / "asset_image_pipeline.py"
+VIDEO_PIPELINE = BASE_DIR / "scripts" / "video_pipeline.py"
 
 
 # ── 辅助函数 ───────────────────────────────────────────────────────────────
@@ -118,6 +121,60 @@ def check_asset_consistency(path: Path) -> bool:
 
 # ── Stage 函数 ─────────────────────────────────────────────────────────────
 
+def stage0_storyline(
+    script_arg: str | None,
+    episode: str,
+    project: str,
+    output_dir: Path,
+    dry_run: bool,
+    task_db=None,
+    conv_mgr=None,
+) -> Path | None:
+    """Stage 0: storyline-agent 生成故事线"""
+    storyline_dir = BASE_DIR / ".huage888" / "storylines" / project / episode
+    storyline_dir.mkdir(parents=True, exist_ok=True)
+
+    # 读取剧本
+    if script_arg:
+        script_path = Path(script_arg)
+        if script_path.exists() and script_path.is_file():
+            script_content = script_path.read_text(encoding="utf-8")
+        else:
+            script_content = script_arg
+    else:
+        if dry_run:
+            script_content = "[剧本内容占位 - dry-run]"
+        else:
+            print("[ERROR] Stage 0 需要 --script 参数")
+            return None
+
+    print(f"\n{'[DRY] ' if dry_run else ''}→ Stage 0: storyline 生成")
+
+    if dry_run:
+        print(f"    [DRY] 剧本前80字：{script_content[:80]}...")
+        return storyline_dir / "storyline.json"
+
+    # 调用 storyline_pipeline
+    cmd = [
+        sys.executable,
+        str(STORYLINE_PIPELINE),
+        "--script", script_arg or script_content,
+        "--episode", episode,
+        "--project", project,
+        "--output-base", str(BASE_DIR),
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"    [FAIL] Stage 0 storyline 失败", file=sys.stderr)
+        print(f"    stderr: {result.stderr[:300]}", file=sys.stderr)
+        return None
+
+    storyline_path = storyline_dir / "storyline.json"
+    print(f"    [OK] storyline 完成 → {storyline_path.absolute().relative_to(BASE_DIR.absolute()) if storyline_path else None}")
+    return storyline_path
+
+
 def stage1_outline(
     script_arg: str | None,
     episode: str,
@@ -167,6 +224,41 @@ def stage1_outline(
         validate_outline(outline_path)
 
     return outline_path
+
+
+def stage1_5_asset_images(
+    outline_path: Path,
+    episode: str,
+    project: str,
+    output_dir: Path,
+    dry_run: bool,
+    task_db=None,
+) -> bool:
+    """Stage 1.5: 资产图 API 生成"""
+    print(f"\n{'[DRY] ' if dry_run else ''}→ Stage 1.5: 资产图生成")
+
+    if dry_run:
+        print(f"    [DRY] outline: {outline_path}")
+        return True
+
+    cmd = [
+        sys.executable,
+        str(ASSET_IMAGE_PIPELINE),
+        "--outline", str(outline_path),
+        "--episode", episode,
+        "--project", project,
+        "--output-dir", str(output_dir),
+        "--provider", "doubao",
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"    [FAIL] Stage 1.5 资产图失败", file=sys.stderr)
+        print(f"    stderr: {result.stderr[:300]}", file=sys.stderr)
+        return False
+
+    print(f"    [OK] Stage 1.5 完成")
+    return True
 
 
 def stage2_storyboard(
@@ -319,11 +411,41 @@ def stage4_p2(
     return True
 
 
+def stage5_video(
+    shots_path: Path,
+    episode: str,
+    output_dir: Path,
+    provider: str,
+    duration: int,
+    workers: int,
+    dry_run: bool,
+    task_db=None,
+) -> dict:
+    """Stage 5: 视频生成"""
+    print(f"\n{'[DRY] ' if dry_run else ''}→ Stage 5: 视频生成")
+
+    # 延迟导入避免循环依赖
+    sys.path.insert(0, str(SCRIPT_DIR))
+    from video_pipeline import stage5_video as _stage5_video
+
+    result = _stage5_video(
+        shots_path=shots_path,
+        episode=episode,
+        output_dir=output_dir,
+        provider=provider,
+        duration=duration,
+        workers=workers,
+        task_db=task_db,
+        dry_run=dry_run,
+    )
+    return result
+
+
 # ── 主函数 ─────────────────────────────────────────────────────────────────
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Multi-Agent 委托链编排：outline → storyboard → P1 → P2",
+        description="Multi-Agent 委托链编排：storyline → outline → asset_images → storyboard → P1 → P2 → video",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -375,18 +497,123 @@ def main():
         action="store_true",
         help="不调用 API，仅打印执行计划",
     )
+
+    # ── 新增阶段参数 ───────────────────────────────────────────────────────
+    stage = parser.add_argument_group("Pipeline 阶段控制")
+    stage.add_argument(
+        "--storyline",
+        action="store_true",
+        help="执行 Stage 0：故事线生成",
+    )
+    stage.add_argument(
+        "--run-asset-images",
+        action="store_true",
+        help="执行 Stage 1.5：资产图 API 生成（需 outline 完成）",
+    )
+    stage.add_argument(
+        "--skip-video",
+        action="store_true",
+        default=True,
+        help="跳过 Stage 5 视频生成（默认 True，需显式开启）",
+    )
+    stage.add_argument(
+        "--run-video",
+        action="store_true",
+        help="执行 Stage 5：视频生成",
+    )
+    stage.add_argument(
+        "--video-provider",
+        default="doubao",
+        choices=["doubao", "kling"],
+        help="视频生成提供商（默认 doubao）",
+    )
+    stage.add_argument(
+        "--video-duration",
+        type=int,
+        default=5,
+        help="视频时长（秒，默认 5）",
+    )
+    stage.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="视频批量并发数（默认 4）",
+    )
+    stage.add_argument(
+        "--session-id",
+        default=None,
+        help="对话 session ID（用于对话历史续接）",
+    )
+    stage.add_argument(
+        "--max-history",
+        type=int,
+        default=10,
+        help="对话历史注入条数上限（默认 10，设为 0 禁用）",
+    )
+
     args = parser.parse_args()
 
+    # ── 初始化 TaskDB 和 ConversationManager ─────────────────────────────────
+    task_db = None
+    conv_mgr = None
+    try:
+        sys.path.insert(0, str(SCRIPT_DIR))
+        from task_db import TaskDB
+        task_db = TaskDB()
+        project_id = task_db.upsert_project(name=args.project)
+        print(f"  📊 TaskDB 已连接（project_id: {project_id}）")
+    except Exception as e:
+        print(f"  [INFO] TaskDB 不可用: {e}")
+
+    try:
+        from conversation_manager import ConversationManager
+        conv_mgr = ConversationManager()
+        print(f"  💬 ConversationManager 已连接")
+    except Exception as e:
+        print(f"  [INFO] ConversationManager 不可用: {e}")
+
     output_dir = Path(args.output_dir)
+
+    def _rel(path: Path) -> str:
+        """安全获取相对路径（处理 dry-run 中的相对路径）"""
+        if path is None:
+            return None
+        try:
+            return str(path.relative_to(BASE_DIR))
+        except ValueError:
+            return str(path.resolve().relative_to(BASE_DIR.resolve()))
 
     print(f"{'='*60}")
     print(f"  Episode Pipeline · {args.episode} · {args.project}")
     print(f"  输出目录: {output_dir}")
-    print(f"  阶段: outline({'skip' if args.skip_outline else 'run'}) / "
+    print(f"  阶段: storyline({('run' if args.storyline else 'skip')}) / "
+          f"outline({'skip' if args.skip_outline else 'run'}) / "
+          f"asset_images({'run' if args.run_asset_images else 'skip'}) / "
           f"storyboard({'skip' if args.skip_storyboard else 'run'}) / "
           f"P1({'run' if args.run_p1 else 'skip'}) / "
-          f"P2({'run' if args.run_p2 else 'skip'})")
+          f"P2({'run' if args.run_p2 else 'skip'}) / "
+          f"video({'run' if args.run_video and not args.skip_video else 'skip'})")
     print(f"{'='*60}")
+
+    # ── Stage 0: storyline ──────────────────────────────────────────────
+    storyline_path: Path | None = None
+
+    if args.storyline:
+        print(f"\n[Stage 0] storyline-agent")
+        storyline_path = stage0_storyline(
+            script_arg=args.script,
+            episode=args.episode,
+            project=args.project,
+            output_dir=output_dir,
+            dry_run=args.dry_run,
+            task_db=task_db,
+            conv_mgr=conv_mgr,
+        )
+        if storyline_path is None and not args.dry_run:
+            print("[ERROR] Stage 0 失败，停止执行")
+            sys.exit(1)
+    else:
+        print(f"\n[Stage 0] SKIP（需 --storyline 显式开启）")
 
     # ── Stage 1: outline ────────────────────────────────────────────────
     outline_path: Path | None = None
@@ -413,6 +640,21 @@ def main():
 
     if outline_path is None:
         outline_path = output_dir / args.episode / f"{args.episode}-outline.md"
+
+    # ── Stage 1.5: asset_images ───────────────────────────────────────
+    asset_ok = True
+    if args.run_asset_images and outline_path and outline_path.exists():
+        print(f"\n[Stage 1.5] 资产图生成")
+        asset_ok = stage1_5_asset_images(
+            outline_path=outline_path,
+            episode=args.episode,
+            project=args.project,
+            output_dir=output_dir,
+            dry_run=args.dry_run,
+            task_db=task_db,
+        )
+    else:
+        print(f"\n[Stage 1.5] SKIP（需 --run-asset-images 且 outline 存在）")
 
     # ── Stage 2: storyboard ────────────────────────────────────────────
     shots_path: Path | None = None
@@ -462,18 +704,45 @@ def main():
             dry_run=args.dry_run,
         )
 
+    # ── Stage 5: video ──────────────────────────────────────────────────
+    video_ok = True
+    video_result = {}
+    if args.run_video and not args.skip_video and shots_path and shots_path.exists():
+        video_result = stage5_video(
+            shots_path=shots_path,
+            episode=args.episode,
+            output_dir=output_dir,
+            provider=args.video_provider,
+            duration=args.video_duration,
+            workers=args.workers,
+            dry_run=args.dry_run,
+            task_db=task_db,
+        )
+        video_ok = video_result.get("failed", 1) == 0
+    elif args.run_video:
+        print(f"\n[Stage 5] SKIP（需 shots 文件存在）")
+    else:
+        print(f"\n[Stage 5] SKIP（默认关闭，需 --run-video 开启）")
+
     # ── 汇总 ────────────────────────────────────────────────────────────
     summary = {
         "episode": args.episode,
         "project": args.project,
         "generated_at": datetime.now().isoformat(),
         "stages": {
+            "storyline": {
+                "path": _rel(storyline_path),
+                "status": "success" if storyline_path else ("skipped" if not args.storyline else "failed"),
+            },
             "outline": {
-                "path": str(outline_path.resolve().relative_to(BASE_DIR.resolve())) if outline_path else None,
+                "path": _rel(outline_path),
                 "status": "success" if outline_path else "skipped",
             },
+            "asset_images": {
+                "status": "success" if asset_ok else "failed",
+            },
             "storyboard": {
-                "path": str(shots_path.resolve().relative_to(BASE_DIR.resolve())) if shots_path else None,
+                "path": _rel(shots_path),
                 "status": "success" if shots_path else "skipped",
             },
             "p1": {
@@ -481,6 +750,11 @@ def main():
             },
             "p2": {
                 "status": "success" if p2_ok else "failed",
+            },
+            "video": {
+                "status": "success" if video_ok else "failed",
+                "generated": video_result.get("generated", 0),
+                "failed": video_result.get("failed", 0),
             },
         },
     }
@@ -495,11 +769,19 @@ def main():
     print(f"\n{'='*60}")
     print(f"  Pipeline 完成")
     print(f"  汇总: {summary_path.resolve().relative_to(BASE_DIR.resolve())}")
-    print(f"  outline: {summary['stages']['outline']['status']}")
-    print(f"  storyboard: {summary['stages']['storyboard']['status']}")
-    print(f"  P1: {summary['stages']['p1']['status']}")
-    print(f"  P2: {summary['stages']['p2']['status']}")
+    print(f"  storyline:   {summary['stages']['storyline']['status']}")
+    print(f"  outline:     {summary['stages']['outline']['status']}")
+    print(f"  asset_images:{summary['stages']['asset_images']['status']}")
+    print(f"  storyboard:  {summary['stages']['storyboard']['status']}")
+    print(f"  P1:          {summary['stages']['p1']['status']}")
+    print(f"  P2:          {summary['stages']['p2']['status']}")
+    print(f"  video:       {summary['stages']['video']['status']}"
+          f" ({video_result.get('generated', 0)} 个)")
     print(f"{'='*60}")
+
+    # 关闭 TaskDB
+    if task_db:
+        task_db.close()
 
     # 检查失败
     failed = [k for k, v in summary["stages"].items() if v.get("status") == "failed"]
