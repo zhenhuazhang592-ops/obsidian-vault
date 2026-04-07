@@ -415,6 +415,12 @@ def parse_args():
                         help="最大输出 token 数")
     parser.add_argument("--output", "-o",
                         help="输出文件路径（直接写入，不打印到 stdout）")
+    parser.add_argument(
+        "--asset-library",
+        action="store_true",
+        default=False,
+        help="自动加载 assets/library/ 的 manifest，拼入 system prompt 资产引用"
+    )
     parser.add_argument("--asset-output",
                         dest="asset_output", default=None,
                         help="将 outline JSON 中的 characters/scenes/props 提取写入指定文件")
@@ -519,6 +525,37 @@ def main():
     else:
         print("错误：请提供 --agent 或 --system", file=sys.stderr)
         sys.exit(1)
+
+    # ── 资产库注入（--asset-library）──────────────────────────────
+    if args.asset_library and args.agent and args.agent != "outline":
+        try:
+            sys.path.insert(0, str(BASE_DIR / "scripts"))
+            from asset_library import AssetLibrary
+
+            lib = AssetLibrary()
+            # 从 user 内容中推断项目名
+            project_hint = ""
+            user_content = args.user or ""
+            for kw in ["漠玫传", "漠玫", "断桥", "漠玫IP"]:
+                if kw in user_content:
+                    project_hint = "漠玫传"
+                    break
+
+            if project_hint:
+                assets = lib.list_by_project(project_hint)
+                lines = ["\n\n## 可用资产（来自 assets/library/）"]
+                for atype, names in assets.items():
+                    if names:
+                        lines.append(f"### {atype}:")
+                        for n in names:
+                            refs = lib.resolve(n, atype.rstrip("s"))
+                            lines.append(f"- {n}: {refs}")
+                if len(lines) > 1:
+                    asset_context = "\n".join(lines)
+                    system = system + asset_context
+                    print(f"\n[Asset Library] 发现 {sum(1 for a in assets.values() for _ in a)} 个资产", file=sys.stderr)
+        except Exception as e:
+            print(f"\n[WARN] 资产库加载失败: {e}", file=sys.stderr)
 
     # ── 构建 user prompt ──────────────────────────────────────────────
 
