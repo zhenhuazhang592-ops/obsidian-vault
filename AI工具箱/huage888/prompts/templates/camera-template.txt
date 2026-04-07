@@ -1,0 +1,15 @@
+# 运镜 Prompt 库 — 运镜方式 → 视频 Prompt 映射
+# 适用：分镜脚本中的运镜描述转 Doubao/Kling prompt
+
+CAMERA_{{camera_type}}:
+{{camera_description}}
+
+# 示例值：
+# camera_type=推镜头 → 镜头缓缓推向{{target}}，{{subject}}保持{{action}}
+# camera_type=拉镜头 → 镜头缓缓拉远，{{subject}}从{{from}}变为{{to}}
+# camera_type=横移   → 镜头平移，{{subject}}从左至右{{action}}
+# camera_type=摇镜头 → 镜头围绕{{subject}}旋转，{{subject}}保持{{action}}
+# camera_type=升降   → 镜头从低处升起，{{subject}}逐渐进入画面
+# camera_type=跟拍   → 镜头跟随{{subject}}移动，视角同步
+# camera_type=甩镜头 → 镜头快速甩至{{target}}，动感转场
+# camera_type=固定   → 镜头固定，{{subject}}进行{{action}}

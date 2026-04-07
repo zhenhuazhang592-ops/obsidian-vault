@@ -1,0 +1,8 @@
+# 完整视频 Prompt — 赛博墨韵风格
+# 适用：直接发给视频模型的最终 prompt
+
+{{main_subject}}在{{scene}}中{{core_action}}，
+{{detail_description}}
+{{background_description}}
+光影：{{light_color}}，{{light_effect}}
+氛围：{{mood}}，{{style}}

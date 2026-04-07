@@ -1,0 +1,22 @@
+# 光影 Prompt 库
+# 适用：视频 Prompt 中的光影描述
+
+# 光源类型
+LIGHT_SOURCE_{{light_type}}:
+{{light_description}}
+
+# 示例值：
+# light_type=自然月光 → 月光从{{direction}}洒下，光线{{intensity}}
+# light_type=霓虹光   → 青色/蓝色霓虹光，光影流动
+# light_type=轮廓光   → 主体轮廓发出{{color}}光芒，{{effect}}
+# light_type=粒子光   → 数据粒子漂浮，发光粒子飘落
+# light_type=混合光   → {{light_a}} + {{light_b}} 混合，{{effect}}
+
+# 色温关键词
+TEMP_{{temperature}}:
+{{temp_keywords}}
+
+# 示例值：
+# temperature=冷调 → 青蓝色，冷调，神秘，禁欲
+# temperature=暖调 → 金黄色，暖光，柔和，舒适
+# temperature=中性 → 自然光，平衡，真实

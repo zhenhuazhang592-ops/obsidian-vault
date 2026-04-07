@@ -1,0 +1,11 @@
+# 角色动作视频模板 — 漠玫 IP
+# 适用：分镜脚本中的角色动作镜头
+
+{{character}} · {{scene}} · {{action}}
+
+▸ 主体：{{character_id}} 在 {{scene_id}} 中 {{action}}
+{{character_detail}}
+▸ 服装：{{clothing}}
+▸ 光效：{{lighting}}
+▸ 表情：{{expression}}
+▸ 画风：超写实，电影级质感，8K，景深效果
