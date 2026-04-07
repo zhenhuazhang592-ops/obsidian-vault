@@ -67,6 +67,7 @@ def main():
     print(f"   情绪曲线: {outline.emotionalCurve}")
 
     if write_mode:
+        json_content = json.dumps(outline.model_dump(), ensure_ascii=False, indent=2)
         output = f"""---
 episodeIndex: {outline.episodeIndex}
 title: {outline.title}
@@ -79,7 +80,9 @@ propsCount: {len(outline.props)}
 
 # 大纲
 
-{json.dumps(outline.model_dump(), ensure_ascii=False, indent=2)}
+```json
+{json_content}
+```
 """
         output_path = file_path
         output_path.write_text(output, encoding="utf-8")
