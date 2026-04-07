@@ -106,20 +106,19 @@ def build_prop_prompt(prop: dict, template: str) -> str:
 
 def call_qwen_max(prompt: str, system: str = "") -> str:
     """调用 qwen-max 生成内容"""
+    import os
+    import urllib.request
+    import urllib.error
+
     api_key = Path.home() / ".config" / "huage888" / "api_key"
     if api_key.exists():
-        import os
         os.environ.setdefault("QWEN_API_KEY", api_key.read_text().strip())
 
-    import os
     api_key_val = os.environ.get("QWEN_API_KEY", "")
     if not api_key_val:
         raise RuntimeError("请设置 QWEN_API_KEY 环境变量")
 
     base_url = os.environ.get("QWEN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
-
-    import urllib.request
-    import urllib.error
 
     headers = {
         "Authorization": f"Bearer {api_key_val}",
