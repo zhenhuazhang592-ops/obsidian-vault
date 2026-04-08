@@ -28,6 +28,7 @@
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -38,6 +39,19 @@ from pathlib import Path
 
 SCRIPT_DIR = Path(__file__).parent
 BASE_DIR = SCRIPT_DIR.parent
+
+# ── .env 自动加载（优先级：环境变量 > .env 文件）───────────────────
+_env_path = BASE_DIR / ".env"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                _k = _k.strip()
+                _v = _v.strip()
+                if _k and os.environ.get(_k) is None:
+                    os.environ[_k] = _v
 QWEN_PIPELINE = BASE_DIR / "config" / "qwen_pipeline.py"
 VALIDATE_OUTLINE = BASE_DIR / "scripts" / "validate_outline.py"
 CHECK_ASSET = BASE_DIR / "scripts" / "check_asset_consistency.py"
@@ -66,6 +80,8 @@ def call_qwen(
     output_path: Path,
     asset_library: bool = False,
     dry_run: bool = False,
+    session_id: str | None = None,
+    max_history: int = 10,
 ) -> subprocess.CompletedProcess | None:
     """调用 qwen_pipeline.py --agent"""
     cmd = [
@@ -77,9 +93,14 @@ def call_qwen(
     ]
     if asset_library:
         cmd.append("--asset-library")
+    if session_id:
+        cmd += ["--session-id", session_id]
+        cmd += ["--max-history", str(max_history)]
 
     print(f"\n{'[DRY] ' if dry_run else ''}→ qwen_pipeline --agent {agent}")
     print(f"    输出: {output_path.resolve().relative_to(BASE_DIR.resolve())}")
+    if session_id:
+        print(f"    session: {session_id} (max_history={max_history})")
 
     if dry_run:
         print(f"    [DRY] prompt 前80字: {user[:80]}...")
@@ -96,27 +117,148 @@ def call_qwen(
 
 
 def validate_outline(path: Path) -> bool:
-    """调用 validate_outline.py 校验大纲"""
+    """调用 validate_outline.py 校验大纲，FAIL 直接阻断执行"""
     cmd = [sys.executable, str(VALIDATE_OUTLINE), str(path)]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"    [WARN] outline 校验未通过（非阻断）")
+        print(f"    [FAIL] outline 校验未通过 → 阻断执行")
         print(f"    {result.stdout[:300]}", file=sys.stderr)
-        return False
+        sys.exit(1)
     print(f"    [OK] outline 校验通过")
     return True
 
 
 def check_asset_consistency(path: Path) -> bool:
-    """调用 check_asset_consistency.py 校验分镜"""
+    """调用 check_asset_consistency.py 校验分镜，FAIL 直接阻断执行"""
     cmd = [sys.executable, str(CHECK_ASSET), str(path)]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"    [WARN] 分镜资产一致性校验未通过（非阻断）")
+        print(f"    [FAIL] 分镜资产一致性校验未通过 → 阻断执行")
         print(f"    {result.stdout[:300]}", file=sys.stderr)
-        return False
+        sys.exit(1)
     print(f"    [OK] 分镜资产一致性校验通过")
     return True
+
+
+# ── AI 审核函数（Toonflow Director Agent 对标）────────────────────────────────
+
+def run_review(
+    review_agent: str,
+    content_path: Path,
+    dry_run: bool = False,
+    max_retries: int = 3,
+) -> bool:
+    """
+    调用 AI 审核 Agent（script-review / art-review / storyboard-review），
+    参考 Toonflow outlineScript-director 审核流程。
+
+    流程：
+      1. 读取待审核内容（outline / storyboard 文件）
+      2. 调用 qwen_pipeline --agent {review_agent}
+      3. 解析输出：PASS → 继续；FAIL → 输出问题清单 + 询问是否重写
+      4. 最多重试 max_retries 次
+
+    Returns:
+        True = PASS（审核通过）
+        False = FAIL 但已达重试上限，或用户选择跳过
+    """
+    agent_display = {
+        "script-review": "讲戏本审核",
+        "art-review": "资产审核",
+        "storyboard-review": "分镜脚本审核",
+    }
+    display_name = agent_display.get(review_agent, review_agent)
+
+    if not content_path.exists():
+        print(f"    [WARN] 审核文件不存在：{content_path}，跳过审核")
+        return True
+
+    content = content_path.read_text(encoding="utf-8")
+    # 截断过长内容（审核 prompt 有 max_tokens 上限）
+    max_chars = 6000
+    if len(content) > max_chars:
+        content = content[:max_chars] + f"\n\n[... 内容截断，原始文件共 {len(content)} 字 ...]"
+
+    review_user = (
+        f"请严格审核以下内容，对照审核标准给出 PASS 或 FAIL：\n\n"
+        f"## 待审核内容\n\n{content}\n\n"
+        f"## 审核要求\n\n"
+        f"严格按照 agents/{review_agent}.md 中的审核标准逐项检查，"
+        f"输出格式：\n"
+        f"  ## 审核结果：PASS 或 FAIL\n"
+        f"  ## 问题清单（如有 FAIL）\n"
+        f"  ## 通过项目\n"
+    )
+
+    for attempt in range(1, max_retries + 1):
+        print(f"    ── {display_name} [尝试 {attempt}/{max_retries}] ──")
+
+        if dry_run:
+            print(f"    [DRY] 跳过审核")
+            return True
+
+        # 调用本地 call_qwen（封装了 qwen_pipeline.py CLI）
+        # 审核结果直接打印到 stdout，不写文件
+        result = call_qwen(
+            agent=review_agent,
+            user=review_user,
+            output_path=Path("/dev/null"),  # 审核结果不落盘，统一打印
+            dry_run=dry_run,
+        )
+
+        if result is None:
+            print(f"    [WARN] 审核调用失败，跳过")
+            return False
+
+        # 解析审核结果（subprocess.CompletedProcess.stdout）
+        output = result.stdout or ""
+
+        # 判断 PASS / FAIL
+        is_pass = "审核结果：PASS" in output or "审核结果: PASS" in output
+        is_fail = "审核结果：FAIL" in output or "审核结果: FAIL" in output
+
+        if is_pass:
+            print(f"    ✅ {display_name} → PASS")
+            # 打印通过项目摘要
+            if "通过项目" in output:
+                lines = output.splitlines()
+                in_pass = False
+                for line in lines:
+                    if "通过项目" in line:
+                        in_pass = True
+                        continue
+                    if in_pass and line.strip().startswith("##"):
+                        break
+                    if in_pass and line.strip():
+                        print(f"       {line.strip()}")
+            return True
+
+        if is_fail:
+            print(f"    ❌ {display_name} → FAIL")
+            # 打印问题清单
+            print(f"    ── 问题清单 ──")
+            lines = output.splitlines()
+            in_problems = False
+            for line in lines:
+                if "问题清单" in line:
+                    in_problems = True
+                    continue
+                if in_problems and line.strip().startswith("##"):
+                    break
+                if in_problems and line.strip():
+                    print(f"       {line.strip()}")
+            print()
+            if attempt < max_retries:
+                print(f"    ↺ 审核失败，")
+            continue
+
+        # 无法解析结果
+        print(f"    [WARN] 无法解析审核结果，视为 FAIL")
+        if attempt < max_retries:
+            print(f"    ↺ 重新审核 [尝试 {attempt + 1}/{max_retries}]")
+
+    print(f"    ⚠️  审核已达重试上限（{max_retries}），继续执行（建议手动检查）")
+    return False
 
 
 # ── Stage 函数 ─────────────────────────────────────────────────────────────
@@ -182,32 +324,47 @@ def stage1_outline(
     output_dir: Path,
     asset_library: bool,
     dry_run: bool,
+    session_id: str | None = None,
+    max_history: int = 10,
+    storyline_path: Path | None = None,
 ) -> Path | None:
-    """Stage 1: outline-agent 生成大纲"""
+    """Stage 1: outline-agent 生成大纲
+
+    若 storyline_path 存在（Stage 0 产出），优先使用其作为输入；
+    否则回退到 script_arg（原始剧本）。
+    """
     outline_dir = output_dir / episode
     outline_dir.mkdir(parents=True, exist_ok=True)
     outline_path = outline_dir / f"{episode}-outline.md"
 
-    # 读取剧本内容
-    if script_arg:
+    # ── Stage 0→1 数据流：优先使用 storyling.json ───────────────────────
+    if storyline_path and storyline_path.exists():
+        print(f"    [INFO] Stage 0→1：使用 storyline.json → {storyline_path.name}")
+        script_content = storyline_path.read_text(encoding="utf-8")
+        user_prompt = (
+            f"项目：{project}，集数：{episode}\n"
+            f"（以下为 Stage 0 生成的 storyline.json，请基于此生成结构化大纲）\n\n"
+            f"{script_content}"
+        )
+    elif script_arg:
+        # 回退：使用原始剧本文件或文本
         script_path = Path(script_arg)
         if script_path.exists() and script_path.is_file():
             script_content = script_path.read_text(encoding="utf-8")
         else:
             script_content = script_arg  # 视作直接传入的剧本文本
+        user_prompt = (
+            f"项目：{project}，集数：{episode}\n\n"
+            f"以下是原始剧本内容，请生成结构化大纲：\n\n"
+            f"{script_content}"
+        )
     else:
         if dry_run:
             script_content = "[剧本内容占位 - dry-run 模式]"
+            user_prompt = f"项目：{project}，集数：{episode}\n\n{script_content}"
         else:
-            print("[ERROR] 请提供 --script 参数（剧本文件路径）")
+            print("[ERROR] 请提供 --script 参数（剧本文件路径）或 --storyline 启用 Stage 0")
             return None
-
-    # 追加任务说明
-    user_prompt = (
-        f"项目：{project}，集数：{episode}\n\n"
-        f"以下是原始剧本内容，请生成结构化大纲：\n\n"
-        f"{script_content}"
-    )
 
     result = call_qwen(
         agent="outline",
@@ -215,6 +372,8 @@ def stage1_outline(
         output_path=outline_path,
         asset_library=asset_library,
         dry_run=dry_run,
+        session_id=session_id,
+        max_history=max_history,
     )
     if result is None and not dry_run:
         return None
@@ -268,6 +427,8 @@ def stage2_storyboard(
     output_dir: Path,
     asset_library: bool,
     dry_run: bool,
+    session_id: str | None = None,
+    max_history: int = 10,
 ) -> Path | None:
     """Stage 2: storyboard-agent 生成分镜"""
     # 读取 outline JSON 并提取关键信息
@@ -326,6 +487,8 @@ def stage2_storyboard(
         output_path=shots_path,
         asset_library=asset_library,
         dry_run=dry_run,
+        session_id=session_id,
+        max_history=max_history,
     )
     if result is None and not dry_run:
         return None
@@ -343,9 +506,12 @@ def stage3_p1(
     episode: str,
     output_dir: Path,
     dry_run: bool,
+    optimize_prompts: bool = False,
 ) -> bool:
     """Stage 3: P1 — 逐 Shot 图生图"""
     print(f"\n{'[DRY] ' if dry_run else ''}→ Stage 3: P1 逐 Shot 图生图")
+    if optimize_prompts:
+        print(f"    [OPT] 提示词优化层已开启（T2I七维度）")
 
     shots_images_dir = output_dir / episode / "shots" / "images"
     shots_images_dir.mkdir(parents=True, exist_ok=True)
@@ -359,6 +525,8 @@ def stage3_p1(
         "--provider", "doubao",
         "--model", "doubao-seedream-4.5",
     ]
+    if optimize_prompts:
+        cmd.append("--optimize")
 
     if dry_run:
         print(f"    [DRY] {' '.join(cmd)}")
@@ -395,7 +563,7 @@ def stage4_p2(
         "--cols", "3",
         "--output-dir", str(grid_dir),
         "--provider", "doubao",
-        "--model", "nanobanana",
+        "--model", "doubao-seedream-5-0-260128",
     ]
 
     if dry_run:
@@ -420,9 +588,15 @@ def stage5_video(
     workers: int,
     dry_run: bool,
     task_db=None,
+    img1_dir: Path | None = None,
+    optimize_prompts: bool = False,
 ) -> dict:
-    """Stage 5: 视频生成"""
+    """Stage 5: 视频生成（支持 P1 首帧参考图 + 提示词优化）"""
     print(f"\n{'[DRY] ' if dry_run else ''}→ Stage 5: 视频生成")
+    if optimize_prompts:
+        print(f"    [OPT] 提示词优化层已开启（视频prompt增强）")
+    if img1_dir and img1_dir.exists():
+        print(f"    [INFO] 使用 P1 首帧参考图：{img1_dir}")
 
     # 延迟导入避免循环依赖
     sys.path.insert(0, str(SCRIPT_DIR))
@@ -437,6 +611,8 @@ def stage5_video(
         workers=workers,
         task_db=task_db,
         dry_run=dry_run,
+        img1_dir=img1_dir,
+        optimize_prompts=optimize_prompts,
     )
     return result
 
@@ -478,6 +654,11 @@ def main():
         help="跳过分镜阶段（使用已有 shots 文件）",
     )
     parser.add_argument(
+        "--skip-review",
+        action="store_true",
+        help="跳过 AI 审核阶段（script-review / storyboard-review）",
+    )
+    parser.add_argument(
         "--run-p1",
         action="store_true",
         help="执行 P1 逐 Shot 图生图",
@@ -513,13 +694,19 @@ def main():
     stage.add_argument(
         "--skip-video",
         action="store_true",
-        default=True,
-        help="跳过 Stage 5 视频生成（默认 True，需显式开启）",
+        default=False,
+        help="跳过 Stage 5 视频生成（默认 False，即默认开启）",
     )
     stage.add_argument(
         "--run-video",
         action="store_true",
-        help="执行 Stage 5：视频生成",
+        help="执行 Stage 5：视频生成（默认开启，可用 --skip-video 跳过）",
+    )
+    stage.add_argument(
+        "--optimize-prompts",
+        action="store_true",
+        default=bool(os.environ.get("HUAGE888_OPTIMIZE", "")),
+        help="开启提示词优化层（T2I七维度 + 视频prompt增强）",
     )
     stage.add_argument(
         "--video-provider",
@@ -550,8 +737,25 @@ def main():
         default=10,
         help="对话历史注入条数上限（默认 10，设为 0 禁用）",
     )
+    parser.add_argument(
+        "--report-level",
+        default="stage",
+        choices=["stage", "shot"],
+        help="报告颗粒度：stage（默认，日常用）/ shot（精查用）",
+    )
 
     args = parser.parse_args()
+
+    # ── 初始化 ReportLogger ───────────────────────────────────────────────
+    report_logger = None
+    try:
+        sys.path.insert(0, str(SCRIPT_DIR))
+        from report_logger import ReportLogger
+        report_logger = ReportLogger(project=args.project, episode=args.episode)
+        report_logger.log_pipeline_start(report_level=args.report_level)
+        print(f"  📝 ReportLogger 已连接")
+    except Exception as e:
+        print(f"  [INFO] ReportLogger 不可用: {e}")
 
     # ── 初始化 TaskDB 和 ConversationManager ─────────────────────────────────
     task_db = None
@@ -588,11 +792,13 @@ def main():
     print(f"  输出目录: {output_dir}")
     print(f"  阶段: storyline({('run' if args.storyline else 'skip')}) / "
           f"outline({'skip' if args.skip_outline else 'run'}) / "
+          f"review1({'skip' if args.skip_review else 'run'}) / "
           f"asset_images({'run' if args.run_asset_images else 'skip'}) / "
           f"storyboard({'skip' if args.skip_storyboard else 'run'}) / "
+          f"review2({'skip' if args.skip_review else 'run'}) / "
           f"P1({'run' if args.run_p1 else 'skip'}) / "
           f"P2({'run' if args.run_p2 else 'skip'}) / "
-          f"video({'run' if args.run_video and not args.skip_video else 'skip'})")
+          f"video({'run' if not args.skip_video else 'skip'})")
     print(f"{'='*60}")
 
     # ── Stage 0: storyline ──────────────────────────────────────────────
@@ -612,6 +818,14 @@ def main():
         if storyline_path is None and not args.dry_run:
             print("[ERROR] Stage 0 失败，停止执行")
             sys.exit(1)
+
+        # ── ReportLogger 埋点 ─────────────────────────────────────────
+        if report_logger:
+            report_logger.log_stage_end(
+                stage=0, name="storyline",
+                status="success" if storyline_path else "failed",
+                output_file=_rel(storyline_path) if storyline_path else "",
+            )
     else:
         print(f"\n[Stage 0] SKIP（需 --storyline 显式开启）")
 
@@ -627,10 +841,25 @@ def main():
             output_dir=output_dir,
             asset_library=args.asset_library,
             dry_run=args.dry_run,
+            session_id=args.session_id,
+            max_history=args.max_history,
+            storyline_path=storyline_path,
         )
         if outline_path is None and not args.dry_run:
             print("[ERROR] Stage 1 失败，停止执行")
             sys.exit(1)
+
+        # ── Stage 1 审核（Toonflow Director Agent 对标）──────────────
+        if outline_path and outline_path.exists() and not args.dry_run and not args.skip_review:
+            print(f"\n[Review-1] script-review — 讲戏本质量审核")
+            review_pass = run_review(
+                review_agent="script-review",
+                content_path=outline_path,
+                dry_run=args.dry_run,
+                max_retries=3,
+            )
+            if not review_pass:
+                print(f"    [WARN] 讲戏本审核未通过，继续执行（建议手动修复）")
     else:
         outline_path = output_dir / args.episode / f"{args.episode}-outline.md"
         if not outline_path.exists() and not args.dry_run:
@@ -640,6 +869,19 @@ def main():
 
     if outline_path is None:
         outline_path = output_dir / args.episode / f"{args.episode}-outline.md"
+
+    # ── Stage 1 埋点 ─────────────────────────────────────────────────
+    if report_logger:
+        if not args.skip_outline:
+            report_logger.log_stage_end(
+                stage=1, name="outline",
+                status="success" if outline_path else "failed",
+                output_file=_rel(outline_path) if outline_path else "",
+                review_result="PASS" if review_pass else "WARNING",
+                model="qwen-plus",
+            )
+        else:
+            report_logger.log_stage_end(stage=1, name="outline", status="skipped")
 
     # ── Stage 1.5: asset_images ───────────────────────────────────────
     asset_ok = True
@@ -653,6 +895,12 @@ def main():
             dry_run=args.dry_run,
             task_db=task_db,
         )
+        if report_logger:
+            report_logger.log_stage_end(
+                stage=1.5, name="asset_images",
+                status="success" if asset_ok else "failed",
+                model="doubao",
+            )
     else:
         print(f"\n[Stage 1.5] SKIP（需 --run-asset-images 且 outline 存在）")
 
@@ -668,10 +916,29 @@ def main():
             output_dir=output_dir,
             asset_library=args.asset_library,
             dry_run=args.dry_run,
+            session_id=args.session_id,
+            max_history=args.max_history,
         )
         if shots_path is None and not args.dry_run:
             print("[ERROR] Stage 2 失败，停止执行")
             sys.exit(1)
+
+        # ── Stage 2 审核（Toonflow storyboard-agent 对标）────────────
+        if shots_path and shots_path.exists() and not args.dry_run and not args.skip_review:
+            print(f"\n[Review-2] storyboard-review — 分镜脚本质量审核")
+            # 先运行规则校验（快速）
+            try:
+                check_asset_consistency(shots_path)
+            except SystemExit:
+                print(f"    [WARN] 分镜资产一致性校验失败，继续 AI 审核")
+            review_pass = run_review(
+                review_agent="storyboard-review",
+                content_path=shots_path,
+                dry_run=args.dry_run,
+                max_retries=3,
+            )
+            if not review_pass:
+                print(f"    [WARN] 分镜脚本审核未通过，继续执行（建议手动修复）")
     else:
         shots_path = output_dir / args.episode / f"{args.episode}-shots.md"
         if not shots_path.exists() and not args.dry_run:
@@ -682,6 +949,19 @@ def main():
     if shots_path is None:
         shots_path = output_dir / args.episode / f"{args.episode}-shots.md"
 
+    # ── Stage 2 埋点 ─────────────────────────────────────────────────
+    if report_logger:
+        if not args.skip_storyboard:
+            report_logger.log_stage_end(
+                stage=2, name="storyboard",
+                status="success" if shots_path else "failed",
+                output_file=_rel(shots_path) if shots_path else "",
+                review_result="PASS" if review_pass else "WARNING",
+                model="qwen-plus",
+            )
+        else:
+            report_logger.log_stage_end(stage=2, name="storyboard", status="skipped")
+
     # ── Stage 3: P1 ─────────────────────────────────────────────────────
     p1_ok = True
     if args.run_p1:
@@ -691,7 +971,14 @@ def main():
             episode=args.episode,
             output_dir=output_dir,
             dry_run=args.dry_run,
+            optimize_prompts=args.optimize_prompts,
         )
+        if report_logger:
+            report_logger.log_stage_end(
+                stage=3, name="p1",
+                status="success" if p1_ok else "failed",
+                model="doubao-seedream-4.5",
+            )
 
     # ── Stage 4: P2 ─────────────────────────────────────────────────────
     p2_ok = True
@@ -703,11 +990,25 @@ def main():
             output_dir=output_dir,
             dry_run=args.dry_run,
         )
+        if report_logger:
+            report_logger.log_stage_end(
+                stage=4, name="p2",
+                status="success" if p2_ok else "failed",
+                model="doubao-seedream-5-0-260128",
+            )
 
-    # ── Stage 5: video ──────────────────────────────────────────────────
+    # ── Stage 5: video（默认开启，可用 --skip-video 跳过）────────────────
     video_ok = True
     video_result = {}
-    if args.run_video and not args.skip_video and shots_path and shots_path.exists():
+    # P1 首帧参考图目录：outputs/{episode}/shots/images/
+    p1_images_dir: Path | None = None
+    if not args.skip_video and shots_path and shots_path.exists():
+        p1_images_dir = output_dir / args.episode / "shots" / "images"
+        if not p1_images_dir.exists():
+            p1_images_dir = None
+            print(f"    [INFO] 未找到 P1 首帧图片目录（跳过 img1 传图）")
+        else:
+            print(f"    [INFO] 找到 P1 首帧图片目录：{p1_images_dir}")
         video_result = stage5_video(
             shots_path=shots_path,
             episode=args.episode,
@@ -717,12 +1018,37 @@ def main():
             workers=args.workers,
             dry_run=args.dry_run,
             task_db=task_db,
+            img1_dir=p1_images_dir,
+            optimize_prompts=args.optimize_prompts,
         )
         video_ok = video_result.get("failed", 1) == 0
-    elif args.run_video:
+    elif not args.skip_video:
         print(f"\n[Stage 5] SKIP（需 shots 文件存在）")
     else:
-        print(f"\n[Stage 5] SKIP（默认关闭，需 --run-video 开启）")
+        print(f"\n[Stage 5] SKIP（已用 --skip-video 跳过）")
+
+    # ── ReportLogger 埋点 & 生成制作文档 ──────────────────────────────
+    if report_logger:
+        if not args.skip_video and shots_path and shots_path.exists():
+            report_logger.log_stage_end(
+                stage=5, name="video",
+                status="success" if video_ok else "failed",
+                model=args.video_provider,
+            )
+        else:
+            report_logger.log_stage_end(stage=5, name="video", status="skipped")
+        # ── 生成制作文档 ───────────────────────────────────────────
+        try:
+            import subprocess as _subprocess
+            _subprocess.run([
+                sys.executable,
+                str(SCRIPT_DIR / "production_report.py"),
+                "--project", args.project,
+                "--episode", args.episode,
+                "--report-level", args.report_level,
+            ], check=False)
+        except Exception as e:
+            print(f"  [WARN] 制作文档生成失败: {e}")
 
     # ── 汇总 ────────────────────────────────────────────────────────────
     summary = {
