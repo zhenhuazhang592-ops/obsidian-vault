@@ -4,81 +4,94 @@
     "type": "split",
     "children": [
       {
-        "id": "1c79f1e93220bbcc",
-        "type": "split",
+        "id": "3fd4e84306247519",
+        "type": "tabs",
         "children": [
           {
-            "id": "ce191423e5901122",
-            "type": "tabs",
-            "dimension": 22.701475595913735,
-            "children": [
-              {
-                "id": "9a041f754c4bf58a",
-                "type": "leaf",
-                "state": {
-                  "type": "markdown",
-                  "state": {
-                    "file": "AI工具箱/huage888/assets/libtv-参考图提示词.md",
-                    "mode": "source",
-                    "source": false
+            "id": "c704ba8b0d7eca53",
+            "type": "leaf",
+            "pinned": true,
+            "state": {
+              "type": "terminal:terminal",
+              "state": {
+                "terminal:terminal": {
+                  "cwd": "/Users/huage/Obsidian Vault",
+                  "focus": false,
+                  "profile": {
+                    "args": [
+                      "--login"
+                    ],
+                    "executable": "/bin/zsh",
+                    "followTheme": true,
+                    "name": "",
+                    "platforms": {
+                      "darwin": true
+                    },
+                    "pythonExecutable": "python3",
+                    "restoreHistory": false,
+                    "rightClickAction": "copyPaste",
+                    "successExitCodes": [
+                      "0",
+                      "SIGINT",
+                      "SIGTERM"
+                    ],
+                    "terminalOptions": {
+                      "documentOverride": null
+                    },
+                    "type": "integrated",
+                    "useWin32Conhost": true
                   },
-                  "icon": "lucide-file",
-                  "title": "libtv-参考图提示词"
+                  "serial": null
                 }
-              }
-            ]
+              },
+              "pinned": true,
+              "icon": "terminal",
+              "title": "终端：✳ Claude Code"
+            }
           },
           {
-            "id": "fa6bdc17c55c4282",
-            "type": "tabs",
-            "dimension": 77.29852440408627,
-            "children": [
-              {
-                "id": "74418c3acca3e698",
-                "type": "leaf",
-                "pinned": true,
-                "state": {
-                  "type": "terminal:terminal",
-                  "state": {
-                    "terminal:terminal": {
-                      "cwd": "/Users/huage/Obsidian Vault",
-                      "focus": false,
-                      "profile": {
-                        "args": [
-                          "--login"
-                        ],
-                        "executable": "/bin/zsh",
-                        "followTheme": true,
-                        "name": "",
-                        "platforms": {
-                          "darwin": true
-                        },
-                        "pythonExecutable": "python3",
-                        "restoreHistory": false,
-                        "rightClickAction": "copyPaste",
-                        "successExitCodes": [
-                          "0",
-                          "SIGINT",
-                          "SIGTERM"
-                        ],
-                        "terminalOptions": {
-                          "documentOverride": null
-                        },
-                        "type": "integrated",
-                        "useWin32Conhost": true
-                      },
-                      "serial": null
-                    }
+            "id": "e0c665735b49ce09",
+            "type": "leaf",
+            "pinned": true,
+            "state": {
+              "type": "terminal:terminal",
+              "state": {
+                "terminal:terminal": {
+                  "cwd": "/Users/huage/Obsidian Vault",
+                  "focus": false,
+                  "profile": {
+                    "args": [
+                      "--login"
+                    ],
+                    "executable": "/bin/zsh",
+                    "followTheme": true,
+                    "name": "",
+                    "platforms": {
+                      "darwin": true
+                    },
+                    "pythonExecutable": "python3",
+                    "restoreHistory": false,
+                    "rightClickAction": "copyPaste",
+                    "successExitCodes": [
+                      "0",
+                      "SIGINT",
+                      "SIGTERM"
+                    ],
+                    "terminalOptions": {
+                      "documentOverride": null
+                    },
+                    "type": "integrated",
+                    "useWin32Conhost": true
                   },
-                  "pinned": true,
-                  "icon": "terminal",
-                  "title": "终端：⠂ Claude Code"
+                  "serial": null
                 }
-              }
-            ]
+              },
+              "pinned": true,
+              "icon": "terminal",
+              "title": "终端：✳ Claude Code"
+            }
           }
-        ],
-        "direction": "horizontal"
+        ]
       }
     ],
     "direction": "vertical"
@@ -243,54 +256,53 @@
       "terminal:Open terminal": false
     }
   },
-  "active": "74418c3acca3e698",
+  "active": "c704ba8b0d7eca53",
   "lastOpenFiles": [
-    "docs/plans/2026-04-03-cyber-ink-ip-design.md",
-    "玫贵人IP",
-    "docs/plans/2026-04-03-meiguiren-implementation-plan.md",
-    "docs/plans/2026-04-03-meiguiren-ip-design.md",
-    "AI工具箱/huage888/scripts/__pycache__/_common.cpython-314.pyc",
-    "AI工具箱/huage888/scripts/__pycache__",
-    "AI工具箱/huage888/assets/libtv-参考图提示词.md",
-    "AI工具箱/huage888/assets/character-prompts.md",
-    "AI工具箱/huage888/assets/prop-prompts.md",
-    "AI工具箱/huage888/scripts/upload_file.py",
-    "AI工具箱/huage888/scripts/query_session.py",
-    "AI工具箱/huage888/scripts/download_results.py",
-    "AI工具箱/huage888/scripts/create_session.py",
-    "AI工具箱/huage888/scripts/change_project.py",
-    "AI工具箱/huage888/scripts/_common.py",
-    "AI工具箱/huage888/scripts",
-    "AI工具箱/huage888/skills/storyboard-skill.md",
-    "AI工具箱/huage888/skills/storyboard-review-skill.md",
-    "AI工具箱/huage888/skills/script-review-skill.md",
-    "AI工具箱/huage888/skills/prop-design-skill.md",
-    "AI工具箱/huage888/skills/libtv-huage-integration.md",
-    "AI工具箱/huage888/skills/director-skill.md",
-    "AI工具箱/huage888/skills/compliance-skill.md",
-    "AI工具箱/huage888/skills/art-review-skill.md",
-    "AI工具箱/huage888/skills/art-design-skill.md",
-    "AI工具箱/huage888/outputs/02-storyboard-script.md",
-    "AI工具箱/huage888/outputs/01-director-analysis.md",
-    "AI工具箱/huage888/config/visual-bible.md",
-    "AI工具箱/huage888/assets/scene-prompts.md",
-    "AI工具箱/huage888/assets/03-asset-registry.md",
-    "AI工具箱/huage888/agents/storyboard-artist.md",
-    "AI工具箱/huage888/agents/prop-designer.md",
-    "AI工具箱/huage888/agents/director.md",
-    "AI工具箱/huage888/agents/art-designer.md",
-    "AI工具箱/huage888/CLAUDE.md",
-    "output/avocado-hass-20260403/poster-v.png",
-    "output/avocado-hass-20260403/poster-ai-origin-v.png",
-    "output/avocado-hass-20260403/poster-ai-origin-h.png",
-    "output/avocado-hass-20260403/detail-copy.md",
-    "output/avocado-hass-20260403/poster-h.png",
-    "output/avocado-hass-20260403/main-ref.jpg",
-    "output/avocado-hass-20260403/crops/main-taobao-1:1.png",
-    "output/avocado-hass-20260403/crops/main-pdd-3:4.png",
-    "output/avocado-hass-20260403/crops/main-pdd-1:1.png",
-    "output/avocado-hass-20260403/crops/main-jd-1:1.png",
-    "output/avocado-hass-20260403/crops/main-douyin-3:4.png",
+    "AI工具箱/huage888/outputs/S01E01/S01E01-pipeline-summary.json",
+    "AI工具箱/huage888/outputs/S01E01/production_report.md",
+    "AI工具箱/huage888/outputs/S01E01/technical_log.json",
+    "AI工具箱/huage888/outputs/S01E01",
+    "AI工具箱/huage888/scripts/__pycache__/production_report.cpython-314.pyc",
+    "AI工具箱/huage888/scripts/production_report.py",
+    "AI工具箱/huage888/scripts/__pycache__/report_logger.cpython-314.pyc",
+    "AI工具箱/huage888/scripts/report_logger.py",
+    "docs/superpowers/plans/2026-04-08-production-report-design.md",
+    "docs/superpowers/specs/2026-04-08-production-report-design.md",
+    "AI工具箱/huage888/skills/中年修复术-style/SKILL.md",
+    "AI工具箱/huage888/skills/中年修复术-style",
+    "AI工具箱/huage888/projects/测试项目/README.md",
+    "AI工具箱/huage888/projects/测试项目/config/visual-bible.md",
+    "AI工具箱/huage888/projects/测试项目/docs/README.md",
+    "AI工具箱/huage888/projects/测试项目/outputs",
+    "AI工具箱/huage888/projects/测试项目/docs",
+    "AI工具箱/huage888/projects/测试项目/CLAUDE.md",
+    "AI工具箱/huage888/agents/storyboard-review.md",
+    "AI工具箱/huage888/agents/art-review.md",
+    "AI工具箱/huage888/agents/script-review.md",
+    "AI工具箱/huage888/skills/motion-prompt-skill/SKILL.md",
+    "AI工具箱/huage888/docs/README.md",
+    "AI工具箱/huage888/docs/reference/toonflow-gap-analysis.md",
+    "AI工具箱/huage888/outputs/S01E01/S01E01-shots.md",
+    "AI工具箱/huage888/outputs/S01E01/S01E01-outline.md",
+    "AI工具箱/huage888/agents/storyline.md",
+    "AI工具箱/huage888/config/seedream_prompts/prop_card_template.md",
+    "AI工具箱/huage888/config/seedream_prompts/scene_card_template.md",
+    "AI工具箱/huage888/config/seedream_prompts/character_card_template.md",
+    "docs/superpowers/plans/2026-04-07-huage888-p1-p2-implementation.md",
+    "docs/superpowers/specs/2026-04-07-huage888-p1-p2-design.md",
+    "AI工具箱/huage888/outputs/S01E01-shots.md",
+    "AI工具箱/huage888/outputs/S01E01-outline.md",
+    "AI工具箱/huage888/agents/outline-agent.md",
+    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/01.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/04.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/03.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/02.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_08.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_02.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_01.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_07.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_06.png",
+    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_05.png",
     "未命名.canvas"
   ]
 }

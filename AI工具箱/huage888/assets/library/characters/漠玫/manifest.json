@@ -1,0 +1,22 @@
+{
+  "name": "漠玫",
+  "type": "character",
+  "role_type": "角色",
+  "project": "漠玫传",
+  "first_episode": null,
+  "visual_description": "道姑髻，黑色长发，金色瞳孔带数据流光晕，青蓝色水墨眼线，道袍丝绸与电路板纹理混合，腰间发光玉佩，赛博墨韵风格",
+  "seedream_card": null,
+  "files": [],
+  "status": "pending",
+  "view_roles": [
+    "character_front_full",
+    "character_face_closeup",
+    "character_side_full",
+    "character_side_closeup",
+    "character_back_full",
+    "character_three_quarter_full"
+  ],
+  "style_keywords": "赛博墨韵",
+  "created_at": "2026-04-07",
+  "updated_at": "2026-04-08"
+}

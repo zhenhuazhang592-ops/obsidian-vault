@@ -871,17 +871,22 @@ def main():
         outline_path = output_dir / args.episode / f"{args.episode}-outline.md"
 
     # ── Stage 1 埋点 ─────────────────────────────────────────────────
+    # 放在 if/else 之后，只埋一次
     if report_logger:
-        if not args.skip_outline:
+        if args.skip_outline:
+            report_logger.log_stage_end(stage=1, name="outline", status="skipped")
+        else:
+            _review_pass = (
+                outline_path and outline_path.exists()
+                and not args.dry_run and not args.skip_review
+            )
             report_logger.log_stage_end(
                 stage=1, name="outline",
                 status="success" if outline_path else "failed",
                 output_file=_rel(outline_path) if outline_path else "",
-                review_result="PASS" if review_pass else "WARNING",
+                review_result="PASS" if _review_pass else "WARNING",
                 model="qwen-plus",
             )
-        else:
-            report_logger.log_stage_end(stage=1, name="outline", status="skipped")
 
     # ── Stage 1.5: asset_images ───────────────────────────────────────
     asset_ok = True
@@ -950,17 +955,22 @@ def main():
         shots_path = output_dir / args.episode / f"{args.episode}-shots.md"
 
     # ── Stage 2 埋点 ─────────────────────────────────────────────────
+    # 放在 if/else 之后，只埋一次
     if report_logger:
-        if not args.skip_storyboard:
+        if args.skip_storyboard:
+            report_logger.log_stage_end(stage=2, name="storyboard", status="skipped")
+        else:
+            _review2_pass = (
+                shots_path and shots_path.exists()
+                and not args.dry_run and not args.skip_review
+            )
             report_logger.log_stage_end(
                 stage=2, name="storyboard",
                 status="success" if shots_path else "failed",
                 output_file=_rel(shots_path) if shots_path else "",
-                review_result="PASS" if review_pass else "WARNING",
+                review_result="PASS" if _review2_pass else "WARNING",
                 model="qwen-plus",
             )
-        else:
-            report_logger.log_stage_end(stage=2, name="storyboard", status="skipped")
 
     # ── Stage 3: P1 ─────────────────────────────────────────────────────
     p1_ok = True

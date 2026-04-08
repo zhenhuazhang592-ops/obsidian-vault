@@ -44,13 +44,12 @@ def build_stages(records: list[dict]) -> list[dict]:
 
     for rec in records:
         if rec["event"] == "stage_start":
-            sid = rec["data"].get("stage", rec["data"].get("name", ""))
+            sid = rec.get("stage", rec.get("name", ""))
             stage_starts[sid] = rec
         elif rec["event"] == "stage_end":
-            data = rec["data"]
-            sid = data.get("stage", data.get("name", ""))
             started_at = ""
-            duration = data.get("duration_seconds", 0.0)
+            duration = rec.get("duration_seconds", 0.0)
+            sid = rec.get("stage", rec.get("name", ""))
             if sid in stage_starts:
                 started_at = stage_starts[sid].get("ts", "")
                 if duration == 0.0 and started_at:
@@ -61,17 +60,17 @@ def build_stages(records: list[dict]) -> list[dict]:
                     except Exception:
                         duration = 0.0
             stages.append({
-                "stage": data.get("stage", 0),
-                "name": data.get("name", ""),
-                "model": data.get("model", ""),
+                "stage": rec.get("stage", 0),
+                "name": rec.get("name", ""),
+                "model": rec.get("model", ""),
                 "started_at": started_at,
                 "duration_seconds": duration,
-                "status": data.get("status", "success"),
-                "prompt_id": data.get("prompt_id", ""),
-                "review_result": data.get("review_result", ""),
-                "output_file": data.get("output_file", ""),
-                "retry_count": data.get("retry_count", 0),
-                "error_message": data.get("error_message", ""),
+                "status": rec.get("status", "success"),
+                "prompt_id": rec.get("prompt_id", ""),
+                "review_result": rec.get("review_result", ""),
+                "output_file": rec.get("output_file", ""),
+                "retry_count": rec.get("retry_count", 0),
+                "error_message": rec.get("error_message", ""),
             })
     return stages
 
@@ -80,18 +79,17 @@ def build_shots(records: list[dict]) -> list[dict]:
     shots = []
     for rec in records:
         if rec["event"] == "shot":
-            data = rec["data"]
             shots.append({
-                "shot_number": data.get("shot_number", 0),
-                "description": data.get("description", ""),
-                "image_prompt": data.get("image_prompt", ""),
-                "image_asset_id": data.get("image_asset_id", ""),
-                "motion_prompt": data.get("motion_prompt", ""),
-                "video_url": data.get("video_url", ""),
-                "duration_seconds": data.get("duration_seconds", 0),
-                "model": data.get("model", ""),
-                "quality_score": data.get("quality_score"),
-                "notes": data.get("notes", ""),
+                "shot_number": rec.get("shot_number", 0),
+                "description": rec.get("description", ""),
+                "image_prompt": rec.get("image_prompt", ""),
+                "image_asset_id": rec.get("image_asset_id", ""),
+                "motion_prompt": rec.get("motion_prompt", ""),
+                "video_url": rec.get("video_url", ""),
+                "duration_seconds": rec.get("duration_seconds", 0),
+                "model": rec.get("model", ""),
+                "quality_score": rec.get("quality_score"),
+                "notes": rec.get("notes", ""),
             })
     return sorted(shots, key=lambda x: x["shot_number"])
 
@@ -120,7 +118,7 @@ def generate_markdown_report(project: str, episode: str,
     summary = {}
     for rec in records:
         if rec["event"] == "pipeline_end":
-            summary = rec["data"].get("summary", {})
+            summary = rec.get("summary", {})
 
     total_dur = sum(s.get("duration_seconds", 0) for s in stages)
     mins, secs = divmod(int(total_dur), 60)

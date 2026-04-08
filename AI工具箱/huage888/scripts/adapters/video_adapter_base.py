@@ -13,6 +13,11 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
+# 图片引用角色类型
+IMAGE_ROLE_FIRST_FRAME = "first_frame"   # 首帧
+IMAGE_ROLE_LAST_FRAME = "last_frame"    # 尾帧
+IMAGE_ROLE_REFERENCE = "reference_image"  # 参考图（角色/场景一致性）
+
 
 @dataclass
 class VideoResult:
@@ -74,9 +79,33 @@ class VideoAdapterBase(ABC):
         img2: Optional[str] = None,
         duration: Optional[int] = None,
         model: Optional[str] = None,
+        references: Optional[list[dict]] = None,
     ) -> VideoResult:
-        """生成视频（文生 / 图生 / 首尾帧）"""
-        task_id = self._create_video_task(prompt, img1, img2, duration, model)
+        """生成视频（文生 / 图生 / 首尾帧 / 多参考图）
+
+        Args:
+            prompt:      视频提示词文本
+            output_path: 输出文件路径
+            img1:        首帧图片 URL（向后兼容，单图首帧）
+            img2:        尾帧图片 URL（向后兼容，单图尾帧）
+            duration:    视频时长（秒）
+            model:       具体模型 ID
+            references: 参考图列表，每项 dict:
+                {
+                    "url": str,        # 图片 URL 或本地路径
+                    "role": str,       # "first_frame" | "last_frame" | "reference_image"
+                    "label": str,      # 可选，标签如"漠玫参考图"，用于 debug
+                }
+        """
+        # references 优先级高于 img1/img2
+        task_id = self._create_video_task(
+            prompt,
+            img1=img1,
+            img2=img2,
+            duration=duration,
+            model=model,
+            references=references,
+        )
         return self._poll_and_download(task_id, output_path, model)
 
     def generate_image(
@@ -109,8 +138,18 @@ class VideoAdapterBase(ABC):
         img2: Optional[str],
         duration: Optional[int],
         model: Optional[str],
+        references: Optional[list[dict]] = None,
     ) -> str:
-        """创建视频任务，返回 task_id"""
+        """创建视频任务，返回 task_id
+
+        Args:
+            references: 参考图列表，每项 dict:
+                {
+                    "url": str,        # 图片 URL
+                    "role": str,       # "first_frame" | "last_frame" | "reference_image"
+                    "label": str,      # 可选，标签
+                }
+        """
         ...
 
     @abstractmethod

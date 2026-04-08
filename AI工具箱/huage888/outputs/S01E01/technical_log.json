@@ -1,0 +1,49 @@
+{
+  "project": "测试验证",
+  "episode": "S01E01",
+  "generated_at": "2026-04-08T17:50:35.633849",
+  "report_level": "stage",
+  "total_duration_seconds": 0.0,
+  "stages": [
+    {
+      "stage": 1,
+      "name": "outline",
+      "model": "qwen-plus",
+      "started_at": "",
+      "duration_seconds": 0.0,
+      "status": "success",
+      "prompt_id": "",
+      "review_result": "WARNING",
+      "output_file": "outputs/S01E01/S01E01-outline.md",
+      "retry_count": 0,
+      "error_message": ""
+    },
+    {
+      "stage": 2,
+      "name": "storyboard",
+      "model": "qwen-plus",
+      "started_at": "",
+      "duration_seconds": 0.0,
+      "status": "success",
+      "prompt_id": "",
+      "review_result": "WARNING",
+      "output_file": "outputs/S01E01/S01E01-shots.md",
+      "retry_count": 0,
+      "error_message": ""
+    },
+    {
+      "stage": 5,
+      "name": "video",
+      "model": "",
+      "started_at": "",
+      "duration_seconds": 0.0,
+      "status": "skipped",
+      "prompt_id": "",
+      "review_result": "",
+      "output_file": "",
+      "retry_count": 0,
+      "error_message": ""
+    }
+  ],
+  "shots": []
+}

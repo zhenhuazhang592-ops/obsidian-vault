@@ -58,6 +58,19 @@ SCRIPT_DIR = Path(__file__).parent
 BASE_DIR = SCRIPT_DIR.parent  # huage888 根目录
 SCRIPTS_DIR = BASE_DIR / "scripts"
 
+# ── .env 自动加载（优先级：环境变量 > .env 文件）───────────────────
+_env_path = BASE_DIR / ".env"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                _k = _k.strip()
+                _v = _v.strip()
+                if _k and os.environ.get(_k) is None:
+                    os.environ[_k] = _v
+
 # 添加 scripts/ 到 Python 路径（task_state / event_emitter）
 sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -117,6 +130,30 @@ RETRY_DELAY = 30  # 秒
 
 AGENTS_DIR = BASE_DIR / "agents"
 SKILLS_DIR = BASE_DIR / "skills"
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Agent 文件名别名映射（pipeline 调用名 → 实际文件名）
+# ─────────────────────────────────────────────────────────────────────────────
+
+# pipeline 调用名 → 实际 agents/ 下的文件名（不含 .md）
+AGENT_NAME_ALIASES = {
+    "outline":             "outline-agent",
+    "storyboard":        "storyboard-artist",
+    "storyboard-artist":  "storyboard-artist",
+    "director":           "director",
+    "art-designer":       "art-designer",
+    "prop-designer":      "prop-designer",
+    "storyline":          "storyline",
+    # 审核 Agent（Toonflow Director Agent 对标）
+    "script-review":      "script-review",
+    "art-review":         "art-review",
+    "storyboard-review":   "storyboard-review",
+}
+
+
+def _resolve_agent_name(name: str) -> str:
+    """解析 agent 调用名，返回 agents/ 下的文件名（不含 .md）"""
+    return AGENT_NAME_ALIASES.get(name, name)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -179,7 +216,8 @@ def build_system_prompt(agent_name: str, skill_name: str | None) -> str:
 
     如果 skill_name 未指定，默认与 agent_name 相同。
     """
-    agent_file = AGENTS_DIR / f"{agent_name}.md"
+    resolved = _resolve_agent_name(agent_name)
+    agent_file = AGENTS_DIR / f"{resolved}.md"
     if not agent_file.exists():
         raise FileNotFoundError(f"agent 文件不存在：{agent_file}")
 
@@ -227,19 +265,22 @@ def call_qwen(
     temperature: float | None = None,
     top_p: float | None = None,
     max_tokens: int | None = None,
-    # ── 追踪参数（可选）───────────────────────────────────────────────
+    # ── 流式输出 ────────────────────────────────────────────────────
+    stream: bool = False,
+    stream_callback=None,          # stream=True 时每块调一次 cb(text: str)
+    # ── 追踪参数（可选）─────────────────────────────────────────────
     emitter=None,
     task_id: str | None = None,
     task_name: str = "qwen-call",
-) -> str:
+) -> str | None:
     """
     调用 qwen-max，返回 assistant 的 content。
     429 / 500 错误自动重试，最多 MAX_RETRIES 次。
 
     Args:
-        emitter: EventEmitter 实例，用于发送事件（可选）
-        task_id: 任务 ID（emitter 开启时必填）
-        task_name: 任务名称（用于事件输出）
+        stream:          True 时返回 None，改为通过 stream_callback 分块推送
+        stream_callback: stream=True 时必填，签名为 fn(text: str)
+        emitter/task_id/task_name: 事件追踪参数
     """
     client = get_client()
 
@@ -264,6 +305,14 @@ def call_qwen(
                     progress=0.5,
                 )
 
+            if stream:
+                return _call_qwen_stream(
+                    client=client, model=model, messages=messages,
+                    temperature=temperature, top_p=top_p, max_tokens=max_tokens,
+                    stream_callback=stream_callback, emitter=emitter,
+                    task_id=task_id, task_name=task_name,
+                )
+
             response = client.chat.completions.create(
                 model=model,
                 messages=messages,
@@ -276,7 +325,7 @@ def call_qwen(
 
             if not content or not content.strip():
                 print("警告：API 返回内容为空", file=sys.stderr)
-                return ""
+                return "" if not stream else None
 
             if emitter and task_id:
                 emitter.emit_task_progress(
@@ -331,6 +380,62 @@ def call_qwen(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# 流式调用
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _call_qwen_stream(
+    client: "OpenAI",
+    model: str,
+    messages: list[dict],
+    temperature: float,
+    top_p: float,
+    max_tokens: int,
+    stream_callback,
+    emitter,
+    task_id,
+    task_name,
+) -> None:
+    """
+    SSE 流式调用 qwen-max，通过 stream_callback 分块推送。
+
+    Toonflow 对标：agent.emitter.emit("stream", {delta}) 模式。
+    每收到一个 delta 立即推送，不等完整内容。
+    """
+    response = client.chat.completions.create(
+        model=model,
+        messages=messages,
+        temperature=temperature,
+        top_p=top_p,
+        max_tokens=max_tokens,
+        stream=True,
+    )
+
+    full_content = []
+    for chunk in response:
+        delta = chunk.choices[0].delta.content or ""
+        if delta:
+            full_content.append(delta)
+            # 推送事件
+            if emitter and task_id:
+                emitter.emit_task_stream(task_id, task_name, delta)
+            # 调用回调
+            if stream_callback:
+                try:
+                    stream_callback(delta)
+                except Exception:
+                    pass
+
+    # 完成事件
+    if emitter and task_id:
+        emitter.emit_task_progress(
+            task_id, task_name,
+            status="complete",
+            message="流式生成完成",
+            progress=1.0,
+        )
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # 对话历史集成调用
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -358,10 +463,12 @@ def call_qwen_with_conversation(
     top_p: float | None = None,
     max_tokens: int | None = None,
     max_history: int = 10,
+    stream: bool = False,
+    stream_callback=None,
     emitter=None,
     task_id: str | None = None,
     task_name: str | None = None,
-) -> str:
+) -> str | None:
     """
     带对话历史注入的 qwen-max 调用。
 
@@ -411,12 +518,15 @@ def call_qwen_with_conversation(
         temperature=temperature,
         top_p=top_p,
         max_tokens=max_tokens,
+        stream=stream,
+        stream_callback=stream_callback,
         emitter=emitter,
         task_id=task_id,
         task_name=tn,
     )
 
     # 记录对话（API 调用后写入，非调用前）
+    # 流模式：content 为 None，依赖 stream_callback 累积完整内容
     conv_mgr.append(agent, session_id, "user", user)
     if content:
         conv_mgr.append(agent, session_id, "assistant", content)
@@ -574,6 +684,12 @@ def parse_args():
         "--new-session",
         action="store_true",
         help="强制创建新 session（--session-id 已指定时）"
+    )
+    conv.add_argument(
+        "--stream",
+        action="store_true",
+        default=False,
+        help="开启 SSE 流式输出（通过 stream_callback 分块推送事件）"
     )
 
     return parser.parse_args()
@@ -738,6 +854,12 @@ def main():
 
     print(f"\n🤖 调用 qwen-max（model={args.model}, temp={temperature}）", file=sys.stderr)
 
+    # ── 流式回调：累积完整内容用于日志 ───────────────────────────────
+    accumulated: list[str] = []
+    def _stream_cb(delta: str) -> None:
+        accumulated.append(delta)
+        print(delta, end="", flush=True)
+
     if use_conversation:
         content = call_qwen_with_conversation(
             agent=args.agent or "adhoc",
@@ -751,6 +873,8 @@ def main():
             top_p=top_p,
             max_tokens=max_tokens,
             max_history=args.max_history,
+            stream=args.stream,
+            stream_callback=_stream_cb if args.stream else None,
             emitter=emitter,
             task_id=task_id,
             task_name=task_name,
@@ -763,6 +887,8 @@ def main():
             temperature=temperature,
             top_p=top_p,
             max_tokens=max_tokens,
+            stream=args.stream,
+            stream_callback=_stream_cb if args.stream else None,
             emitter=emitter,
             task_id=task_id,
             task_name=task_name,
@@ -782,6 +908,19 @@ def main():
             task_id, TaskState.SUCCESS,
             result={"output": args.output, "length": len(content)},
         )
+
+    # 流模式下 content=None，内容已通过 _stream_cb 打印到 stdout
+    if content is None:
+        # 流式输出，不写文件（output_path 由 caller 管理）
+        if args.output:
+            full = "".join(accumulated)
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(full, encoding="utf-8")
+            print(f"\n\n✅ 已写入：{args.output}（{len(full)} 字符）", file=sys.stderr)
+        else:
+            print(file=sys.stderr)  # 换行
+        return  # 提前返回，不重复输出
 
     # ── 输出 ─────────────────────────────────────────────────────────
 

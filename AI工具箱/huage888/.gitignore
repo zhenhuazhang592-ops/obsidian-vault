@@ -1,34 +1,18 @@
+# 环境变量（包含 API Key，绝对不提交）
+.env
+.env.local
+.env.production
+
 # Python
 __pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
+*.pyc
+*.pyo
+.pytest_cache/
 
-# Runtime data
-.huage888/
-.huche888-sessions/
-*.db
-*.sqlite
+# 任务状态/对话历史
+.huage888/tasks/
+.huage888/conversations/
+.huage888/events.jsonl
 
-# Claude Code
-.claude/
-
-# IDE
+# macOS
 .DS_Store
-.vscode/
-*.swp
-
-# Generated assets (keep source prompts)
-outputs/S01E01/
-outputs/S01E*/
-outputs/*.png
-outputs/*.mp4
-outputs/*.jpg
-assets/library/
-assets/*.png
-assets/*.jpg
-assets/*.mp4
-
-# Projects (each project manages its own state)
-projects/

@@ -192,6 +192,129 @@ CREATE INDEX IF NOT EXISTS idx_tasks_stage  ON tasks(stage);
 CREATE INDEX IF NOT EXISTS idx_tasks_state  ON tasks(state);
 CREATE INDEX IF NOT EXISTS idx_deps_task    ON task_dependencies(task_id);
 CREATE INDEX IF NOT EXISTS idx_deps_dep     ON task_dependencies(depends_on_id);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 资产表（对标 Toonflow t_assets）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS assets (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL,
+    type            TEXT NOT NULL,         -- character / scene / prop
+    intro           TEXT,                  -- 资产描述
+    prompt          TEXT,                  -- 图片生成 prompt
+    video_prompt    TEXT,                  -- 视频生成 prompt
+    remark         TEXT,                   -- 备注
+    episode         TEXT,                   -- 首次出现集数
+    duration        INTEGER,                -- 预计时长（秒）
+    file_path       TEXT,                  -- 参考图路径
+    project_id      INTEGER,
+    script_id       TEXT,
+    segment_id      TEXT,                  -- 分段 ID
+    shot_index      INTEGER,               -- 镜头索引
+    state           INTEGER DEFAULT 0,     -- 0=待生成/1=生成中/2=成功/-1=失败
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 图片表（对标 Toonflow t_image）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS images (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path       TEXT,
+    type            TEXT,                   -- grid / single / asset / storyboard
+    assets_id       INTEGER,
+    script_id       TEXT,
+    project_id      INTEGER,
+    video_id        INTEGER,
+    shot_index      INTEGER,               -- 镜头号
+    state           INTEGER DEFAULT 0,     -- 0=待生成/1=生成中/2=成功/-1=失败
+    error           TEXT,
+    provider        TEXT,                   -- doubao / kling
+    model           TEXT,                   -- doubao-seedream-5-0-260128
+    created_at      TEXT DEFAULT (datetime('now'))
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 视频表（对标 Toonflow t_video）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS videos (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    file_path       TEXT,
+    resolution      TEXT,                   -- 1280x720 / 1920x1080
+    prompt          TEXT,                   -- 视频生成 prompt
+    first_frame     TEXT,                   -- 首帧图路径
+    storyboard_imgs TEXT,                  -- JSON: [shot1_img, shot2_img, ...]
+    model           TEXT,                   -- doubao-seedance-2-0-260128
+    error_reason    TEXT,
+    time_seconds    REAL,                  -- 生成耗时
+    state           INTEGER DEFAULT 0,     -- 0=进行中/1=成功/-1=失败
+    script_id       TEXT,
+    config_id       INTEGER,
+    project_id      INTEGER,
+    created_at      TEXT DEFAULT (datetime('now')),
+    finished_at     TEXT
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 视频配置表（对标 Toonflow t_videoConfig）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS video_configs (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    script_id       TEXT,
+    project_id      INTEGER,
+    ai_config_id   INTEGER,
+    audio_enabled   INTEGER DEFAULT 0,    -- 0=否/1=是
+    manufacturer    TEXT,                  -- volcengine / kling / vidu / ...
+    mode            TEXT,                  -- startEnd / multi / single
+    start_frame     INTEGER,
+    end_frame       INTEGER,
+    images_json     TEXT,                  -- JSON: [img_path, ...]
+    resolution      TEXT,                  -- 1280x720
+    duration        INTEGER,               -- 秒
+    prompt          TEXT,
+    selected_result_id INTEGER,
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 艺术风格表（对标 Toonflow t_artStyle）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS art_styles (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL UNIQUE,
+    category        TEXT,                   -- 常用风格 / IP风格 / 插画风格 / ...
+    styles_json     TEXT NOT NULL          -- JSON: [{name, prompt, prompt_en, file_url}, ...]
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 提示词模板表（对标 Toonflow t_prompts）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS prompts (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    code            TEXT NOT NULL UNIQUE,   -- outlineScript-main / storyboard-shot / ...
+    name            TEXT,
+    type            TEXT,                   -- mainAgent / subAgent / system / tool
+    parent_code     TEXT,                  -- 父模板 code
+    default_value   TEXT NOT NULL,         -- 默认 prompt 模板
+    custom_value    TEXT,                  -- 用户自定义覆盖
+    description     TEXT,
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 索引（新增表）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_assets_project  ON assets(project_id);
+CREATE INDEX IF NOT EXISTS idx_assets_type    ON assets(type);
+CREATE INDEX IF NOT EXISTS idx_assets_episode ON assets(episode);
+CREATE INDEX IF NOT EXISTS idx_images_project  ON images(project_id);
+CREATE INDEX IF NOT EXISTS idx_images_state    ON images(state);
+CREATE INDEX IF NOT EXISTS idx_videos_project  ON videos(project_id);
+CREATE INDEX IF NOT EXISTS idx_videos_state    ON videos(state);
+CREATE INDEX IF NOT EXISTS idx_prompts_code   ON prompts(code);
+CREATE INDEX IF NOT EXISTS idx_prompts_type   ON prompts(type);
 """
 
 MIGRATION_SELECT_SQL = """
@@ -526,6 +649,361 @@ class TaskDB:
                 edges.append({"from": depends_on_id, "to": task_id})
 
         return {"nodes": list(tasks.values()), "edges": edges}
+
+    # ─── 资产管理 ───────────────────────────────────────────────────────────
+
+    def upsert_asset(
+        self,
+        name: str,
+        asset_type: str,
+        project_id: int | None = None,
+        episode: str | None = None,
+        intro: str | None = None,
+        prompt: str | None = None,
+        video_prompt: str | None = None,
+        file_path: str | None = None,
+        state: int = 0,
+        segment_id: str | None = None,
+        shot_index: int | None = None,
+    ) -> int:
+        """创建或更新资产，返回 asset_id"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM assets WHERE name = ? AND type = ?",
+            (name, asset_type),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE assets SET intro=?, prompt=?, video_prompt=?,
+                   file_path=?, state=?, segment_id=?, shot_index=?, updated_at=?
+                   WHERE id=?""",
+                (intro, prompt, video_prompt, file_path, state,
+                 segment_id, shot_index, self._now(), existing[0]),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            """INSERT INTO assets
+               (name, type, intro, prompt, video_prompt, project_id, episode,
+                file_path, state, segment_id, shot_index)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (name, asset_type, intro, prompt, video_prompt, project_id,
+             episode, file_path, state, segment_id, shot_index),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_assets(
+        self,
+        project_id: int | None = None,
+        asset_type: str | None = None,
+        episode: str | None = None,
+    ) -> list[dict]:
+        """查询资产列表"""
+        conn = self._get_conn()
+        query = "SELECT * FROM assets WHERE 1=1"
+        params: list = []
+        if project_id is not None:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        if asset_type:
+            query += " AND type = ?"
+            params.append(asset_type)
+        if episode:
+            query += " AND episode = ?"
+            params.append(episode)
+        query += " ORDER BY id"
+        return [dict(r) for r in conn.execute(query, params).fetchall()]
+
+    def update_asset_state(self, asset_id: int, state: int, file_path: str | None = None) -> None:
+        """更新资产状态和文件路径"""
+        conn = self._get_conn()
+        if file_path:
+            conn.execute(
+                "UPDATE assets SET state=?, file_path=?, updated_at=? WHERE id=?",
+                (state, file_path, self._now(), asset_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE assets SET state=?, updated_at=? WHERE id=?",
+                (state, self._now(), asset_id),
+            )
+        conn.commit()
+
+    # ─── 图片记录 ───────────────────────────────────────────────────────────
+
+    def create_image(
+        self,
+        file_path: str | None = None,
+        image_type: str = "storyboard",
+        project_id: int | None = None,
+        shot_index: int | None = None,
+        state: int = 0,
+        provider: str | None = None,
+        model: str | None = None,
+    ) -> int:
+        """创建图片记录，返回 image_id"""
+        conn = self._get_conn()
+        cur = conn.execute(
+            """INSERT INTO images
+               (file_path, type, project_id, shot_index, state, provider, model)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (file_path, image_type, project_id, shot_index, state, provider, model),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def update_image_state(self, image_id: int, state: int, file_path: str | None = None, error: str | None = None) -> None:
+        """更新图片状态"""
+        conn = self._get_conn()
+        if file_path:
+            conn.execute(
+                "UPDATE images SET state=?, file_path=?, error=? WHERE id=?",
+                (state, file_path, error, image_id),
+            )
+        else:
+            conn.execute(
+                "UPDATE images SET state=?, error=? WHERE id=?",
+                (state, error, image_id),
+            )
+        conn.commit()
+
+    def list_images(self, project_id: int | None = None, state: int | None = None) -> list[dict]:
+        """查询图片列表"""
+        conn = self._get_conn()
+        query = "SELECT * FROM images WHERE 1=1"
+        params: list = []
+        if project_id is not None:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        if state is not None:
+            query += " AND state = ?"
+            params.append(state)
+        return [dict(r) for r in conn.execute(query, params).fetchall()]
+
+    # ─── 视频记录 ───────────────────────────────────────────────────────────
+
+    def create_video(
+        self,
+        file_path: str | None = None,
+        prompt: str | None = None,
+        project_id: int | None = None,
+        model: str | None = None,
+        state: int = 0,
+    ) -> int:
+        """创建视频记录，返回 video_id"""
+        conn = self._get_conn()
+        cur = conn.execute(
+            """INSERT INTO videos
+               (file_path, prompt, project_id, model, state)
+               VALUES (?, ?, ?, ?, ?)""",
+            (file_path, prompt, project_id, model, state),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def update_video(
+        self,
+        video_id: int,
+        state: int | None = None,
+        file_path: str | None = None,
+        error_reason: str | None = None,
+        time_seconds: float | None = None,
+    ) -> None:
+        """更新视频状态"""
+        conn = self._get_conn()
+        updates = []
+        vals: list = []
+        if state is not None:
+            updates.append("state = ?")
+            vals.append(state)
+        if file_path is not None:
+            updates.append("file_path = ?")
+            vals.append(file_path)
+        if error_reason is not None:
+            updates.append("error_reason = ?")
+            vals.append(error_reason)
+        if time_seconds is not None:
+            updates.append("time_seconds = ?")
+            vals.append(time_seconds)
+        if state in (1, -1):
+            updates.append("finished_at = ?")
+            vals.append(self._now())
+        if updates:
+            vals.append(video_id)
+            conn.execute(f"UPDATE videos SET {', '.join(updates)} WHERE id=?", vals)
+            conn.commit()
+
+    def list_videos(self, project_id: int | None = None, state: int | None = None) -> list[dict]:
+        """查询视频列表"""
+        conn = self._get_conn()
+        query = "SELECT * FROM videos WHERE 1=1"
+        params: list = []
+        if project_id is not None:
+            query += " AND project_id = ?"
+            params.append(project_id)
+        if state is not None:
+            query += " AND state = ?"
+            params.append(state)
+        return [dict(r) for r in conn.execute(query, params).fetchall()]
+
+    # ─── 视频配置 ───────────────────────────────────────────────────────────
+
+    def upsert_video_config(
+        self,
+        script_id: str,
+        project_id: int | None = None,
+        manufacturer: str | None = None,
+        mode: str | None = None,
+        images_json: str | None = None,
+        resolution: str | None = None,
+        duration: int | None = None,
+        prompt: str | None = None,
+        audio_enabled: int = 0,
+    ) -> int:
+        """创建或更新视频配置"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM video_configs WHERE script_id = ?", (script_id,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE video_configs SET manufacturer=?, mode=?, images_json=?,
+                   resolution=?, duration=?, prompt=?, audio_enabled=?,
+                   updated_at=? WHERE id=?""",
+                (manufacturer, mode, images_json, resolution, duration,
+                 prompt, audio_enabled, self._now(), existing[0]),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            """INSERT INTO video_configs
+               (script_id, project_id, manufacturer, mode, images_json,
+                resolution, duration, prompt, audio_enabled)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (script_id, project_id, manufacturer, mode, images_json,
+             resolution, duration, prompt, audio_enabled),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    # ─── 艺术风格 ───────────────────────────────────────────────────────────
+
+    def upsert_art_style(self, name: str, category: str, styles_json: str) -> int:
+        """创建或更新艺术风格"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM art_styles WHERE name = ?", (name,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE art_styles SET category=?, styles_json=? WHERE id=?",
+                (category, styles_json, existing[0]),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            "INSERT INTO art_styles (name, category, styles_json) VALUES (?, ?, ?)",
+            (name, category, styles_json),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def list_art_styles(self, category: str | None = None) -> list[dict]:
+        """查询艺术风格"""
+        conn = self._get_conn()
+        if category:
+            rows = conn.execute(
+                "SELECT * FROM art_styles WHERE category = ?", (category,)
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM art_styles ORDER BY category, name").fetchall()
+        return [dict(r) for r in rows]
+
+    # ─── 提示词模板 ─────────────────────────────────────────────────────────
+
+    def upsert_prompt(
+        self,
+        code: str,
+        name: str | None = None,
+        prompt_type: str | None = None,
+        default_value: str = "",
+        custom_value: str | None = None,
+        parent_code: str | None = None,
+        description: str | None = None,
+    ) -> int:
+        """创建或更新提示词模板"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM prompts WHERE code = ?", (code,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE prompts SET name=?, type=?, custom_value=?,
+                   parent_code=?, description=?, updated_at=? WHERE code=?""",
+                (name, prompt_type, custom_value, parent_code,
+                 description, self._now(), code),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            """INSERT INTO prompts
+               (code, name, type, default_value, custom_value, parent_code, description)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (code, name, prompt_type, default_value, custom_value, parent_code, description),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_prompt(self, code: str) -> dict | None:
+        """获取提示词模板（custom_value 优先于 default_value）"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM prompts WHERE code = ?", (code,)
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["value"] = d.get("custom_value") or d.get("default_value")
+        return d
+
+    def list_prompts(self, prompt_type: str | None = None) -> list[dict]:
+        """查询提示词模板列表"""
+        conn = self._get_conn()
+        if prompt_type:
+            rows = conn.execute(
+                "SELECT * FROM prompts WHERE type = ? ORDER BY code", (prompt_type,)
+            ).fetchall()
+        else:
+            rows = conn.execute("SELECT * FROM prompts ORDER BY code").fetchall()
+        return [dict(r) for r in rows]
+
+    def seed_default_prompts(self) -> None:
+        """初始化默认提示词模板（对标 Toonflow t_prompts）"""
+        defaults = [
+            ("outlineScript-main",    "大纲故事线主 Agent",   "mainAgent",  "", None,
+             "大纲故事线协调 Agent，协调 AI1(故事师)、AI2(大纲师)、director(导演) 三个子 Agent 工作"),
+            ("outlineScript-a1",     "故事师",              "subAgent",   "outlineScript-main", "", None,
+             "分析小说章节，生成故事线"),
+            ("outlineScript-a2",       "大纲师",              "subAgent",   "outlineScript-main", "", None,
+             "根据故事线生成大纲 JSON"),
+            ("outlineScript-director","导演",               "subAgent",   "outlineScript-main", "", None,
+             "审核故事线和大纲的质量"),
+            ("storyboard-main",       "分镜协调 Agent",      "mainAgent",  "", None,
+             "分镜协调 Agent，管理 segmentAgent 和 shotAgent"),
+            ("storyboard-segment",    "片段师",              "subAgent",   "storyboard-main", "", None,
+             "识别剧本关键片段，生成 segments"),
+            ("storyboard-shot",       "分镜师",             "subAgent",   "storyboard-main", "", None,
+             "生成电影级分镜提示词"),
+            ("generateImagePrompts",  "宫格分镜提示词生成",  "tool",       "", "", None,
+             "宫格分镜提示词生成工具"),
+        ]
+        for row in defaults:
+            self.upsert_prompt(
+                code=row[0], name=row[1], prompt_type=row[2],
+                default_value=row[3], parent_code=row[4],
+                description=row[6],
+            )
 
     # ─── 迁移 ───────────────────────────────────────────────────────────────
 

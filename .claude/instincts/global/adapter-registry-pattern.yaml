@@ -1,0 +1,38 @@
+---
+id: adapter-registry-multi-model
+trigger: "当设计多 AI 服务集成的架构时（新增 API / 统一调用多个模型）"
+confidence: 0.85
+domain: 架构设计 · AI 服务集成
+source: prompt-optimizer-deep-dive
+scope: global
+---
+
+# Adapter Registry 模式
+
+## 行为
+
+当需要统一调用多个 AI 服务时，**用 Adapter Registry 模式，不硬编码 API 调用**。
+
+核心原则：**一个接口，多个实现。切换模型只需换适配器，不改调用方。**
+
+```
+调用方 → Registry.get('provider') → ProviderAdapter → 具体 API
+```
+
+关键组件：
+1. **统一接口** `ILLMAdapter`（sendMessage + sendMessageStream）
+2. **注册中心** `AdapterRegistry`（register/get/list）
+3. **基类** `BaseAdapter`（通用 fetch + headers + error 处理）
+4. **工厂函数** `createLLMService()`（一次性注册所有内置适配器）
+
+## 证据
+
+- prompt-optimizer 用此模式统一了 12 个 LLM 提供商
+- 切换模型只需改一行：`registry.get('dashscope')` → `registry.get('openai')`
+- 新增模型只需写新适配器文件，不动核心逻辑
+
+## 应用场景
+
+- 重构 `baoyu-image-gen`：统一 OpenAI/Google/DashScope/Doubao/Replicate
+- `huage888` 视频服务：统一即梦/可灵/海螺/通义视频 API
+- 任何需要接入多个 AI 服务的地方

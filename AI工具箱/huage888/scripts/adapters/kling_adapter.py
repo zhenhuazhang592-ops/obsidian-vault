@@ -74,6 +74,7 @@ class KlingAdapter(VideoAdapterBase):
         img2: Optional[str],
         duration: Optional[int],
         model: Optional[str],
+        references: Optional[list[dict]] = None,
     ) -> str:
         model_id = self._resolve_model(model, duration)
         dur = duration or self.config.duration
@@ -88,17 +89,28 @@ class KlingAdapter(VideoAdapterBase):
         aspect = ratio_map.get(self.config.aspect_ratio, "16:9")
 
         # 构建请求体（Kling 格式）
-        payload = {
+        # references 优先级高于 img1（向后兼容）
+        resolved_img1 = img1
+        resolved_img2 = img2
+        if references:
+            for ref in references:
+                if ref.get("role") == "first_frame" or resolved_img1 is None:
+                    resolved_img1 = ref.get("url", img1)
+                if ref.get("role") == "last_frame":
+                    resolved_img2 = ref.get("url", img2)
+
+        payload: dict = {
             "model": model_id,
             "aspect_ratio": aspect,
             "duration": dur,
             "prompt": prompt,
         }
 
-        if img1:
-            payload["image_url"] = img1
-        if img2:
-            payload["negative_prompt"] = img2  # Kling 用 negative_prompt 字段
+        if resolved_img1:
+            payload["image_url"] = resolved_img1
+        if resolved_img2:
+            # Kling v2 支持尾帧图，v1 忽略
+            payload["negative_prompt"] = resolved_img2
 
         body_str = json.dumps(payload, separators=(",", ":"))
         url = f"{self._base_url}/v1/videos/generation"

@@ -58,7 +58,10 @@ class Shot(BaseModel):
     scene: str = Field(..., description="场景名（必须使用 outline 中的场景名）")
     props: list[str] = Field(default_factory=list, description="道具名列表")
     imagePrompt: str = Field(..., description="英文生图提示词（含风格锚定词）")
-    videoPrompt: Optional[str] = Field(default=None, description="英文生视频提示词（可选）")
+    libtvPrompt: Optional[str] = Field(
+        default=None,
+        description="英文生视频提示词（LibTV直用，≤200字，含动作+运镜+风格）",
+    )
     notes: Optional[str] = Field(default=None, description="运镜/时长备注")
 
 

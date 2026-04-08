@@ -145,7 +145,8 @@ def main():
     parser.add_argument("--cols", type=int, default=3, help="宫格列数")
     parser.add_argument("--output-dir", required=True)
     parser.add_argument("--provider", default="doubao")
-    parser.add_argument("--model", default="nanobanana")
+    parser.add_argument("--model", default="doubao-seedream-5-0-260128",
+                        help="图片模型，默认 doubao-seedream-5-0-260128（与 P1 一致）")
     parser.add_argument("--aspect-ratio", default="16:9", choices=["16:9", "9:16", "1:1"])
     parser.add_argument("--dry-run", action="store_true")
     args = parser.parse_args()

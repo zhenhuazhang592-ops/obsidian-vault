@@ -1,0 +1,33 @@
+{
+  "episode": "S01E01",
+  "project": "测试验证",
+  "generated_at": "2026-04-08T17:50:35.640531",
+  "stages": {
+    "storyline": {
+      "path": null,
+      "status": "skipped"
+    },
+    "outline": {
+      "path": "outputs/S01E01/S01E01-outline.md",
+      "status": "success"
+    },
+    "asset_images": {
+      "status": "success"
+    },
+    "storyboard": {
+      "path": "outputs/S01E01/S01E01-shots.md",
+      "status": "success"
+    },
+    "p1": {
+      "status": "success"
+    },
+    "p2": {
+      "status": "success"
+    },
+    "video": {
+      "status": "success",
+      "generated": 0,
+      "failed": 0
+    }
+  }
+}

@@ -98,8 +98,262 @@ def _lazy_event_emitter(log_file: str | None = None, emit_console: bool = True):
 
 
 # ─────────────────────────────────────────────────────────────────
+# 资产库查询（打通资产库 → 视频提示词）
+# ─────────────────────────────────────────────────────────────────
+
+def resolve_shot_references(
+    shot: dict,
+    asset_library=None,
+    asset_dir: Path | None = None,
+) -> list[dict]:
+    """
+    为单个 shot 解析资产参考图列表（参考 Toonflow 多参考图模式）。
+
+    查询优先级：
+      1. asset_dir（Stage 1.5 输出目录，episode 专用资产）
+      2. AssetLibrary 全局库（assets/library/）
+
+    Args:
+        shot:         分镜 dict，需包含 characters / scene / props 字段
+        asset_library: AssetLibrary 实例
+        asset_dir:    Stage 1.5 输出目录（如 outputs/S01E01/assets/）
+
+    Returns:
+        references: list[dict]，每项 {
+            "url": str,       # 本地绝对路径
+            "role": str,      # "reference_image"
+            "label": str,     # 标签，如 "漠玫参考图"
+            "asset_name": str, # 资产名称
+            "asset_type": str, # character / scene / prop
+        }
+    """
+    from adapters.video_adapter_base import IMAGE_ROLE_REFERENCE
+
+    refs: list[dict] = []
+    seen_urls: set[str] = set()
+
+    def _add_ref(file_path: str, label: str, asset_name: str, asset_type: str, base: Path):
+        """添加单个参考图（去重）"""
+        if file_path in seen_urls:
+            return
+        abs_path = base / file_path
+        if abs_path.exists():
+            refs.append({
+                "url": str(abs_path.resolve()),
+                "role": IMAGE_ROLE_REFERENCE,
+                "label": label,
+                "asset_name": asset_name,
+                "asset_type": asset_type,
+            })
+            seen_urls.add(file_path)
+
+    # ── 1. 优先：asset_dir（episode 输出目录）───────────────────
+    if asset_dir and asset_dir.exists() and asset_library:
+        for char_name in shot.get("characters", []):
+            for fp in asset_library.resolve(char_name, "character", base_dir=asset_dir):
+                _add_ref(fp, f"{char_name}参考图", char_name, "character", asset_dir)
+
+        scene_name = shot.get("scene", "")
+        if scene_name:
+            for fp in asset_library.resolve(scene_name, "scene", base_dir=asset_dir):
+                _add_ref(fp, f"{scene_name}场景参考图", scene_name, "scene", asset_dir)
+
+        for prop_name in shot.get("props", []):
+            for fp in asset_library.resolve(prop_name, "prop", base_dir=asset_dir):
+                _add_ref(fp, f"{prop_name}道具参考图", prop_name, "prop", asset_dir)
+
+    # ── 2. 降级：AssetLibrary 全局库 + 目录扫描 ─────────────────
+    global_base = BASE_DIR / "assets" / "library"
+
+    if asset_library:
+        for char_name in shot.get("characters", []):
+            for fp in asset_library.resolve(char_name, "character", base_dir=global_base):
+                _add_ref(fp, f"{char_name}参考图(全局)", char_name, "character", global_base)
+
+        scene_name = shot.get("scene", "")
+        if scene_name:
+            for fp in asset_library.resolve(scene_name, "scene", base_dir=global_base):
+                _add_ref(fp, f"{scene_name}场景参考图(全局)", scene_name, "scene", global_base)
+
+        for prop_name in shot.get("props", []):
+            for fp in asset_library.resolve(prop_name, "prop", base_dir=global_base):
+                _add_ref(fp, f"{prop_name}道具参考图(全局)", prop_name, "prop", global_base)
+
+    # ── 3. 降级：asset_dir 目录直接扫描（无 manifest 时兜底）───
+    if asset_dir and asset_dir.exists():
+        for char_name in shot.get("characters", []):
+            char_dir = asset_dir / char_name
+            if not char_dir.is_dir():
+                continue
+            for img in char_dir.glob("*.png"):
+                if img.name in seen_urls:
+                    continue
+                refs.append({
+                    "url": str(img.resolve()),
+                    "role": IMAGE_ROLE_REFERENCE,
+                    "label": f"{char_name}参考图",
+                    "asset_name": char_name,
+                    "asset_type": "character",
+                })
+                seen_urls.add(img.name)
+
+        scene_name = shot.get("scene", "")
+        if scene_name:
+            scene_dir = asset_dir / scene_name
+            if scene_dir.is_dir():
+                for img in scene_dir.glob("*.png"):
+                    if img.name in seen_urls:
+                        continue
+                    refs.append({
+                        "url": str(img.resolve()),
+                        "role": IMAGE_ROLE_REFERENCE,
+                        "label": f"{scene_name}场景参考图",
+                        "asset_name": scene_name,
+                        "asset_type": "scene",
+                    })
+                    seen_urls.add(img.name)
+
+    return refs
+
+
+def build_video_prompt_with_references(
+    base_prompt: str,
+    references: list[dict],
+    style_name: str = "",
+    art_style: dict | None = None,
+) -> str:
+    """
+    构建增强后的视频 prompt（含资产 Reference Section）。
+
+    参考 @图N 格式（来自视频提示词生成 Skill）：
+      [References]
+      @图1 : [漠玫参考图]
+      @图2 : [赛博西湖断桥场景图]
+      [Instruction]
+      Based on @图1 ..., set in the environment of @图2 ...
+
+    Toonflow 的实际 API 传图方式是 content 数组，
+    此函数同时输出 Reference Section（供日志/debug）和纯 prompt 文本。
+
+    Returns:
+        (enhanced_prompt, ref_section)
+        - enhanced_prompt: 含 @图N 引用标记的完整 prompt（用于日志）
+        - ref_section: [References] ... 部分（可嵌入 prompt）
+    """
+    parts: list[str] = []
+
+    # 1. [References] Section（@图N 格式）
+    if references:
+        ref_lines = ["[References]"]
+        for i, ref in enumerate(references, 1):
+            label = ref.get("label", ref.get("asset_name", f"图{i}"))
+            ref_lines.append(f"@图{i} : [{label}]")
+        parts.append("\n".join(ref_lines))
+
+    # 2. [Instruction] Section
+    if references:
+        parts.append("[Instruction]")
+        # 注入 @图N 引用到主体内容
+        ref_usage_parts = []
+        for i, ref in enumerate(references, 1):
+            asset_name = ref.get("asset_name", "")
+            asset_type = ref.get("asset_type", "")
+            if asset_type == "character":
+                ref_usage_parts.append(f"@图{i} (character reference: {asset_name})")
+            elif asset_type == "scene":
+                ref_usage_parts.append(f"@图{i} (scene reference: {asset_name})")
+            else:
+                ref_usage_parts.append(f"@图{i} ({asset_name})")
+        parts.append("Reference assets: " + ", ".join(ref_usage_parts) + ".")
+        parts.append("Content: " + base_prompt)
+    else:
+        parts.append(base_prompt)
+
+    # 3. [Style Mandate]
+    style_constraint = ""
+    if art_style and isinstance(art_style, dict):
+        style_text = art_style.get("prompt", "")
+        style_en = art_style.get("prompt_en", "")
+        style_constraint = f"[Style Mandate]: Strictly maintain {style_name or 'specified'} art style. {style_en or style_text}"
+    elif style_name:
+        style_constraint = f"[Style Mandate]: Strictly maintain {style_name} art style."
+
+    if style_constraint:
+        parts.append(style_constraint)
+
+    return "\n".join(parts)
+
+
+# ─────────────────────────────────────────────────────────────────
 # Prompt 模板系统
 # ─────────────────────────────────────────────────────────────────
+
+def build_video_prompt(
+    base_prompt: str,
+    style_name: str = "",
+    art_style: str = "",
+    characters: str = "",
+    scene: str = "",
+) -> str:
+    """
+    构建增强后的视频 prompt（对标 Toonflow generateVideo.ts）。
+
+    Toonflow 模式：
+      "请完全参照以下内容生成视频：${prompt}\n重要强调：\n风格高度保持..."
+
+    注入层次：
+    1. 资产引用（角色名=参考图）
+    2. 风格锚定（Art Style 强制）
+    3. 技术参数（时长/比例）
+
+    Args:
+        base_prompt:   原始 libtvPrompt
+        style_name:     风格名称（如"赛博墨韵"）
+        art_style:      Art Style 对象（dict，含 prompt/prompt_en）
+        characters:     角色名列表（逗号分隔）
+        scene:          场景名
+
+    Returns:
+        增强后的完整 prompt
+    """
+    parts = []
+
+    # 1. 角色一致性锚定
+    if characters:
+        parts.append(f"[Character Reference]: {characters}")
+
+    # 2. 场景锚定
+    if scene:
+        parts.append(f"[Scene Reference]: {scene}")
+
+    # 3. 主体内容
+    parts.append(f"[Content]: {base_prompt}")
+
+    # 4. 风格强制（最高优先级）
+    style_constraint = ""
+    if art_style and isinstance(art_style, dict):
+        # 从 art_style 提取中英文 prompt
+        style_text = art_style.get("prompt", "")
+        style_en = art_style.get("prompt_en", "")
+        style_constraint = f"[Style Mandate]: Strictly maintain {style_name or 'specified'} art style. {style_en or style_text}"
+    elif style_name:
+        style_constraint = f"[Style Mandate]: Strictly maintain {style_name} art style."
+
+    if style_constraint:
+        parts.append(style_constraint)
+
+    return "\n".join(parts)
+
+
+def _find_column(header: list[str], candidates: list[str]) -> int | None:
+    """从表头中查找匹配的列索引（不区分大小写）"""
+    for i, h in enumerate(header):
+        h_clean = h.lower().strip()
+        for c in candidates:
+            if c.lower() in h_clean or h_clean in c.lower():
+                return i
+    return None
+
 
 def render_template(template_id: str, variables: dict) -> str:
     """
@@ -151,10 +405,22 @@ def _batch_with_queue(
     task_id: str | None,
     task_name_prefix: str,
     style_name: str,
+    img1_dir: Path | None = None,
+    optimizer=None,  # PromptOptimizer instance
+    # ── 资产库参数（新增）────────────────────────────────────────
+    shots: list[dict] | None = None,   # 分镜 dict 列表（带 characters/scene/props）
+    asset_dir: Path | None = None,     # Stage 1.5 资产图目录（优先级高于 manifest）
     **kwargs,
 ) -> tuple[list[Path], list]:
-    """使用 task_queue 并行批量生成"""
-    import time as time_module
+    """使用 task_queue 并行批量生成（支持 prompt 优化 + 资产库参考图）"""
+
+    # 延迟初始化 AssetLibrary
+    asset_library = None
+    try:
+        from asset_library import AssetLibrary
+        asset_library = AssetLibrary()
+    except Exception:
+        pass
 
     def gen_video_fn(
         shot_num: int,
@@ -162,6 +428,8 @@ def _batch_with_queue(
         output_path_str: str,
         style: str,
         pvd: str,
+        shot_img1: str,
+        shot_references: list[dict],
         kw: dict,
     ):
         """闭包：避免 pickle 问题"""
@@ -170,6 +438,8 @@ def _batch_with_queue(
             prompt=prompt,
             output_path=Path(output_path_str),
             style_name=style,
+            img1=shot_img1,
+            references=shot_references,
             **kw,
         )
 
@@ -189,14 +459,57 @@ def _batch_with_queue(
         if not prompt:
             continue
         output_path = output_dir / f"shot_{i:03d}.mp4"
+
+        # ── P1 首帧图（旧逻辑，降级保留）─────────────────────────
+        shot_img1 = ""
+        if img1_dir and img1_dir.exists():
+            for fmt in [f"shot_{i:02d}.png", f"shot_{i:02d}.jpg",
+                        f"shot_{i:03d}.png", f"shot_{i:03d}.jpg"]:
+                p = img1_dir / fmt
+                if p.exists():
+                    shot_img1 = str(p.resolve())
+                    break
+
+        # ── 资产库参考图（新逻辑，打通核心）─────────────────────
+        shot_references: list[dict] = []
+        if shots and i - 1 < len(shots):
+            shot_dict = shots[i - 1]
+            shot_references = resolve_shot_references(
+                shot=shot_dict,
+                asset_library=asset_library,
+                asset_dir=asset_dir,
+            )
+            # P1 图作为额外 reference_image（如果未被 manifest 图覆盖）
+            if shot_img1 and not any(r.get("url") == shot_img1 for r in shot_references):
+                from adapters.video_adapter_base import IMAGE_ROLE_REFERENCE
+                shot_references.append({
+                    "url": shot_img1,
+                    "role": IMAGE_ROLE_REFERENCE,
+                    "label": f"分镜图-shot_{i:03d}",
+                    "asset_name": "",
+                    "asset_type": "storyboard",
+                })
+
+        # 提示词优化（video 模式，在入队前主进程执行）
+        optimized_prompt = prompt
+        if optimizer:
+            try:
+                optimized_prompt = optimizer.optimize(prompt, mode="video", dry_run=False)
+                print(f"  [OPT] shot {i:03d}: {optimized_prompt[:60]}...", file=sys.stderr)
+            except Exception as e:
+                print(f"  [OPT] shot {i:03d} 优化失败: {e}", file=sys.stderr)
+                optimized_prompt = prompt
+
         task_id_gen = queue.add(
             name=f"{task_name_prefix}-shot-{i:03d}",
             fn=gen_video_fn,
             shot_num=i,
-            prompt=prompt,
+            prompt=optimized_prompt,
             output_path_str=str(output_path),
             style=style_name,
             pvd=provider_name,
+            shot_img1=shot_img1,
+            shot_references=shot_references,
             kw=kwargs,
         )
         task_map[task_id_gen] = (i, output_path)
@@ -224,14 +537,37 @@ def batch_from_shots(
     task_id: str | None = None,
     task_name_prefix: str = "video-batch",
     style_name: str = "",
+    # ── P1 图生视频（img1_dir = Stage 3 P1 输出目录）───────────────
+    img1_dir: Path | None = None,
+    # ── 提示词优化 ─────────────────────────────────────────────────
+    optimize_prompts: bool = False,
+    # ── 资产库（打通关键：Stage 1.5 输出目录，含 manifest.json）───
+    asset_dir: Path | None = None,
     **kwargs,
 ) -> list[Path]:
-    """从分镜脚本批量生成视频"""
+    """从分镜脚本批量生成视频
+
+    若 img1_dir 存在（Stage 3 P1 输出目录），自动为每个镜头匹配 P1 图片作为首帧参考。
+    若 asset_dir 存在（Stage 1.5 输出目录），优先从 manifest.json 查资产参考图注入视频。
+    若 optimize_prompts=True，使用 PromptOptimizer（video 模式）增强每个 libtvPrompt。
+    P1 图片命名规范：shot_01.png, shot_02.png, ...
+    """
     if not shots_file.exists():
         raise FileNotFoundError(f"分镜文件不存在：{shots_file}")
 
     content = shots_file.read_text(encoding="utf-8")
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # 提示词优化器（延迟初始化）
+    optimizer = None
+    if optimize_prompts:
+        try:
+            sys.path.insert(0, str(BASE_DIR / "config"))
+            from prompt_optimizer import PromptOptimizer
+            optimizer = PromptOptimizer()
+            print(f"  [OPT] PromptOptimizer 已就绪（mode=video）", file=sys.stderr)
+        except Exception as e:
+            print(f"  [OPT] PromptOptimizer 初始化失败: {e}", file=sys.stderr)
 
     # 解析 Markdown 表格
     lines = content.split("\n")
@@ -251,31 +587,85 @@ def batch_from_shots(
 
     # 第一行是表头
     header = rows[0]
+    col_idx = None
+    fallback_used = None
     try:
         col_idx = header.index(prompt_column)
     except ValueError:
-        # 尝试模糊匹配
-        col_idx = None
+        # 优先精确匹配 libtvPrompt（视频专用），降级 imagePrompt（质量较低）
         for i, h in enumerate(header):
-            if "prompt" in h.lower() or "libtv" in h.lower():
+            if "libtvprompt" in h.lower():
                 col_idx = i
+                fallback_used = "libtvPrompt"
                 break
+        if col_idx is None:
+            for i, h in enumerate(header):
+                if h.lower() in ("imageprompt", "prompt", "videoprompt"):
+                    col_idx = i
+                    fallback_used = "imagePrompt (no libtvPrompt available — video quality may suffer)"
+                    break
         if col_idx is None:
             raise ValueError(f"找不到列 '{prompt_column}'，表头：{header}")
 
-    print(f"📋 找到 {len(rows)-1} 个镜头，Prompt 列：'{header[col_idx]}'", file=sys.stderr)
+    actual_col = header[col_idx]
+    if fallback_used:
+        print(f"⚠️  找不到 '{prompt_column}' 列，降级使用：'{actual_col}' — {fallback_used}", file=sys.stderr)
+    print(f"📋 找到 {len(rows)-1} 个镜头，Prompt 列：'{actual_col}'", file=sys.stderr)
+
+    # ── 解析分镜字典列表（用于资产库查询）────────────────────────
+    # 从表头推断列位置
+    shot_dicts: list[dict] = []
+    char_col = _find_column(header, ["characters", "主体", "出场人物"])
+    scene_col = _find_column(header, ["scene", "场景", "场景名"])
+    props_col = _find_column(header, ["props", "道具"])
+
+    for row in rows[1:]:
+        shot_dict: dict = {"characters": [], "scene": "", "props": []}
+        # 解析 characters 列（可能为空字符串）
+        if char_col is not None and char_col < len(row):
+            names = row[char_col].strip()
+            shot_dict["characters"] = [n.strip() for n in names.split("/") if n.strip()]
+        if scene_col is not None and scene_col < len(row):
+            shot_dict["scene"] = row[scene_col].strip()
+        if props_col is not None and props_col < len(row):
+            props = row[props_col].strip()
+            shot_dict["props"] = [p.strip() for p in props.split("/") if p.strip()]
+        shot_dicts.append(shot_dict)
+
+    print(f"  📋 资产库查询：{len(shot_dicts)} 个镜头已解析 characters/scene/props", file=sys.stderr)
 
     # 使用 task_queue 并行执行（可选降级）
     use_queue = max_workers > 1
     if use_queue:
         print(f"🔄 启用任务队列（并发 {max_workers}，最大重试 {max_retries}）", file=sys.stderr)
+        # 解析 asset_dir（显式参数优先，否则从 img1_dir 推导）
+        resolved_asset_dir: Path | None = asset_dir
+        if resolved_asset_dir is None and img1_dir is not None:
+            resolved_asset_dir = img1_dir.parent / "assets"
         results, task_queue_results = _batch_with_queue(
             rows[1:], col_idx, output_dir,
             provider_name, max_workers, max_retries,
             emitter, task_id, task_name_prefix, style_name,
+            img1_dir=img1_dir,
+            optimizer=optimizer,
+            shots=shot_dicts,
+            asset_dir=resolved_asset_dir,
             **kwargs,
         )
     else:
+        # 延迟初始化 AssetLibrary
+        asset_library = None
+        try:
+            from asset_library import AssetLibrary
+            asset_library = AssetLibrary()
+        except Exception:
+            pass
+
+        # 解析 asset_dir（显式参数优先，否则从 img1_dir 推导）
+        resolved_asset_dir: Path | None = asset_dir
+        if resolved_asset_dir is None and img1_dir is not None:
+            resolved_asset_dir = img1_dir.parent / "assets"
+
         results = []
         for i, row in enumerate(rows[1:], 1):
             if col_idx >= len(row):
@@ -284,8 +674,50 @@ def batch_from_shots(
             if not prompt:
                 continue
 
+            # 提示词优化层（video 模式）
+            if optimizer:
+                try:
+                    prompt = optimizer.optimize(prompt, mode="video", dry_run=False)
+                    print(f"  [OPT] shot {i:03d} 优化后: {prompt[:60]}...", file=sys.stderr)
+                except Exception as e:
+                    print(f"  [OPT] shot {i:03d} 优化失败: {e}", file=sys.stderr)
+
+            # 查找 P1 首帧图
+            shot_img1 = ""
+            if img1_dir and img1_dir.exists():
+                for fmt in [f"shot_{i:02d}.png", f"shot_{i:02d}.jpg",
+                            f"shot_{i:03d}.png", f"shot_{i:03d}.jpg"]:
+                    p = img1_dir / fmt
+                    if p.exists():
+                        shot_img1 = str(p.resolve())
+                        break
+
+            # ── 资产库查询（新逻辑，打通核心）─────────────────────
+            shot_dict = shot_dicts[i - 1] if i - 1 < len(shot_dicts) else {}
+            shot_references = resolve_shot_references(
+                shot=shot_dict,
+                asset_library=asset_library,
+                asset_dir=resolved_asset_dir,
+            )
+            # 合并 P1 图
+            if shot_img1 and not any(r.get("url") == shot_img1 for r in shot_references):
+                from adapters.video_adapter_base import IMAGE_ROLE_REFERENCE
+                shot_references.append({
+                    "url": shot_img1,
+                    "role": IMAGE_ROLE_REFERENCE,
+                    "label": f"分镜图-shot_{i:03d}",
+                    "asset_name": "",
+                    "asset_type": "storyboard",
+                })
+
             output_path = output_dir / f"shot_{i:03d}.mp4"
             print(f"\n[镜头 {i:03d}] → {output_path.name}", file=sys.stderr)
+            if shot_references:
+                print(f"  📷 资产参考图：{len(shot_references)} 张", file=sys.stderr)
+                for r in shot_references:
+                    print(f"    [{r.get('role', 'ref')}] {r.get('label', r.get('asset_name', '?'))}", file=sys.stderr)
+            elif shot_img1:
+                print(f"  📷 首帧参考：{Path(shot_img1).name}", file=sys.stderr)
 
             try:
                 generate_video(
@@ -293,6 +725,8 @@ def batch_from_shots(
                     prompt=prompt,
                     output_path=output_path,
                     style_name=style_name,
+                    img1=shot_img1,
+                    references=shot_references if shot_references else None,
                     **kwargs,
                 )
                 results.append(output_path)
@@ -318,13 +752,17 @@ def generate_video(
     img1: str = "",
     img2: str = "",
     style_name: str = "",
+    # ── 资产库参考图（打通关键）──────────────────────────────────
+    references: list[dict] | None = None,
+    shot: dict | None = None,   # 可选，直接传 shot dict 替代 references
+    asset_dir: Path | None = None,  # 备选：从目录扫描资产图
     # ── 追踪参数（可选）─────────────────────────────────────────────
     emitter=None,
     task_id: str | None = None,
     task_name: str = "video-gen",
     **kwargs,
 ) -> VideoResult:
-    """生成视频（统一入口）"""
+    """生成视频（统一入口，支持多参考图）"""
     registry = get_registry()
     adapter = registry.get(provider_name)
 
@@ -333,12 +771,35 @@ def generate_video(
     adapter.config.watermark = watermark
     adapter.config.aspect_ratio = aspect_ratio
 
-    # 风格锚定（art_styles 集成）
+    # 风格锚定 + prompt 增强
+    art_style_obj = None
     if style_name:
-        style = get_style(style_name)
-        if style:
-            prompt = prompt.rstrip() + "，" + style["prompt"]
+        art_style_obj = get_style(style_name)
+        if art_style_obj:
             print(f"  🎨 风格锚定：{style_name}", file=sys.stderr)
+
+    # ── 解析 references ────────────────────────────────────────────
+    final_refs: list[dict] = list(references) if references else []
+
+    # 如果传的是 shot dict，直接在函数内解析（简化调用方）
+    if not final_refs and shot:
+        # 延迟导入 AssetLibrary（避免硬依赖）
+        asset_library = None
+        try:
+            from asset_library import AssetLibrary
+            asset_library = AssetLibrary()
+        except Exception:
+            pass
+
+        final_refs = resolve_shot_references(shot, asset_library, asset_dir)
+
+    # 注入 @图N Reference Section 到 prompt（日志/debug 用）
+    enhanced_prompt, _ = build_video_prompt_with_references(
+        base_prompt=prompt,
+        references=final_refs,
+        style_name=style_name,
+        art_style=art_style_obj,
+    )
 
     if emitter and task_id:
         emitter.emit_task_start(task_name, params={"prompt": prompt[:50], "provider": provider_name})
@@ -347,15 +808,19 @@ def generate_video(
     print(f"  适配器：{provider_name}", file=sys.stderr)
     print(f"  模型：{model or adapter.default_video_model}", file=sys.stderr)
     print(f"  时长：{duration}s | 比例：{aspect_ratio} | 水印：{watermark}", file=sys.stderr)
-    print(f"  Prompt：{prompt[:60]}{'...' if len(prompt) > 60 else ''}", file=sys.stderr)
+    print(f"  参考图：{len(final_refs)} 张", file=sys.stderr)
+    for r in final_refs:
+        print(f"    [{r.get('role', 'ref')}] {r.get('label', r.get('asset_name', '?'))}", file=sys.stderr)
+    print(f"  Prompt：{enhanced_prompt[:80]}{'...' if len(enhanced_prompt) > 80 else ''}", file=sys.stderr)
 
     result = adapter.generate_video(
-        prompt=prompt,
+        prompt=enhanced_prompt,
         output_path=output_path,
         img1=img1 or None,
         img2=img2 or None,
         duration=duration,
         model=model or None,
+        references=final_refs if final_refs else None,
     )
 
     print(f"  ✅ 完成（{result.elapsed_seconds:.0f}s）：{output_path}", file=sys.stderr)
@@ -413,6 +878,8 @@ def stage5_video(
     conv_mgr=None,
     emitter=None,
     dry_run: bool = False,
+    img1_dir: Path | None = None,
+    optimize_prompts: bool = False,
 ) -> dict:
     """
     Stage 5: 分镜脚本 → 批量视频生成
@@ -432,18 +899,24 @@ def stage5_video(
         conv_mgr: ConversationManager 实例（可选）
         emitter: EventEmitter 实例（可选）
         dry_run: dry-run 模式
+        img1_dir: P1 阶段输出目录（shots/images/），自动匹配 shot_XX.png 作为首帧参考图
 
     Returns:
         {"generated": N, "failed": M, "files": [file_paths], "summary": {...}}
     """
-    base = output_dir or (BASE_DIR / "outputs")
+    base = (output_dir or (BASE_DIR / "outputs")).resolve()
     video_dir = base / episode / "videos"
     video_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        rel_video_dir = video_dir.relative_to(BASE_DIR)
+    except ValueError:
+        rel_video_dir = video_dir
 
     print(f"\n🎬 Stage 5: 视频生成")
     print(f"  集数：{episode}")
     print(f"  分镜脚本：{shots_path.name}")
-    print(f"  输出目录：{video_dir.relative_to(BASE_DIR)}")
+    print(f"  输出目录：{rel_video_dir}")
     print(f"  提供商：{provider}，时长：{duration}s，水印：{watermark}")
 
     if dry_run:
@@ -472,6 +945,12 @@ def stage5_video(
         except Exception as e:
             print(f"  [WARN] task_db 记录失败: {e}", file=sys.stderr)
 
+    if img1_dir:
+        try:
+            print(f"  📷 P1 首帧参考目录：{img1_dir.relative_to(BASE_DIR)}")
+        except ValueError:
+            print(f"  📷 P1 首帧参考目录：{img1_dir}")
+
     try:
         results = batch_from_shots(
             shots_file=shots_path,
@@ -484,6 +963,9 @@ def stage5_video(
             task_name_prefix=f"video_{episode}",
             duration=duration,
             watermark=watermark,
+            img1_dir=img1_dir,
+            optimize_prompts=optimize_prompts,
+            asset_dir=img1_dir.parent / "assets" if img1_dir else None,
         )
 
         generated = len(results)
@@ -538,6 +1020,9 @@ def parse_args():
 
     parser.add_argument("--list", action="store_true", help="列出所有已注册适配器")
     parser.add_argument("--test", action="store_true", help="测试所有适配器连接")
+    parser.add_argument("--test-model",
+                        metavar="MODEL_ID",
+                        help="检测指定模型是否可用（如 doubao-seedance-2-0-260128）")
 
     mode = parser.add_argument_group("模式（互斥）")
     mode_g = mode.add_mutually_exclusive_group()
@@ -595,6 +1080,47 @@ def parse_args():
     return parser.parse_args()
 
 
+def test_model_availability(adapter, model: str) -> tuple[bool, str]:
+    """
+    检测指定模型是否可用。
+
+    实现：尝试用该模型创建一个最小任务，通过返回结果判断。
+    Doubao → POST /contents/generations/tasks
+    Kling  → 依赖 KlingAdapter 的健康检查
+
+    返回：(ok: bool, reason: str)
+    """
+    try:
+        # Doubao 适配器
+        if hasattr(adapter, "_create_video_task"):
+            # 最小化测试：发一个 5 秒测试任务
+            task_id = adapter._create_video_task(
+                prompt="test --wm true --dur 5",
+                img1=None, img2=None, duration=5, model=model,
+            )
+            return True, task_id
+
+        # 通用健康检查
+        if hasattr(adapter, "health_check") and adapter.health_check():
+            return True, "health_check passed"
+
+        return False, "unknown adapter type"
+
+    except Exception as e:
+        err = str(e)
+        if "401" in err or "authentication" in err.lower():
+            return False, "API Key 无效或未设置"
+        if "403" in err:
+            return False, "权限不足（余额可能为 0）"
+        if "404" in err:
+            return False, f"模型 {model} 不存在（404）"
+        if "400" in err:
+            return False, f"模型 {model} 参数错误（400）：{err[:200]}"
+        if "429" in err:
+            return False, "限流（429）"
+        return False, err[:300]
+
+
 # ─────────────────────────────────────────────────────────────────
 # 主函数
 # ─────────────────────────────────────────────────────────────────
@@ -642,6 +1168,32 @@ def main():
             status = "✅ 正常" if adapter.health_check() else "❌ 失败"
             print(f"  {name}: {status}")
         print("=" * 50)
+        return
+
+    # 测试指定模型可用性
+    if args.test_model:
+        print(f"检测模型：{args.test_model}", file=sys.stderr)
+        model = args.test_model
+        # 根据模型前缀推断提供商
+        if "seedance" in model.lower() or "seedream" in model.lower() or "doubao" in model.lower():
+            provider = "doubao"
+        elif "kling" in model.lower():
+            provider = "kling"
+        else:
+            provider = args.provider
+
+        adapter = registry.get(provider)
+        if adapter is None:
+            print(f"❌ 提供商 {provider} 未注册", file=sys.stderr)
+            sys.exit(1)
+
+        print(f"提供商：{provider}", file=sys.stderr)
+        ok, reason = test_model_availability(adapter, model)
+        if ok:
+            print(f"\n✅ 模型 {model} 可用", file=sys.stderr)
+        else:
+            print(f"\n❌ 模型 {model} 不可用：{reason}", file=sys.stderr)
+            sys.exit(1)
         return
 
     # 解析 prompt（模板 或 直接文本）

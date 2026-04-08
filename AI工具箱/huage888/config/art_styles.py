@@ -371,6 +371,44 @@ ART_STYLES: dict[str, list[dict]] = {
             "note": "断桥奇遇场景风格",
         },
     ],
+
+    # ══════════════════════════════════════════════════════
+    # 来源：中年人的修复术风格模板.html
+    # 风格：半写实动漫 × 金继美学 × 当代华人情感叙事 × 今敏笔触
+    # 适用：中年情感短剧、品牌故事片、竖屏/横屏叙事短片
+    # ══════════════════════════════════════════════════════
+    "叙事风格": [
+        {
+            "name": "中年修复术",
+            "prompt": "(画风：中年修复术,半写实动漫,金继美学,今敏笔触,吉卜力氛围,焦土暖调,克制内敛,岁月感面孔,金继裂缝,胶片质感)",
+            "prompt_en": "semi-realistic anime style, Satoshi Kon influence, Studio Ghibli atmosphere, muted warm tones, cinematic lighting, detailed texture, film grain, emotional depth, kintsugi gold cracks, weathered middle-aged face",
+            "file_url": "",
+            "note": "中年情感叙事核心风格锚点",
+            "skill_file": "skills/中年修复术-style/SKILL.md",
+            "tags": ["半写实", "金继", "今敏", "中年叙事", "情感"],
+            "color_palette": {
+                "primary": ["#2C1F14", "#5C3D20", "#8B6340", "#C49A6C", "#E8D5B7", "#F5EFE4"],
+                "accent": ["#B8860B", "#C8A951", "#7A8A8F", "#A0B0B5"],
+                "description": "焦土暖调 + 金继金 + 瓷器灰蓝点缀",
+            },
+            "negative_prompt": "young idol face, perfect smooth skin, bright saturated colors, western comic style, 3D CGI render look, action hero body, fantasy elements, chibi, flat 2D anime, neon lights, overly dramatic expression, low quality, blurry",
+            "props": [
+                {"name": "金继陶碗", "prompt": "kintsugi ceramic bowl, gold lacquer cracks, white porcelain, held in weathered hands"},
+                {"name": "旧书/信件", "prompt": "aged paperback book, yellowed pages, handwritten margin notes, worn spine"},
+                {"name": "手工工具", "prompt": "traditional repair tools, bamboo brush, urushi lacquer bowl, wooden workbench"},
+                {"name": "搪瓷杯/铁饭盒", "prompt": "vintage Chinese enamel mug, faded floral pattern, worn edges, warm tea inside"},
+                {"name": "植物/盆栽", "prompt": "small bonsai on windowsill, weathered clay pot, soft afternoon light"},
+                {"name": "老照片/相册", "prompt": "old family photograph, film grain, faded colors, 1990s Chinese interior background"},
+            ],
+            "narrative_arc": [
+                {"act": 1, "name": "破碎时刻", "desc": "用物件/事件切入，不解释背景，直接进入状态"},
+                {"act": 2, "name": "劳动作为逃避", "desc": "手工劳动回避情绪，大量道具特写，少台词"},
+                {"act": 3, "name": "意外的连接", "desc": "另一个人物带来新视角，人与人偶然真实相遇"},
+                {"act": 4, "name": "金继时刻（高潮）", "desc": "裂缝被正视而非掩盖，情绪释放但克制"},
+                {"act": 5, "name": "开放结局", "desc": "不给答案，给一个动作或画面"},
+            ],
+        },
+    ],
 }
 
 
@@ -478,6 +516,9 @@ def recommend_styles_for_project(project_type: str) -> list[dict]:
         "可爱": ["Q版3D", "像素", "动森", "日本小人"],
         "IP": ["蜡笔小新", "草帽团", "木叶村", "龙族传说"],
         "短剧": ["真人写实", "3D国创", "赛博竹林", "油画釉光"],
+        "中年叙事": ["中年修复术"],
+        "情感叙事": ["中年修复术", "吉卜力", "油画釉光"],
+        "金继": ["中年修复术"],
     }
 
     recommended_names = recommendations.get(project_type, [])

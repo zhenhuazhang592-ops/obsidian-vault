@@ -63,6 +63,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable, Optional
 from threading import Lock
+import threading
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -347,65 +348,146 @@ class JSONLSink(Sink):
 
 class WebSocketSink(Sink):
     """
-    WebSocket Sink — 实时推送到前端
+    WebSocket Sink — 实时推送到前端（后台线程 + 持久连接）
 
     用途：
     - 供 Claude Code Web UI 实时展示进度
     - 与前端应用集成
 
-    注意：需要 websockets 库（pip install websockets）
+    实现：
+    - 独立 daemon 线程持有 WebSocket 连接
+    - 主线程 write() 非阻塞 enqueue，不抛异常
+    - 连接断开时自动重连（最多 3 次，间隔 reconnect_delay 秒）
+    - 依赖 websockets 库（pip install websockets）
+
+    用法：
+      sink = WebSocketSink("ws://localhost:8080/events")
+      emitter = EventEmitter(sinks=[ConsoleSink(), sink])
     """
 
-    def __init__(self, url: str, reconnect: bool = True, reconnect_delay: float = 3.0):
+    def __init__(
+        self,
+        url: str,
+        reconnect: bool = True,
+        reconnect_delay: float = 3.0,
+        max_retries: int = 3,
+        queue_size: int = 200,
+    ):
         self.url = url
         self.reconnect = reconnect
         self.reconnect_delay = reconnect_delay
-        self._ws = None
-        self._lock = Lock()
-        self._connect()
+        self.max_retries = max_retries
 
-    def _connect(self) -> None:
+        self._queue: "queue.Queue[str]" | None = None
+        self._thread: "threading.Thread | None" = None
+        self._lock = threading.Lock()
+        self._stop_event: "threading.Event | None" = None
+        self._websockets: "type | None" = None
+
+        self._connect_module()
+        self._start_thread(queue_size)
+
+    def _connect_module(self) -> None:
+        """延迟导入 websockets 库"""
         try:
-            import websockets
-            import asyncio
-            # 延迟导入，避免无 websockets 库时报错
-            self._websockets = websockets
-            self._connected = True
+            import websockets as _ws
+            self._websockets = _ws
         except ImportError:
             print(
                 "⚠️  WebSocket Sink 需要 websockets 库：pip install websockets",
-                file=sys.stderr
+                file=sys.stderr,
             )
-            self._connected = False
+
+    def _start_thread(self, queue_size: int) -> None:
+        """启动后台发送线程"""
+        import queue
+        self._queue = queue.Queue(maxsize=queue_size)
+        self._stop_event = threading.Event()
+
+        def ws_sender():
+            import asyncio
+            ws: "Any" = None
+            retry_count = 0
+
+            async def _send_loop():
+                nonlocal ws, retry_count
+                while not self._stop_event.wait(0.5):
+                    # 尝试发送队列中的所有消息
+                    if ws is None:
+                        # 需要重连
+                        if not self.reconnect or retry_count >= self.max_retries:
+                            # 丢弃队列中所有消息
+                            while not self._queue.empty():
+                                try:
+                                    self._queue.get_nowait()
+                                except Exception:
+                                    break
+                            break
+                        try:
+                            async with self._websockets.connect(self.url) as _ws:
+                                ws = _ws
+                                retry_count = 0
+                                # 发送队列积压
+                                while not self._queue.empty():
+                                    try:
+                                        msg = self._queue.get_nowait()
+                                        await ws.send(msg)
+                                    except Exception:
+                                        break
+                        except Exception:
+                            retry_count += 1
+                            self._stop_event.wait(self.reconnect_delay)
+                            continue
+
+                    # 非阻塞消费队列
+                    batch = []
+                    while len(batch) < 10:
+                        try:
+                            batch.append(self._queue.get_nowait())
+                        except Exception:
+                            break
+                    for msg in batch:
+                        try:
+                            await ws.send(msg)
+                        except Exception:
+                            ws = None  # 触发重连
+                            retry_count += 1
+                            break
+
+            try:
+                asyncio.run(_send_loop())
+            except RuntimeError:
+                # 已在 asyncio 事件循环中
+                pass
+
+        self._thread = threading.Thread(target=ws_sender, daemon=True, name="ws-sender")
+        self._thread.start()
 
     def write(self, event: Event) -> None:
-        if not self._connected:
+        """非阻塞 enqueue，主线程永远不等待 WebSocket"""
+        if self._websockets is None:
             return
-        # 异步发送，非阻塞
+        if self._queue is None:
+            return
         try:
-            import asyncio
-            asyncio.get_event_loop().run_until_complete(
-                self._send_async(event.to_json())
-            )
+            self._queue.put_nowait(event.to_json())
         except Exception:
-            pass  # 非阻塞，发送失败不阻断主流程
-
-    async def _send_async(self, message: str) -> None:
-        try:
-            async with self._websockets.connect(self.url) as ws:
-                await ws.send(message)
-        except Exception:
-            pass
+            # 队列满，丢弃最老的消息（不阻断主流程）
+            try:
+                self._queue.get_nowait()
+                self._queue.put_nowait(event.to_json())
+            except Exception:
+                pass
 
     def flush(self) -> None:
         pass
 
     def close(self) -> None:
-        if self._ws:
-            try:
-                self._ws.close()
-            except Exception:
-                pass
+        """停止后台线程，关闭连接"""
+        if self._stop_event:
+            self._stop_event.set()
+        if self._thread and self._thread.is_alive():
+            self._thread.join(timeout=2.0)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

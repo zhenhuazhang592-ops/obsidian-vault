@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """
-asset_image_pipeline.py — Stage 1.5：资产图 API 生成
+asset_image_pipeline.py — Stage 1.5：资产图 API 生成（多视角版）
 
 对应 Toonflow generateAssets.ts 的行为：
-从 outline JSON 提取角色/场景/道具描述 → 调用 Doubao Seedream API → 保存图片
-→ 更新 assets/03-asset-registry.md 的 element_id 和 image_url
+从 outline JSON 提取角色/场景/道具描述 → 调用 Doubao Seedream API
+→ 生成多视角参考图（角色3-6视图/场景3视图/道具4视图）
+→ 保存 seedream_card.md（角色卡文档）
+→ 更新 assets/library/{type}/{name}/manifest.json 的 files[]
 
 用法：
   python3 scripts/asset_image_pipeline.py \
@@ -21,8 +23,21 @@ import argparse
 import json
 import re
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import date
 from pathlib import Path
+from typing import Optional
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from config.seedream_templates import (
+    generate_asset_seedream_card,
+    get_style_anchor,
+    build_character_card,
+    build_scene_prompts,
+    build_prop_prompts,
+)
+from config.asset_registry_schema import AssetManifest, AssetFile
 
 # ── 路径配置 ─────────────────────────────────────────────────────────────────
 
@@ -32,20 +47,6 @@ ADAPTERS_DIR = SCRIPT_DIR / "adapters"
 
 sys.path.insert(0, str(ADAPTERS_DIR))
 sys.path.insert(0, str(SCRIPT_DIR))
-
-
-# ── 数据模型 ─────────────────────────────────────────────────────────────────
-
-@dataclass
-class AssetSpec:
-    """单个资产规格"""
-    name: str          # 资产名称（如 "漠玫"）
-    type: str          # character / scene / prop
-    element_id: str    # element_id（"[待填写]" = 未生成）
-    image_url: str     # 图片 URL（"[待填写]" = 未生成）
-    image_prompt: str  # 图像生成 Prompt
-    version: str       # v1.0 / v1.1 ...
-    index: int        # 行号
 
 
 # ── 工具函数 ─────────────────────────────────────────────────────────────────
@@ -60,67 +61,238 @@ def parse_outline_json(outline_path: Path) -> dict:
     return json.loads(match.group(1).strip())
 
 
-def parse_asset_registry(registry_path: Path) -> list[AssetSpec]:
-    """解析 assets/03-asset-registry.md Markdown 表格"""
-    if not registry_path.exists():
-        return []
+# ── Visual Bible 读取 ─────────────────────────────────────────────────────────
 
-    lines = registry_path.read_text(encoding="utf-8").splitlines()
-    assets = []
+def load_visual_bible(vb_path: Path | None = None) -> dict:
+    """
+    读取 Visual Bible，提取风格关键词和光线配置。
 
-    # 找到表头和表体
-    header_idx = -1
-    for i, line in enumerate(lines):
-        if "| 名称 |" in line or "| 资产名称 |" in line:
-            header_idx = i
+    Returns:
+        {"style_keywords": "...", "lighting": {...}, "project_style": "..."}
+    """
+    if vb_path is None:
+        vb_path = BASE_DIR / "config" / "visual-bible.md"
+
+    if not vb_path.exists():
+        return {"style_keywords": None, "lighting": {}, "project_style": None}
+
+    content = vb_path.read_text(encoding="utf-8")
+    # 提取风格关键词（从 Visual Bible 项目基础表格）
+    style_keywords = None
+    for line in content.splitlines():
+        if "视觉风格" in line or "美术风格" in line:
+            style_keywords = line.split("|")[-1].strip()
             break
+        if "画面比例" in line:
+            # 提取项目风格描述（往前几行）
+            pass
 
-    if header_idx < 0:
-        return []
+    # 提取色调基调（第一行有效数据）
+    lighting: dict = {}
+    in_tone_section = False
+    for line in content.splitlines():
+        if "色调基调" in line or "光影基准" in line:
+            in_tone_section = True
+            continue
+        if in_tone_section and line.startswith("|"):
+            cells = [c.strip() for c in line.split("|")[1:-1]]
+            if len(cells) >= 3 and cells[0] and "---" not in line:
+                lighting[cells[0]] = {
+                    "primary": cells[1] if len(cells) > 1 else "",
+                    "secondary": cells[2] if len(cells) > 2 else "",
+                }
 
-    for i, line in enumerate(lines[header_idx + 2:], start=header_idx + 2):
-        line = line.strip()
-        if not line or line.startswith("|"):
-            # 空行或分隔符
-            if "---" in line or not line:
+    return {
+        "style_keywords": style_keywords,
+        "lighting": lighting,
+        "project_style": style_keywords,
+    }
+
+
+# ── 多视角生成器 ─────────────────────────────────────────────────────────────
+
+def generate_multi_view_assets(
+    asset_entries: list[dict],
+    asset_dir: Path,
+    adapter,
+    vb_style: str | None = None,
+    dry_run: bool = False,
+    task_db=None,
+) -> list[dict]:
+    """
+    为每个资产生成多视角 Seedream 参考图。
+
+    角色：front_full / front_closeup / side_full / side_closeup / back_full / three_quarter_full
+    场景：establishing / medium / detail_closeup
+    道具：front / side / three_quarter / closeup_detail
+
+    Returns:
+        [{
+            "name": str,
+            "type": str,
+            "generated_files": [{"view_key": str, "path": Path, "url": str}],
+            "card_md": str,
+        }, ...]
+    """
+    results: list[dict] = []
+
+    for entry in asset_entries:
+        asset_name = entry["name"]
+        asset_type = entry["type"]
+        outline_data = entry.get("outline_data", {})
+
+        print(f"\n  ── {asset_type}: {asset_name} ──")
+        print(f"    风格: {vb_style or 'default'}")
+
+        # 生成多视角 Seedream 卡
+        seedream_result = generate_asset_seedream_card(
+            asset_name=asset_name,
+            asset_type=asset_type,
+            outline_entry=outline_data,
+            style_keywords=vb_style,
+        )
+        prompts: dict[str, str] = seedream_result["prompts"]
+        card_md: str = seedream_result["card_md"]
+        file_specs: list[dict] = seedream_result["files"]
+
+        # 保存角色卡
+        card_path = asset_dir / asset_name / "seedream_card.md"
+        card_path.parent.mkdir(parents=True, exist_ok=True)
+        if card_md:
+            card_path.write_text(card_md, encoding="utf-8")
+            print(f"    ✅ seedream_card.md → {card_path.name}")
+
+        generated_files: list[dict] = []
+
+        # 生成每个视角
+        for spec in file_specs:
+            view_key = spec["view_key"]
+            prompt = spec["prompt"]
+            filename = spec["filename"]
+            output_path = asset_dir / asset_name / filename
+
+            print(f"    [{view_key}] → {filename}")
+            if dry_run:
+                print(f"      [DRY] prompt: {prompt[:80]}...")
+                generated_files.append({"view_key": view_key, "path": output_path, "url": ""})
                 continue
-        if not line.startswith("|"):
-            continue
 
-        cells = [c.strip() for c in line.split("|")[1:-1]]
-        if len(cells) < 5:
-            continue
+            # task 追踪
+            task_id = None
+            if task_db:
+                try:
+                    from task_db import TaskState
+                    task_id = task_db.create(
+                        task_type="doubao_image_multiview",
+                        name=f"asset_{asset_name}_{view_key}",
+                        params={
+                            "asset": asset_name,
+                            "type": asset_type,
+                            "view": view_key,
+                        },
+                        stage="asset_images",
+                    )
+                    task_db.update(task_id, TaskState.RUNNING)
+                except Exception:
+                    pass
 
-        # 解析列（格式：| 名称 | 类型 | element_id | image_url | 描述词/版本 |
-        name = cells[0]
-        atype = cells[1] if len(cells) > 1 else ""
-        element_id = cells[2] if len(cells) > 2 else "[待填写]"
-        image_url = cells[3] if len(cells) > 3 else "[待填写]"
-        version = cells[4] if len(cells) > 4 else "v1.0"
+            try:
+                result = adapter.generate_image(
+                    prompt=prompt,
+                    output_path=output_path,
+                )
+                generated_files.append({
+                    "view_key": view_key,
+                    "path": output_path,
+                    "url": result.image_url,
+                    "role": spec["role"],
+                    "prompt": prompt,
+                })
+                print(f"      ✅ {result.image_url[:60]}...")
 
-        # 映射中文类型
-        type_map = {
-            "角色": "character",
-            "场景": "scene",
-            "道具": "prop",
-            "Character": "character",
-            "Scene": "scene",
-            "Prop": "prop",
-        }
-        atype = type_map.get(atype, atype.lower())
+                if task_db and task_id:
+                    try:
+                        from task_db import TaskState
+                        task_db.update(task_id, TaskState.SUCCESS, result={
+                            "path": str(output_path), "url": result.image_url,
+                        })
+                    except Exception:
+                        pass
 
-        if atype in ("character", "scene", "prop"):
-            assets.append(AssetSpec(
-                name=name,
-                type=atype,
-                element_id=element_id,
-                image_url=image_url,
-                image_prompt="",
-                version=version,
-                index=i,
+            except Exception as e:
+                print(f"      ❌ {e}", file=sys.stderr)
+                if task_db and task_id:
+                    try:
+                        from task_db import TaskState
+                        task_db.update(task_id, TaskState.FAILED, error=str(e))
+                    except Exception:
+                        pass
+
+        results.append({
+            "name": asset_name,
+            "type": asset_type,
+            "generated_files": generated_files,
+            "card_md": card_md,
+            "card_path": str(card_path) if card_md else None,
+        })
+
+    return results
+
+
+def update_manifest_with_multiview(
+    lib_base: Path,
+    results: list[dict],
+    asset_type: str,
+    vb_style: str | None = None,
+) -> None:
+    """
+    用多视角生成结果更新资产库的 manifest.json。
+    """
+    from config.asset_registry_schema import AssetManifest, AssetFile
+
+    type_subdir = {"character": "characters", "scene": "scenes", "prop": "props"}
+
+    for result in results:
+        asset_name = result["name"]
+        subdir = type_subdir.get(asset_type, asset_type)
+        manifest_path = lib_base / subdir / asset_name / "manifest.json"
+        manifest_path.parent.mkdir(parents=True, exist_ok=True)
+
+        # 读取或创建 manifest
+        if manifest_path.exists():
+            try:
+                data = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest = AssetManifest.model_validate(data)
+            except Exception:
+                manifest = AssetManifest(name=asset_name, type=asset_type)
+        else:
+            manifest = AssetManifest(name=asset_name, type=asset_type)
+
+        # 更新 files[]
+        manifest.files = []
+        for f in result["generated_files"]:
+            rel_path = f"characters/{asset_name}/{f['path'].name}" if asset_type == "character" else (
+                f"scenes/{asset_name}/{f['path'].name}" if asset_type == "scene" else
+                f"props/{asset_name}/{f['path'].name}"
+            )
+            manifest.files.append(AssetFile(
+                filename=f["path"].name,
+                role=f.get("role", f["view_key"]),
+                uploaded_at=date.today().isoformat(),
+                file_path=rel_path,
             ))
 
-    return assets
+        # 更新状态和 seedream_card
+        manifest.status = "reference_generated"
+        manifest.seedream_card = result.get("card_path", "")
+
+        # 保存
+        manifest_path.write_text(
+            manifest.model_dump_json(indent=2, ensure_ascii=False),
+            encoding="utf-8",
+        )
+
+
 
 
 def build_asset_prompt(spec: AssetSpec, outline_data: dict) -> str:
@@ -204,18 +376,19 @@ def stage1_5_asset_images(
     emitter=None,
     provider: str = "doubao",
     dry_run: bool = False,
+    visual_bible_path: Path | None = None,
 ) -> dict:
     """
-    Stage 1.5: 资产图 API 生成
+    Stage 1.5: 资产图 API 生成（多视角版）
 
     流程：
     1. 解析 outline JSON → 提取 characters/scenes/props 描述词
-    2. 解析 assets/03-asset-registry.md → 找出 element_id == "[待填写]" 的资产
-    3. 对每个待生成资产：
-       - 构建 image prompt
-       - 调用 DoubaoAdapter.generate_image()
-       - 保存到 outputs/{ep}/assets/{C001}_v1.png
-    4. 更新 03-asset-registry.md 的 element_id 和 image_url 列
+    2. 读取 Visual Bible → 提取风格关键词注入所有 prompt
+    3. 对每个资产：
+       - 调用 seedream_templates 生成多视角 prompt
+       - 调用 DoubaoAdapter.generate_image() 生成每个视角
+       - 保存 seedream_card.md
+    4. 更新 assets/library/{type}/{name}/manifest.json
 
     Returns:
         {"generated": N, "skipped": M, "failed": F, "assets": [...]}
@@ -223,213 +396,176 @@ def stage1_5_asset_images(
     base = output_dir or (BASE_DIR / "outputs")
     asset_dir = base / episode / "assets"
     asset_dir.mkdir(parents=True, exist_ok=True)
+    lib_base = BASE_DIR / "assets" / "library"
 
-    # 解析 outline
-    print(f"\n🖼️  Stage 1.5: 资产图生成")
+    print(f"\n🖼️  Stage 1.5: 资产图生成（多视角版）")
     print(f"  集数：{episode}")
     print(f"  项目：{project}")
     print(f"  输出目录：{asset_dir.relative_to(BASE_DIR)}")
 
+    # ── 1. 解析 outline ──────────────────────────────────────────────────
     try:
         outline_data = parse_outline_json(outline_path)
     except Exception as e:
         print(f"  [ERROR] outline JSON 解析失败: {e}", file=sys.stderr)
         return {"generated": 0, "skipped": 0, "failed": 1, "assets": []}
 
-    # 解析资产注册表
-    reg_path = registry_path or (BASE_DIR / "assets" / "03-asset-registry.md")
-    registry_assets = parse_asset_registry(reg_path) if reg_path.exists() else []
-    registry_map = {a.name: a for a in registry_assets}
+    # ── 2. 读取 Visual Bible ─────────────────────────────────────────────
+    vb = load_visual_bible(visual_bible_path)
+    vb_style = vb.get("style_keywords") or vb.get("project_style")
+    print(f"  Visual Bible 风格: {vb_style or '未找到，使用默认风格'}")
 
-    print(f"  资产注册表：{len(registry_assets)} 个资产")
-
-    # 合并 outline 中的资产（以 outline 为准）
-    all_assets: list[AssetSpec] = []
+    # ── 3. 构建待生成资产列表 ────────────────────────────────────────────
+    all_entries: list[dict] = []
 
     for c in outline_data.get("characters", []):
         name = c.get("name", "")
-        spec = registry_map.get(name, AssetSpec(
-            name=name, type="character",
-            element_id="[待填写]", image_url="[待填写]",
-            image_prompt=c.get("imagePrompt", ""), version="v1.0", index=-1,
-        ))
-        if not spec.image_prompt:
-            spec.image_prompt = build_asset_prompt(spec, outline_data)
-        all_assets.append(spec)
+        if not name:
+            continue
+        all_entries.append({
+            "name": name,
+            "type": "character",
+            "outline_data": c,
+        })
 
     for s in outline_data.get("scenes", []):
         name = s.get("name", "")
-        spec = registry_map.get(name, AssetSpec(
-            name=name, type="scene",
-            element_id="[待填写]", image_url="[待填写]",
-            image_prompt=s.get("imagePrompt", ""), version="v1.0", index=-1,
-        ))
-        if not spec.image_prompt:
-            spec.image_prompt = build_asset_prompt(spec, outline_data)
-        all_assets.append(spec)
+        if not name:
+            continue
+        all_entries.append({
+            "name": name,
+            "type": "scene",
+            "outline_data": s,
+        })
 
     for p in outline_data.get("props", []):
         name = p.get("name", "")
-        spec = registry_map.get(name, AssetSpec(
-            name=name, type="prop",
-            element_id="[待填写]", image_url="[待填写]",
-            image_prompt=p.get("imagePrompt", ""), version="v1.0", index=-1,
-        ))
-        if not spec.image_prompt:
-            spec.image_prompt = build_asset_prompt(spec, outline_data)
-        all_assets.append(spec)
+        if not name:
+            continue
+        all_entries.append({
+            "name": name,
+            "type": "prop",
+            "outline_data": p,
+        })
 
-    # 过滤出需要生成的资产（element_id == "[待填写]"）
-    to_generate = [a for a in all_assets if a.element_id in ("[待填写]", "", None)]
+    print(f"  待处理资产：{len(all_entries)} 个")
 
-    print(f"  待生成资产：{len(to_generate)} 个")
-    print(f"  已完成资产：{len(all_assets) - len(to_generate)} 个")
+    if not all_entries:
+        return {"generated": 0, "skipped": 0, "failed": 0, "assets": []}
 
+    # ── 4. 初始化适配器 ──────────────────────────────────────────────────
     if dry_run:
-        print(f"\n[DRY] 跳过 API 调用")
-        for a in to_generate:
-            print(f"  [DRY] {a.type}: {a.name}")
-            print(f"         prompt: {a.image_prompt[:80]}...")
-        return {
-            "generated": 0, "skipped": len(to_generate),
-            "failed": 0, "assets": to_generate,
-        }
-
-    if not to_generate:
-        print(f"\n  [OK] 所有资产已完成，无需生成")
-        return {"generated": 0, "skipped": len(all_assets), "failed": 0, "assets": all_assets}
-
-    # ── 初始化适配器 ──────────────────────────────────────────────────────
-    try:
-        from video_adapter_registry import get_registry
-        registry = get_registry()
-        adapter = registry.get(provider)
-        if adapter is None:
-            raise ValueError(f"未找到适配器: {provider}")
-    except Exception as e:
-        print(f"  [ERROR] 适配器初始化失败: {e}", file=sys.stderr)
-        print(f"  提示：设置 ARK_API_KEY 环境变量", file=sys.stderr)
-        return {"generated": 0, "skipped": 0, "failed": len(to_generate), "assets": []}
-
-    # ── 逐资产生成 ─────────────────────────────────────────────────────────
-    generated = 0
-    failed = 0
-    results: list[dict] = []
-
-    for spec in to_generate:
-        # 生成文件名
-        type_prefix = {"character": "C", "scene": "S", "prop": "P"}
-        prefix = type_prefix.get(spec.type, "X")
-        # 从名称提取编号（C001, C002...）
-        filename = f"{prefix}_{spec.name.replace(' ', '_')}_v1.png"
-        output_path = asset_dir / filename
-
-        # 去除非法字符
-        output_path = asset_dir / "".join(
-            c if c.isalnum() or c in (".", "_", "-") else "_"
-            for c in filename
-        )
-
-        print(f"\n  生成 {spec.type}: {spec.name}")
-        print(f"    prompt: {spec.image_prompt[:100]}...")
-        print(f"    输出: {output_path.relative_to(BASE_DIR)}")
-
-        # task 追踪
-        task_id = None
-        if task_db:
-            try:
-                from task_db import TaskState
-                task_id = task_db.create(
-                    task_type="doubao_image",
-                    name=f"asset_image_{spec.name}_{spec.type}",
-                    params={"episode": episode, "project": project, "asset": spec.name},
-                    episode=episode,
-                    stage="asset_images",
-                )
-                task_db.update(task_id, TaskState.RUNNING)
-            except Exception:
-                pass
-
+        adapter = None
+    else:
         try:
-            result = adapter.generate_image(
-                prompt=spec.image_prompt,
-                output_path=output_path,
-            )
-
-            # 生成成功 → 更新 registry
-            # 由于不知道具体列索引，用保守方式：追加到 registry
-            if reg_path.exists() and spec.index >= 0:
-                # element_id 在第3列（col_index=3），image_url 在第4列（col_index=4）
-                update_registry_cell(reg_path, spec.index, 3, f"[API-GENERATED-{spec.name}]")
-                update_registry_cell(reg_path, spec.index, 4, result.image_url)
-            else:
-                # 如果没有 registry 或行索引无效，创建新的 registry 条目
-                _append_to_registry(reg_path, spec, result.image_url)
-
-            print(f"    ✅ 完成：{result.image_url[:60]}...")
-            generated += 1
-            results.append({
-                "name": spec.name, "type": spec.type,
-                "path": str(output_path), "url": result.image_url,
-            })
-
-            if task_db and task_id:
-                try:
-                    from task_db import TaskState
-                    task_db.update(task_id, TaskState.SUCCESS, result={
-                        "path": str(output_path), "url": result.image_url,
-                    })
-                except Exception:
-                    pass
-
+            from video_adapter_registry import get_registry
+            registry = get_registry()
+            adapter = registry.get(provider)
+            if adapter is None:
+                raise ValueError(f"未找到适配器: {provider}")
         except Exception as e:
-            print(f"    ❌ 失败: {e}", file=sys.stderr)
-            failed += 1
-            results.append({"name": spec.name, "type": spec.type, "error": str(e)})
+            print(f"  [ERROR] 适配器初始化失败: {e}", file=sys.stderr)
+            print(f"  提示：设置 ARK_API_KEY 环境变量", file=sys.stderr)
+            return {"generated": 0, "skipped": 0, "failed": len(all_entries), "assets": []}
 
-            if task_db and task_id:
-                try:
-                    from task_db import TaskState
-                    task_db.update(task_id, TaskState.FAILED, error=str(e))
-                except Exception:
-                    pass
+    # ── 5. 多视角生成 ───────────────────────────────────────────────────
+    results = generate_multi_view_assets(
+        asset_entries=all_entries,
+        asset_dir=asset_dir,
+        adapter=adapter,
+        vb_style=vb_style,
+        dry_run=dry_run,
+        task_db=task_db,
+    )
 
-    print(f"\n  📊 资产图生成完成：成功 {generated} / 失败 {failed} / 跳过 {len(all_assets) - len(to_generate)}")
+    # ── 6. 更新 manifest.json ───────────────────────────────────────────
+    generated_total = 0
+    failed_total = 0
+    for entry, result in zip(all_entries, results):
+        if not dry_run:
+            update_manifest_with_multiview(
+                lib_base=lib_base,
+                results=[result],
+                asset_type=entry["type"],
+                vb_style=vb_style,
+            )
+        generated_total += len(result["generated_files"])
 
+    # ── 7. 注册到全局 registry.md ────────────────────────────────────────
+    update_global_registry_md(
+        registry_path or (BASE_DIR / "assets" / "03-asset-registry.md"),
+        all_entries,
+        asset_dir,
+    )
+
+    print(f"\n  📊 多视角资产图完成：{generated_total} 张参考图 / {len(all_entries)} 个资产")
     return {
-        "generated": generated,
-        "skipped": len(all_assets) - len(to_generate),
-        "failed": failed,
-        "assets": results,
+        "generated": generated_total,
+        "skipped": 0,
+        "failed": failed_total,
+        "assets": [
+            {
+                "name": r["name"],
+                "type": r["type"],
+                "files": [str(f["path"]) for f in r["generated_files"]],
+            }
+            for r in results
+        ],
     }
 
 
-def _append_to_registry(
+def update_global_registry_md(
     registry_path: Path | None,
-    spec: AssetSpec,
-    image_url: str,
+    all_entries: list[dict],
+    asset_dir: Path,
 ) -> None:
-    """追加新资产到 registry"""
+    """更新全局资产注册表 assets/03-asset-registry.md"""
     if registry_path is None:
         return
 
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+
     type_cn = {"character": "角色", "scene": "场景", "prop": "道具"}
+    new_rows = []
+    for entry in all_entries:
+        name = entry["name"]
+        atype = entry["type"]
+        asset_subdir = asset_dir / name
+        files = list(asset_subdir.glob("*.png")) if asset_subdir.exists() else []
+        image_count = len(files)
+        status = f"{image_count}张多视角" if image_count > 0 else "[待生成]"
 
-    new_row = (
-        f"| {spec.name} | {type_cn.get(spec.type, spec.type)} "
-        f"| [API-GENERATED-{spec.name}] | {image_url} | {spec.image_prompt[:50]} | {spec.version} |"
-    )
+        front_file = next((f for f in files if "front" in f.name), files[0] if files else None)
+        front_url = f"[本地]{front_file.name}" if front_file else "[待填写]"
 
-    if registry_path.exists():
-        content = registry_path.read_text(encoding="utf-8")
-        registry_path.write_text(content + "\n" + new_row + "\n", encoding="utf-8")
-    else:
+        new_rows.append(f"| {name} | {type_cn.get(atype, atype)} | [待上传LibTV] | {front_url} | {status} |")
+
+    if not registry_path.exists():
         header = (
-            "| 资产名称 | 类型 | element_id | image_url | 描述词/版本 |\n"
+            "| 资产名称 | 类型 | element_id | image_url | 状态 |\n"
             "|---|---|---|---|---|\n"
         )
-        registry_path.parent.mkdir(parents=True, exist_ok=True)
-        registry_path.write_text(header + new_row + "\n", encoding="utf-8")
+        registry_path.write_text(header + "\n".join(new_rows) + "\n", encoding="utf-8")
+    else:
+        content = registry_path.read_text(encoding="utf-8")
+        existing_names = set()
+        for line in content.splitlines():
+            if line.startswith("|"):
+                cells = [c.strip() for c in line.split("|")[1:-1]]
+                if cells:
+                    existing_names.add(cells[0])
+
+        new_lines = []
+        for row in new_rows:
+            name = row.split("|")[1].strip()
+            if name not in existing_names:
+                new_lines.append(row)
+
+        if new_lines:
+            registry_path.write_text(
+                content.rstrip() + "\n" + "\n".join(new_lines) + "\n",
+                encoding="utf-8",
+            )
 
 
 # ── CLI ──────────────────────────────────────────────────────────────────────

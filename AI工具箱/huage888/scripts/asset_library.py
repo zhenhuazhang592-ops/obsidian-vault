@@ -40,6 +40,69 @@ class AssetLibrary:
         subdir = TYPE_SUBDIRS.get(asset_type, asset_type)
         return self.base_dir / subdir / name / "images"
 
+    def resolve(
+        self,
+        name: str,
+        asset_type: str,
+        base_dir: Path | None = None,
+    ) -> list[str]:
+        """
+        查询某资产的参考图文件路径列表。
+
+        Args:
+            name:        资产名称
+            asset_type:  character / scene / prop
+            base_dir:    可选，覆盖 self.base_dir（用于查询 episode 输出目录）
+
+        Returns:
+            相对于 base_dir 的文件路径列表
+        """
+        use_dir = base_dir or self.base_dir
+        manifest_path = self._manifest_path_for_dir(name, asset_type, use_dir)
+        if not manifest_path.exists():
+            return []
+        try:
+            data = json.loads(manifest_path.read_text(encoding="utf-8"))
+            manifest = AssetManifest.model_validate(data)
+            return [f.file_path for f in manifest.files]
+        except Exception:
+            return []
+
+    def _manifest_path_for_dir(self, name: str, asset_type: str, base_dir: Path) -> Path:
+        """在指定 base_dir 下查找 manifest.json"""
+        subdir = TYPE_SUBDIRS.get(asset_type, asset_type)
+        return base_dir / subdir / name / "manifest.json"
+
+    def resolve_multi_dir(
+        self,
+        name: str,
+        asset_type: str,
+        extra_dirs: list[Path] | None = None,
+    ) -> list[str]:
+        """
+        在多个目录中查询资产文件（优先级：extra_dirs > self.base_dir）。
+
+        用于：episode 输出目录（优先） + 全局资产库（降级）。
+        """
+        seen: set[str] = set()
+        results: list[str] = []
+
+        # 优先查 extra_dirs
+        if extra_dirs:
+            for d in extra_dirs:
+                for fp in self.resolve(name, asset_type, base_dir=d):
+                    if fp not in seen:
+                        seen.add(fp)
+                        results.append(fp)
+
+        # 降级查 base_dir（全局资产库）
+        for fp in self.resolve(name, asset_type, base_dir=None):
+            if fp not in seen:
+                seen.add(fp)
+                results.append(fp)
+
+        return results
+
     def register(
         self,
         name: str,
@@ -70,18 +133,6 @@ class AssetLibrary:
         )
         print(f"[OK] 已注册: {manifest_path}")
         return manifest_path
-
-    def resolve(self, name: str, asset_type: str) -> list[str]:
-        """查询某资产的参考图文件路径列表（相对于 library 根）"""
-        manifest_path = self._manifest_path(name, asset_type)
-        if not manifest_path.exists():
-            return []
-        try:
-            data = json.loads(manifest_path.read_text(encoding="utf-8"))
-            manifest = AssetManifest.model_validate(data)
-            return [f["file_path"] for f in manifest.files]
-        except Exception:
-            return []
 
     def list_by_project(self, project: str) -> dict[str, list[str]]:
         """列出某项目的所有资产，按类型分组"""
@@ -165,6 +216,140 @@ class AssetLibrary:
             manifest.model_dump_json(indent=2, ensure_ascii=False),
             encoding="utf-8",
         )
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # TaskDB 同步（P4-1：对标 Toonflow t_assets 表）
+    # ─────────────────────────────────────────────────────────────────────────
+
+    def _lazy_db(self):
+        """延迟导入 TaskDB（避免硬依赖）"""
+        try:
+            sys.path.insert(0, str(Path(__file__).parent))
+            from task_db import TaskDB
+            return TaskDB()
+        except Exception:
+            return None
+
+    def sync_to_db(
+        self,
+        name: str,
+        asset_type: str,
+        project_id: int | None = None,
+        episode: str | None = None,
+        file_path: str | None = None,
+        state: int = 0,
+        prompt: str | None = None,
+        video_prompt: str | None = None,
+        intro: str | None = None,
+    ) -> int:
+        """
+        将单个资产同步到 TaskDB.assets 表。
+
+        Returns:
+            asset_id（TaskDB 主键）
+        """
+        db = self._lazy_db()
+        if db is None:
+            return -1
+
+        # 读取 manifest 获取额外信息
+        manifest_path = self._manifest_path(name, asset_type)
+        if manifest_path.exists():
+            try:
+                data = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest = AssetManifest.model_validate(data)
+                if intro is None:
+                    intro = manifest.visual_description
+            except Exception:
+                pass
+
+        return db.upsert_asset(
+            name=name,
+            asset_type=asset_type,
+            project_id=project_id,
+            episode=episode,
+            intro=intro,
+            prompt=prompt,
+            video_prompt=video_prompt,
+            file_path=file_path,
+            state=state,
+        )
+
+    def sync_all_to_db(self, project_id: int | None = None) -> dict[str, int]:
+        """
+        将所有资产同步到 TaskDB。
+
+        Returns:
+            {"succeeded": N, "failed": M}
+        """
+        db = self._lazy_db()
+        if db is None:
+            return {"succeeded": 0, "failed": 0, "note": "TaskDB unavailable"}
+
+        succeeded, failed = 0, 0
+        for asset_type, subdir_key in TYPE_SUBDIRS.items():
+            subdir = self.base_dir / subdir_key
+            if not subdir.exists():
+                continue
+            for asset_dir in subdir.iterdir():
+                if not asset_dir.is_dir():
+                    continue
+                manifest_path = asset_dir / "manifest.json"
+                if not manifest_path.exists():
+                    continue
+                try:
+                    data = json.loads(manifest_path.read_text(encoding="utf-8"))
+                    manifest = AssetManifest.model_validate(data)
+                    self.sync_to_db(
+                        name=manifest.name,
+                        asset_type=manifest.type,
+                        project_id=project_id,
+                        episode=manifest.first_episode,
+                        intro=manifest.visual_description,
+                        state=1 if manifest.files else 0,
+                    )
+                    succeeded += 1
+                except Exception:
+                    failed += 1
+
+        return {"succeeded": succeeded, "failed": failed}
+
+    def load_assets_from_db(
+        self,
+        project_id: int | None = None,
+        asset_type: str | None = None,
+        episode: str | None = None,
+    ) -> list[dict]:
+        """
+        从 TaskDB 加载资产列表（替代直接读文件系统）。
+
+        用途：当 TaskDB 可用时优先从 DB 查询，支持跨 episode 查询。
+        """
+        db = self._lazy_db()
+        if db is None:
+            return []
+        return db.get_assets(
+            project_id=project_id,
+            asset_type=asset_type,
+            episode=episode,
+        )
+
+    def get_asset_state(self, name: str, asset_type: str) -> int:
+        """
+        查询资产生成状态。
+
+        Returns:
+            0=待生成, 1=生成中, 2=成功, -1=失败
+        """
+        db = self._lazy_db()
+        if db is None:
+            return -2  # DB 不可用
+
+        assets = db.get_assets(asset_type=asset_type)
+        for a in assets:
+            if a.get("name") == name:
+                return a.get("state", 0)
+        return 0
 
 
 def main():

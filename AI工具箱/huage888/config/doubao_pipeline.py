@@ -207,7 +207,7 @@ def create_video_task(
         "content": content,
     }
 
-    url = f"{base_url}/content_generation/tasks"
+    url = f"{base_url}/contents/generations/tasks"
     print(f"  模型：{model}", file=sys.stderr)
     print(f"  时长：{duration}s", file=sys.stderr)
     if img1:
@@ -241,7 +241,7 @@ def poll_video_task(
     base_url = get_env("ARK_BASE_URL", DEFAULT_BASE_URL)
     headers = {"Authorization": f"Bearer {api_key}"}
 
-    url = f"{base_url}/content_generation/tasks/{task_id}"
+    url = f"{base_url}/contents/generations/tasks/{task_id}"
     start_time = time.time()
 
     print(f"  轮询中（每 {POLL_INTERVAL}s）...", file=sys.stderr)
@@ -368,7 +368,7 @@ def create_and_wait_image(
         response = client.images.generate(
             model=model,
             prompt=prompt,
-            size="2K",
+            size="2k",
             extra_body={"watermark": False},
         )
         image_url = response.data[0].url
@@ -422,9 +422,9 @@ def create_and_wait_image_with_ref(
 
     # Seedream img2img
     size_map = {
-        "16:9": "2K",
-        "9:16": "2K",
-        "1:1": "1K",
+        "16:9": "2k",
+        "9:16": "2k",
+        "1:1": "2k",
     }
     size = size_map.get(aspect_ratio, "2K")
 
@@ -479,7 +479,7 @@ def test_connection():
     }
 
     # 测试内容生成 API
-    test_url = f"{base_url}/content_generation/tasks"
+    test_url = f"{base_url}/contents/generations/tasks"
     payload = {
         "model": VIDEO_MODEL,
         "content": [{"type": "text", "text": "测试 prompt --wm true --dur 5"}],
