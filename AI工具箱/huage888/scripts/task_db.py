@@ -1593,21 +1593,6 @@ class TaskDB:
 
     # ─── 迁移 ───────────────────────────────────────────────────────────────
 
-    @staticmethod
-    def get_task_list(self, project_name: str | None = None, state: str | None = None) -> list[dict]:
-        """查询任务列表"""
-        conn = self._get_conn()
-        query = "SELECT * FROM task_list WHERE 1=1"
-        params: list = []
-        if project_name:
-            query += " AND project_name=?"
-            params.append(project_name)
-        if state:
-            query += " AND state=?"
-            params.append(state)
-        query += " ORDER BY created_at DESC"
-        return [dict(r) for r in conn.execute(query, params).fetchall()]
-
     def migrate_from_json(
         tasks_dir: Path = TASKS_DIR,
         db_path: Path = DEFAULT_DB,
