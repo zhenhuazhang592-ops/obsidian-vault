@@ -39,9 +39,18 @@ prompts_registry.py — 双轨 Prompt 注册表（Python 实现）
 import json
 import os
 import re
+import sys
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
+
+BASE_DIR = Path(__file__).parent.parent
+sys.path.insert(0, str(BASE_DIR / "scripts"))
+try:
+    from task_db import TaskDB
+    _HAS_TASK_DB = True
+except ImportError:
+    _HAS_TASK_DB = False
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -193,12 +202,22 @@ class PromptsRegistry:
         ),
     }
 
-    def __init__(self, base_dir: str | Path | None = None):
+    def __init__(self, base_dir: str | Path | None = None, db: 'TaskDB | None' = None):
         """
         Args:
             base_dir: huage888 根目录（用于定位项目 override）
+            db: TaskDB 实例（传入则复用，否则自动初始化）
         """
         self.base_dir = Path(base_dir) if base_dir else self._detect_base_dir()
+        self._db: 'TaskDB | None' = None
+        if db is not None:
+            self._db = db
+        elif _HAS_TASK_DB:
+            try:
+                self._db = TaskDB()
+                self._db.seed_default_prompts()   # 确保表已初始化
+            except Exception:
+                pass   # DB 不可用时降级到纯内存模式
 
     def _detect_base_dir(self) -> Path:
         """自动检测 huage888 根目录"""
@@ -235,16 +254,27 @@ class PromptsRegistry:
         if agent_code not in self.DEFAULT_AGENTS:
             raise KeyError(f"未知 Agent：{agent_code}，可用：{list(self.DEFAULT_AGENTS.keys())}")
 
-        # Layer 1: 默认参数（深拷贝）
+        # Layer 1: DB 层（custom_value 覆盖 DEFAULT_AGENTS）
+        #    优先级：DB custom_value > DEFAULT_AGENTS
         params = self._deep_copy(self.DEFAULT_AGENTS[agent_code])
+        if self._db is not None:
+            try:
+                db_row = self._db.get_prompt(agent_code)
+                if db_row and db_row.get("custom_value"):
+                    db_params = json.loads(db_row["custom_value"])
+                    for key, val in db_params.items():
+                        if hasattr(params, key):
+                            setattr(params, key, val)
+            except Exception:
+                pass   # DB 查询失败，降级到纯内存
 
-        # Layer 2: 项目级 override
+        # Layer 2: 项目级 JSON override
         if project_path:
             override = self._load_override(Path(project_path), agent_code)
             if override:
                 self._apply_override(params, override)
 
-        # Layer 3: CLI 参数覆盖
+        # Layer 3: CLI 参数覆盖（优先级最高）
         if overrides:
             self._apply_override(params, overrides)
 

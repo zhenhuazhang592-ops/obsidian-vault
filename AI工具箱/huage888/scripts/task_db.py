@@ -315,6 +315,143 @@ CREATE INDEX IF NOT EXISTS idx_videos_project  ON videos(project_id);
 CREATE INDEX IF NOT EXISTS idx_videos_state    ON videos(state);
 CREATE INDEX IF NOT EXISTS idx_prompts_code   ON prompts(code);
 CREATE INDEX IF NOT EXISTS idx_prompts_type   ON prompts(type);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 小说原文表（对标 Toonflow t_novel）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS novels (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL,
+    chapter_index   INTEGER NOT NULL,           -- 章节序号（1-based）
+    chapter         TEXT,                        -- 章节名称
+    chapter_data    TEXT,                        -- 章节完整原文
+    reel            TEXT,                        -- 分卷名
+    created_at      TEXT DEFAULT (datetime('now')),
+    UNIQUE(project_id, chapter_index)
+);
+
+CREATE INDEX IF NOT EXISTS idx_novels_project   ON novels(project_id);
+CREATE INDEX IF NOT EXISTS idx_novels_chapter   ON novels(chapter_index);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 故事线表（对标 Toonflow t_storyline）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS storylines (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL UNIQUE,
+    content         TEXT,                        -- 故事线完整内容
+    novel_ids       TEXT,                        -- JSON: [novel_id, ...]
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 大纲表（对标 Toonflow t_outline）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS outlines (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL,
+    episode         INTEGER NOT NULL,           -- 集数（1, 2, 3...）
+    data            TEXT,                        -- JSON: 完整大纲数据（含 episodeIndex/title/outline/keyEvents 等）
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now')),
+    UNIQUE(project_id, episode)
+);
+
+CREATE INDEX IF NOT EXISTS idx_outlines_project  ON outlines(project_id);
+CREATE INDEX IF NOT EXISTS idx_outlines_episode ON outlines(episode);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 剧本表（对标 Toonflow t_script）
+-- 对应 Toonflow 的 outline → script 两阶段分离设计
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS scripts (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL,
+    outline_id      INTEGER,                      -- 关联 outline.id
+    name            TEXT,                        -- 如"第1集"
+    content         TEXT,                        -- 剧本正文
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_scripts_project   ON scripts(project_id);
+CREATE INDEX IF NOT EXISTS idx_scripts_outline  ON scripts(outline_id);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 分镜表（对标 Toonflow t_storyboard 内存结构）
+-- segments + shots 合并存储为 JSON
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS storyboards (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL,
+    script_id       INTEGER NOT NULL,
+    name            TEXT,                        -- 如"第1集分镜"
+    segments_json    TEXT,                        -- JSON: [{index, description, emotion, action}, ...]
+    shots_json      TEXT,                        -- JSON: [{id, segmentId, title, cells, assetsTags}, ...]
+    state           INTEGER DEFAULT 0,           -- 0=草稿/1=已确认
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_storyboards_project  ON storyboards(project_id);
+CREATE INDEX IF NOT EXISTS idx_storyboards_script  ON storyboards(script_id);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 对话历史表（对标 Toonflow t_chatHistory）
+-- 支持多 Agent 对话上下文注入
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS chat_history (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    project_id      INTEGER NOT NULL,
+    agent_type      TEXT NOT NULL,               -- outlineAgent / storyboardAgent / ...
+    session_id      TEXT,                        -- 对话 session ID
+    role            TEXT NOT NULL,               -- user / assistant / system
+    content         TEXT,                        -- 对话内容（JSON 序列化）
+    created_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_chat_project   ON chat_history(project_id);
+CREATE INDEX IF NOT EXISTS idx_chat_agent     ON chat_history(agent_type);
+CREATE INDEX IF NOT EXISTS idx_chat_session   ON chat_history(session_id);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- AI 模型配置表（对标 Toonflow t_config + t_aiModelMap）
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ai_models (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    key             TEXT NOT NULL UNIQUE,      -- 如 outlineScriptAgent / assetsImage
+    model           TEXT,                        -- 如 qwen-max / doubao-seedream-5-0-260128
+    api_key         TEXT,
+    base_url        TEXT,
+    manufacturer    TEXT,                       -- volcengine / openai / kling / ...
+    model_type      TEXT,                       -- text / image / video
+    created_at      TEXT DEFAULT (datetime('now')),
+    updated_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_aimodels_key   ON ai_models(key);
+
+-- ───────────────────────────────────────────────────────────────────────────
+-- 任务列表（对标 Toonflow t_taskList + t_myTasks）
+-- 任务中心视图
+-- ───────────────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS task_list (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    name            TEXT NOT NULL,
+    project_name    TEXT,
+    task_class      TEXT,                       -- 视频生成 / 角色图生成 / ...
+    related_objects TEXT,                        -- 关联对象描述
+    model           TEXT,                       -- 使用的模型
+    state           TEXT DEFAULT '待处理',     -- 待处理 / 进行中 / 已完成 / 失败
+    reason          TEXT,                        -- 失败原因
+    start_time      TEXT,
+    end_time        TEXT,
+    created_at      TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_tasklist_project ON task_list(project_name);
+CREATE INDEX IF NOT EXISTS idx_tasklist_state  ON task_list(state);
 """
 
 MIGRATION_SELECT_SQL = """
@@ -979,35 +1116,498 @@ class TaskDB:
         return [dict(r) for r in rows]
 
     def seed_default_prompts(self) -> None:
-        """初始化默认提示词模板（对标 Toonflow t_prompts）"""
-        defaults = [
-            ("outlineScript-main",    "大纲故事线主 Agent",   "mainAgent",  "", None,
+        """初始化默认提示词模板（对标 Toonflow t_prompts + huage888 Agent 覆盖层）"""
+        # ── Toonflow 原版模板（mainAgent / subAgent / tool）─────────────────────
+        toonflow_defaults = [
+            ("outlineScript-main",    "大纲故事线主 Agent",   "mainAgent",  "", None, None,
              "大纲故事线协调 Agent，协调 AI1(故事师)、AI2(大纲师)、director(导演) 三个子 Agent 工作"),
-            ("outlineScript-a1",     "故事师",              "subAgent",   "outlineScript-main", "", None,
+            ("outlineScript-a1",     "故事师",              "subAgent",   "outlineScript-main", "", None, None,
              "分析小说章节，生成故事线"),
-            ("outlineScript-a2",       "大纲师",              "subAgent",   "outlineScript-main", "", None,
+            ("outlineScript-a2",     "大纲师",              "subAgent",   "outlineScript-main", "", None, None,
              "根据故事线生成大纲 JSON"),
-            ("outlineScript-director","导演",               "subAgent",   "outlineScript-main", "", None,
+            ("outlineScript-director","导演",               "subAgent",   "outlineScript-main", "", None, None,
              "审核故事线和大纲的质量"),
-            ("storyboard-main",       "分镜协调 Agent",      "mainAgent",  "", None,
+            ("storyboard-main",      "分镜协调 Agent",      "mainAgent",  "", None, None,
              "分镜协调 Agent，管理 segmentAgent 和 shotAgent"),
-            ("storyboard-segment",    "片段师",              "subAgent",   "storyboard-main", "", None,
+            ("storyboard-segment",   "片段师",              "subAgent",   "storyboard-main", "", None, None,
              "识别剧本关键片段，生成 segments"),
-            ("storyboard-shot",       "分镜师",             "subAgent",   "storyboard-main", "", None,
+            ("storyboard-shot",      "分镜师",             "subAgent",   "storyboard-main", "", None, None,
              "生成电影级分镜提示词"),
-            ("generateImagePrompts",  "宫格分镜提示词生成",  "tool",       "", "", None,
+            ("generateImagePrompts", "宫格分镜提示词生成",  "tool",       "", "", None, None,
              "宫格分镜提示词生成工具"),
         ]
-        for row in defaults:
+        for row in toonflow_defaults:
             self.upsert_prompt(
                 code=row[0], name=row[1], prompt_type=row[2],
                 default_value=row[3], parent_code=row[4],
-                description=row[6],
+                custom_value=row[5], description=row[6],
             )
+
+        # ── huage888 Agent 覆盖层（type=agent，保留 DEFAULT_AGENTS 作为主数据源）──
+        # default_value=""：huage888 Agent 的参数在 DEFAULT_AGENTS 中，此处仅存元数据
+        huage_defaults = [
+            ("director",          "导演讲戏",             "agent", "", None, None,
+             "阶段一：导演讲戏，temperature=0.75，指向 agents/director.md"),
+            ("art-designer",      "角色/场景资产管理",     "agent", "", None, None,
+             "阶段二A：角色/场景提示词，temperature=0.65，指向 agents/art-designer.md"),
+            ("prop-designer",     "道具资产管理",         "agent", "", None, None,
+             "阶段二B：道具提示词，temperature=0.60，指向 agents/prop-designer.md"),
+            ("storyboard-artist", "分镜脚本撰写",         "agent", "", None, None,
+             "阶段三：分镜脚本，temperature=0.55，指向 agents/storyboard-artist.md"),
+            ("script-review",     "剧本/讲戏本审核",       "agent", "", None, None,
+             "阶段一末尾审核，temperature=0.40，指向 agents/script-review.md"),
+            ("art-review",        "资产审核",             "agent", "", None, None,
+             "阶段二末尾审核，temperature=0.40，指向 agents/art-review.md"),
+            ("storyboard-review", "分镜脚本审核",         "agent", "", None, None,
+             "阶段三末尾审核，temperature=0.40，指向 agents/storyboard-review.md"),
+        ]
+        for row in huage_defaults:
+            self.upsert_prompt(
+                code=row[0], name=row[1], prompt_type=row[2],
+                default_value=row[3], parent_code=row[4],
+                custom_value=row[5], description=row[6],
+            )
+
+    # ─── 小说原文 ───────────────────────────────────────────────────────────
+
+    def add_novel_chapters(
+        self,
+        project_id: int,
+        chapters: list[dict],
+    ) -> int:
+        """批量导入小说章节，返回插入数量"""
+        conn = self._get_conn()
+        count = 0
+        for ch in chapters:
+            conn.execute(
+                """INSERT OR REPLACE INTO novels
+                   (project_id, chapter_index, chapter, chapter_data, reel, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    project_id,
+                    ch.get("chapter_index", ch.get("index", 0)),
+                    ch.get("chapter", ""),
+                    ch.get("chapter_data", ""),
+                    ch.get("reel", ""),
+                    self._now(),
+                ),
+            )
+            count += 1
+        conn.commit()
+        return count
+
+    def get_novel_chapters(
+        self,
+        project_id: int,
+        chapter_indices: list[int] | None = None,
+    ) -> list[dict]:
+        """获取小说章节"""
+        conn = self._get_conn()
+        if chapter_indices:
+            placeholders = ",".join("?" * len(chapter_indices))
+            rows = conn.execute(
+                f"SELECT * FROM novels WHERE project_id=? AND chapter_index IN ({placeholders}) ORDER BY chapter_index",
+                [project_id] + chapter_indices,
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM novels WHERE project_id=? ORDER BY chapter_index",
+                (project_id,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_novel_chapter_raw(self, project_id: int, chapter_index: int) -> str | None:
+        """获取单个章节原文"""
+        rows = self.get_novel_chapters(project_id, [chapter_index])
+        return rows[0]["chapter_data"] if rows else None
+
+    def list_novel_projects(self) -> list[dict]:
+        """列出有小说数据的项目"""
+        conn = self._get_conn()
+        rows = conn.execute(
+            """SELECT DISTINCT n.project_id, p.name, p.id
+               FROM novels n LEFT JOIN projects p ON n.project_id = p.id
+               ORDER BY n.project_id"""
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    # ─── 故事线 ───────────────────────────────────────────────────────────
+
+    def save_storyline(
+        self,
+        project_id: int,
+        content: str,
+        novel_ids: list[int] | None = None,
+    ) -> int:
+        """保存故事线（upsert）"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM storylines WHERE project_id=?", (project_id,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE storylines SET content=?, novel_ids=?, updated_at=? WHERE project_id=?",
+                (content, json.dumps(novel_ids) if novel_ids else None, self._now(), project_id),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            "INSERT INTO storylines (project_id, content, novel_ids) VALUES (?, ?, ?)",
+            (project_id, content, json.dumps(novel_ids) if novel_ids else None),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_storyline(self, project_id: int) -> dict | None:
+        """获取故事线"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM storylines WHERE project_id=?", (project_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def delete_storyline(self, project_id: int) -> bool:
+        """删除故事线"""
+        conn = self._get_conn()
+        cur = conn.execute("DELETE FROM storylines WHERE project_id=?", (project_id,))
+        conn.commit()
+        return cur.rowcount > 0
+
+    # ─── 大纲 ───────────────────────────────────────────────────────────
+
+    def save_outline(
+        self,
+        project_id: int,
+        episode: int,
+        data: dict,
+    ) -> int:
+        """保存大纲（upsert），返回 outline_id"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM outlines WHERE project_id=? AND episode=?",
+            (project_id, episode),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE outlines SET data=?, updated_at=? WHERE id=?",
+                (json.dumps(data, ensure_ascii=False), self._now(), existing[0]),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            "INSERT INTO outlines (project_id, episode, data) VALUES (?, ?, ?)",
+            (project_id, episode, json.dumps(data, ensure_ascii=False)),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_outlines(self, project_id: int) -> list[dict]:
+        """获取项目所有大纲"""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM outlines WHERE project_id=? ORDER BY episode",
+            (project_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_outline(self, project_id: int, episode: int) -> dict | None:
+        """获取指定集大纲"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM outlines WHERE project_id=? AND episode=?",
+            (project_id, episode),
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["data"] = json.loads(d["data"]) if d.get("data") else {}
+        return d
+
+    def delete_outlines(self, project_id: int) -> int:
+        """删除项目所有大纲"""
+        conn = self._get_conn()
+        cur = conn.execute("DELETE FROM outlines WHERE project_id=?", (project_id,))
+        conn.commit()
+        return cur.rowcount
+
+    # ─── 剧本 ───────────────────────────────────────────────────────────
+
+    def save_script(
+        self,
+        project_id: int,
+        name: str,
+        content: str,
+        outline_id: int | None = None,
+    ) -> int:
+        """保存剧本（upsert by name）"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM scripts WHERE project_id=? AND name=?",
+            (project_id, name),
+        ).fetchone()
+        if existing:
+            conn.execute(
+                "UPDATE scripts SET content=?, outline_id=?, updated_at=? WHERE id=?",
+                (content, outline_id, self._now(), existing[0]),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            "INSERT INTO scripts (project_id, outline_id, name, content) VALUES (?, ?, ?, ?)",
+            (project_id, outline_id, name, content),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_scripts(self, project_id: int) -> list[dict]:
+        """获取项目所有剧本"""
+        conn = self._get_conn()
+        rows = conn.execute(
+            "SELECT * FROM scripts WHERE project_id=? ORDER BY id",
+            (project_id,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_script(self, project_id: int, name: str) -> dict | None:
+        """按集数名称获取剧本"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM scripts WHERE project_id=? AND name=?",
+            (project_id, name),
+        ).fetchone()
+        return dict(row) if row else None
+
+    # ─── 分镜 ───────────────────────────────────────────────────────────
+
+    def save_storyboard(
+        self,
+        project_id: int,
+        script_id: int,
+        name: str,
+        segments: list[dict] | None = None,
+        shots: list[dict] | None = None,
+        state: int = 0,
+    ) -> int:
+        """保存分镜（upsert by script_id）"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM storyboards WHERE script_id=?", (script_id,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE storyboards SET segments_json=?, shots_json=?, state=?, updated_at=?
+                   WHERE id=?""",
+                (
+                    json.dumps(segments, ensure_ascii=False) if segments else None,
+                    json.dumps(shots, ensure_ascii=False) if shots else None,
+                    state,
+                    self._now(),
+                    existing[0],
+                ),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            """INSERT INTO storyboards
+               (project_id, script_id, name, segments_json, shots_json, state)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (
+                project_id,
+                script_id,
+                name,
+                json.dumps(segments, ensure_ascii=False) if segments else None,
+                json.dumps(shots, ensure_ascii=False) if shots else None,
+                state,
+            ),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_storyboard(self, script_id: int) -> dict | None:
+        """获取分镜"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM storyboards WHERE script_id=?", (script_id,)
+        ).fetchone()
+        if not row:
+            return None
+        d = dict(row)
+        d["segments"] = json.loads(d["segments_json"]) if d.get("segments_json") else []
+        d["shots"] = json.loads(d["shots_json"]) if d.get("shots_json") else []
+        return d
+
+    # ─── 对话历史 ───────────────────────────────────────────────────────
+
+    def append_chat(
+        self,
+        project_id: int,
+        agent_type: str,
+        role: str,
+        content: str,
+        session_id: str | None = None,
+    ) -> int:
+        """追加对话记录"""
+        conn = self._get_conn()
+        cur = conn.execute(
+            """INSERT INTO chat_history
+               (project_id, agent_type, role, content, session_id, created_at)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (project_id, agent_type, role, content, session_id, self._now()),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_chat_history(
+        self,
+        project_id: int,
+        agent_type: str | None = None,
+        session_id: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        """获取对话历史"""
+        conn = self._get_conn()
+        query = "SELECT * FROM chat_history WHERE project_id=?"
+        params: list = [project_id]
+        if agent_type:
+            query += " AND agent_type=?"
+            params.append(agent_type)
+        if session_id:
+            query += " AND session_id=?"
+            params.append(session_id)
+        query += " ORDER BY created_at DESC LIMIT ?"
+        params.append(limit)
+        rows = conn.execute(query, params).fetchall()
+        return [dict(r) for r in reversed(rows)]
+
+    def clear_chat_history(self, project_id: int, agent_type: str | None = None) -> int:
+        """清空对话历史"""
+        conn = self._get_conn()
+        if agent_type:
+            cur = conn.execute(
+                "DELETE FROM chat_history WHERE project_id=? AND agent_type=?",
+                (project_id, agent_type),
+            )
+        else:
+            cur = conn.execute(
+                "DELETE FROM chat_history WHERE project_id=?", (project_id,)
+            )
+        conn.commit()
+        return cur.rowcount
+
+    # ─── AI 模型配置 ───────────────────────────────────────────────────
+
+    def upsert_ai_model(
+        self,
+        key: str,
+        model: str,
+        api_key: str | None = None,
+        base_url: str | None = None,
+        manufacturer: str | None = None,
+        model_type: str | None = None,
+    ) -> int:
+        """保存 AI 模型配置"""
+        conn = self._get_conn()
+        existing = conn.execute(
+            "SELECT id FROM ai_models WHERE key=?", (key,)
+        ).fetchone()
+        if existing:
+            conn.execute(
+                """UPDATE ai_models SET model=?, api_key=?, base_url=?,
+                   manufacturer=?, model_type=?, updated_at=? WHERE key=?""",
+                (model, api_key, base_url, manufacturer, model_type, self._now(), key),
+            )
+            conn.commit()
+            return existing[0]
+        cur = conn.execute(
+            """INSERT INTO ai_models (key, model, api_key, base_url, manufacturer, model_type)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (key, model, api_key, base_url, manufacturer, model_type),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def get_ai_model(self, key: str) -> dict | None:
+        """获取 AI 模型配置"""
+        conn = self._get_conn()
+        row = conn.execute(
+            "SELECT * FROM ai_models WHERE key=?", (key,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    # ─── 任务列表 ───────────────────────────────────────────────────────
+
+    def create_task_list_item(
+        self,
+        name: str,
+        task_class: str | None = None,
+        project_name: str | None = None,
+        model: str | None = None,
+    ) -> int:
+        """创建任务列表条目"""
+        conn = self._get_conn()
+        cur = conn.execute(
+            """INSERT INTO task_list (name, task_class, project_name, model, state, start_time)
+               VALUES (?, ?, ?, ?, '待处理', ?)""",
+            (name, task_class, project_name, model, self._now()),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+    def update_task_list_item(
+        self,
+        item_id: int,
+        state: str | None = None,
+        reason: str | None = None,
+    ) -> None:
+        """更新任务列表条目"""
+        conn = self._get_conn()
+        updates = []
+        vals = []
+        if state:
+            updates.append("state=?")
+            vals.append(state)
+            if state in ("已完成", "失败"):
+                updates.append("end_time=?")
+                vals.append(self._now())
+        if reason:
+            updates.append("reason=?")
+            vals.append(reason)
+        if updates:
+            vals.append(item_id)
+            conn.execute(f"UPDATE task_list SET {', '.join(updates)} WHERE id=?", vals)
+            conn.commit()
+
+    def get_task_list(self, project_name: str | None = None, state: str | None = None) -> list[dict]:
+        """查询任务列表"""
+        conn = self._get_conn()
+        query = "SELECT * FROM task_list WHERE 1=1"
+        params: list = []
+        if project_name:
+            query += " AND project_name=?"
+            params.append(project_name)
+        if state:
+            query += " AND state=?"
+            params.append(state)
+        query += " ORDER BY created_at DESC"
+        return [dict(r) for r in conn.execute(query, params).fetchall()]
 
     # ─── 迁移 ───────────────────────────────────────────────────────────────
 
     @staticmethod
+    def get_task_list(self, project_name: str | None = None, state: str | None = None) -> list[dict]:
+        """查询任务列表"""
+        conn = self._get_conn()
+        query = "SELECT * FROM task_list WHERE 1=1"
+        params: list = []
+        if project_name:
+            query += " AND project_name=?"
+            params.append(project_name)
+        if state:
+            query += " AND state=?"
+            params.append(state)
+        query += " ORDER BY created_at DESC"
+        return [dict(r) for r in conn.execute(query, params).fetchall()]
+
     def migrate_from_json(
         tasks_dir: Path = TASKS_DIR,
         db_path: Path = DEFAULT_DB,
@@ -1109,6 +1709,42 @@ if __name__ == "__main__":
     p_dag = sub.add_parser("dag", help="输出依赖 DAG")
     p_dag.add_argument("--project-id", type=int)
 
+    # novels
+    p_novels = sub.add_parser("novels", help="列出小说章节")
+    p_novels.add_argument("--project-id", type=int, required=True)
+    p_novels.add_argument("--indices", help="章节号（逗号分隔）")
+
+    # storyline
+    p_sl = sub.add_parser("storyline", help="查看/保存故事线")
+    p_sl.add_argument("--project-id", type=int, required=True)
+    p_sl.add_argument("--content", help="故事线内容（保存时）")
+    p_sl.add_argument("--delete", action="store_true", help="删除故事线")
+
+    # outlines
+    p_ol = sub.add_parser("outlines", help="列出大纲")
+    p_ol.add_argument("--project-id", type=int, required=True)
+    p_ol.add_argument("--episode", type=int, help="指定集数")
+
+    # scripts
+    p_sc = sub.add_parser("scripts", help="列出剧本")
+    p_sc.add_argument("--project-id", type=int, required=True)
+
+    # chat
+    p_chat = sub.add_parser("chat", help="查看对话历史")
+    p_chat.add_argument("--project-id", type=int, required=True)
+    p_chat.add_argument("--agent", help="Agent 类型")
+    p_chat.add_argument("--clear", action="store_true", help="清空历史")
+
+    # aimodels
+    p_ai = sub.add_parser("aimodels", help="AI 模型配置")
+    p_ai.add_argument("--list", action="store_true", help="列出所有配置")
+    p_ai.add_argument("--get", metavar="KEY", help="查看指定配置")
+    p_ai.add_argument("--set", nargs=2, metavar=("KEY", "MODEL"), help="设置配置")
+    p_ai.add_argument("--api-key")
+    p_ai.add_argument("--base-url")
+    p_ai.add_argument("--manufacturer")
+    p_ai.add_argument("--type", dest="model_type")
+
     args = parser.parse_args()
     db = TaskDB()
 
@@ -1162,6 +1798,77 @@ if __name__ == "__main__":
     elif args.cmd == "dag":
         dag = db.build_dependency_graph(args.project_id)
         print(json.dumps(dag, indent=2, ensure_ascii=False))
+
+    elif args.cmd == "novels":
+        indices = None
+        if args.indices:
+            indices = [int(x) for x in args.indices.split(",")]
+        rows = db.get_novel_chapters(args.project_id, indices)
+        if not rows:
+            print(f"  无小说数据 (project_id={args.project_id})")
+        for r in rows:
+            print(f"  [章节{r['chapter_index']}] {r.get('chapter','')} ({len(r.get('chapter_data',''))}字)")
+
+    elif args.cmd == "storyline":
+        if args.delete:
+            ok = db.delete_storyline(args.project_id)
+            print(f"  {'删除成功' if ok else '故事线不存在'}")
+        elif args.content:
+            sid = db.save_storyline(args.project_id, args.content)
+            print(f"  故事线已保存 (id={sid})")
+        else:
+            sl = db.get_storyline(args.project_id)
+            if sl:
+                print(f"  id={sl['id']} | updated={sl['updated_at']}")
+                print(f"  内容：{sl['content'][:200]}...")
+            else:
+                print("  无故事线")
+
+    elif args.cmd == "outlines":
+        if args.episode:
+            ol = db.get_outline(args.project_id, args.episode)
+            if ol:
+                print(f"  [第{args.episode}集] id={ol['id']}")
+                print(f"  标题：{ol['data'].get('title','')}")
+                print(f"  核心矛盾：{ol['data'].get('coreConflict','')}")
+            else:
+                print(f"  无第{args.episode}集大纲")
+        else:
+            rows = db.get_outlines(args.project_id)
+            for r in rows:
+                d = json.loads(r["data"]) if r.get("data") else {}
+                print(f"  [第{r['episode']}集] id={r['id']} | {d.get('title','')}")
+
+    elif args.cmd == "scripts":
+        rows = db.get_scripts(args.project_id)
+        for r in rows:
+            print(f"  [{r['id']}] {r['name']} | outline_id={r['outline_id']} | updated={r['updated_at']}")
+
+    elif args.cmd == "chat":
+        if args.clear:
+            n = db.clear_chat_history(args.project_id, args.agent)
+            print(f"  已清空 {n} 条对话历史")
+        else:
+            rows = db.get_chat_history(args.project_id, args.agent)
+            for r in rows:
+                print(f"  [{r['agent_type']}] {r['role']}: {r['content'][:100]}")
+
+    elif args.cmd == "aimodels":
+        if args.list:
+            rows = db.list_prompts()
+            for r in rows:
+                print(f"  [{r['code']}] model={r.get('default_value','')}")
+        elif args.get:
+            r = db.get_ai_model(args.get)
+            if r:
+                print(f"  key={r['key']} | model={r['model']} | manufacturer={r.get('manufacturer','')}")
+            else:
+                print(f"  无配置: {args.get}")
+        elif args.set:
+            key, model = args.set
+            db.upsert_ai_model(key, model, args.api_key, args.base_url,
+                               args.manufacturer, args.model_type)
+            print(f"  已保存: {key} -> {model}")
 
     else:
         parser.print_help()
