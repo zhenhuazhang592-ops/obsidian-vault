@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """千问 Adapter —— 基于 DashScope API"""
 import json
-from .base import BaseAdapter, AdapterRegistry
+from ..base import BaseAdapter, AdapterRegistry
 
 logger = __import__("logging").getLogger(__name__)
 

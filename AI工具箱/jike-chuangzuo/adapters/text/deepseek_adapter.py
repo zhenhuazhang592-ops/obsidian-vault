@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """DeepSeek Adapter —— 基于 DeepSeek API"""
 import json
-from .base import BaseAdapter, AdapterRegistry
+from ..base import BaseAdapter, AdapterRegistry
 
 logger = __import__("logging").getLogger(__name__)
 
