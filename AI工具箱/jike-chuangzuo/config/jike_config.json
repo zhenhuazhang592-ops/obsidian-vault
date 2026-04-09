@@ -3,6 +3,10 @@
   "text_adapter": "qwen",
   "image_adapter": "seedream",
   "video_adapter": "seedance",
+  "ark": {
+    "base_url": "https://ark.cn-beijing.volces.com/api/v3",
+    "api_key_env": "ARK_API_KEY"
+  },
   "models": {
     "qwen": {
       "manufacturer": "aliyun",
@@ -17,16 +21,16 @@
       "base_url": "https://api.deepseek.com"
     },
     "seedream": {
-      "manufacturer": "bytedance",
-      "model": "seedream-4.5",
-      "api_key": "",
-      "base_url": ""
+      "manufacturer": "volcengine",
+      "model": "doubao-seedream-5-0-260128",
+      "api_key_env": "ARK_API_KEY",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3"
     },
     "seedance": {
-      "manufacturer": "bytedance",
-      "model": "seedance-2.0",
-      "api_key": "",
-      "base_url": ""
+      "manufacturer": "volcengine",
+      "model": "doubao-seedance-2-0-260128",
+      "api_key_env": "ARK_API_KEY",
+      "base_url": "https://ark.cn-beijing.volces.com/api/v3"
     }
   },
   "art_style": "cyber_ink",
