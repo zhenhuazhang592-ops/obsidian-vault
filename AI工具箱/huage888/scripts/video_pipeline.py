@@ -66,6 +66,19 @@ BASE_DIR = SCRIPT_DIR.parent
 sys.path.insert(0, str(SCRIPT_DIR))
 sys.path.insert(0, str(BASE_DIR / "config"))
 
+# ── .env 自动加载（优先级：环境变量 > .env 文件）──────────────────
+_env_path = BASE_DIR / ".env"
+if _env_path.exists():
+    with open(_env_path) as _f:
+        for _line in _f:
+            _line = _line.strip()
+            if _line and not _line.startswith("#") and "=" in _line:
+                _k, _v = _line.split("=", 1)
+                _k = _k.strip()
+                _v = _v.strip()
+                if _k and os.environ.get(_k) is None:
+                    os.environ[_k] = _v
+
 from adapters import get_registry, VideoResult, ImageResult
 from art_styles import get_style, search_styles, ART_STYLES
 from task_queue import TaskQueue, create_queue
@@ -770,6 +783,23 @@ def generate_video(
     adapter.config.duration = duration
     adapter.config.watermark = watermark
     adapter.config.aspect_ratio = aspect_ratio
+
+    # 自动模型选型（video_model_registry）
+    # 若未指定 model，使用 select_video_model 自动匹配最优模型
+    if not model:
+        try:
+            from config.video_model_registry import select_video_model
+            selected = select_video_model(
+                has_audio=None,        # 不限定音频（由 adapter 决定）
+                duration=duration,
+                aspect_ratio=aspect_ratio,
+                mode="T2V" if not final_refs else "I2V",
+            )
+            if selected and selected.manufacturer == provider_name:
+                model = selected.model_id
+                print(f"  [Registry] 自动选型：{selected.name}", file=sys.stderr)
+        except Exception:
+            pass
 
     # 风格锚定 + prompt 增强
     art_style_obj = None

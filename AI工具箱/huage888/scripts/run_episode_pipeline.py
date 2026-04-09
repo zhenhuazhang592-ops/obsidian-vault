@@ -65,13 +65,13 @@ VIDEO_PIPELINE = BASE_DIR / "scripts" / "video_pipeline.py"
 # ── 辅助函数 ───────────────────────────────────────────────────────────────
 
 def extract_json_from_markdown(path: Path) -> dict:
-    """从 Markdown 提取 ```json ``` 块内容"""
+    """从 Markdown 提取 ```json ``` 块内容（取最后一个，outline 内容通常在末尾）"""
     content = path.read_text(encoding="utf-8")
     pattern = r"```(?:json)?\s*\n?(.*?)\n?```"
-    match = re.search(pattern, content, re.DOTALL)
-    if not match:
+    matches = re.findall(pattern, content, re.DOTALL)
+    if not matches:
         raise ValueError(f"Markdown 中未找到 JSON 块: {path}")
-    return json.loads(match.group(1).strip())
+    return json.loads(matches[-1].strip())
 
 
 def call_qwen(
@@ -98,7 +98,10 @@ def call_qwen(
         cmd += ["--max-history", str(max_history)]
 
     print(f"\n{'[DRY] ' if dry_run else ''}→ qwen_pipeline --agent {agent}")
-    print(f"    输出: {output_path.resolve().relative_to(BASE_DIR.resolve())}")
+    if str(output_path) == "/dev/null":
+        print(f"    输出: (不落盘，审核结果)")
+    else:
+        print(f"    输出: {output_path.resolve().relative_to(BASE_DIR.resolve())}")
     if session_id:
         print(f"    session: {session_id} (max_history={max_history})")
 
@@ -420,6 +423,52 @@ def stage1_5_asset_images(
     return True
 
 
+
+def stage1_8_script(
+    outline_path: Path,
+    episode: str,
+    project: str,
+    project_id: int | None,
+    output_dir: Path,
+    dry_run: bool,
+) -> Path | None:
+    """Stage 1.8: 剧本生成器（大纲 → 纯台词剧本）"""
+    script_dir = output_dir / episode
+    script_dir.mkdir(parents=True, exist_ok=True)
+    script_path = script_dir / f"{episode}-script.md"
+
+    prefix = "[DRY] " if dry_run else ""
+    print(f"{prefix}→ Stage 1.8: 剧本生成")
+    if dry_run:
+        return script_path
+
+    try:
+        from config.outline_schema import EpisodeOutline
+        import json, re
+        outline_content = outline_path.read_text(encoding="utf-8")
+        pattern = r"```(?:json)?\s*\n?(.*?)\n?```"
+        matches = re.findall(pattern, outline_content, re.DOTALL)
+        outline_data = json.loads(matches[-1].strip()) if matches else {}
+        outline = EpisodeOutline.model_validate(outline_data)
+    except Exception as e:
+        print(f"  [ERROR] 加载 outline 失败: {e}")
+        return None
+
+    gen = ScriptGenerator()
+    try:
+        path = gen.generate(
+            outline=outline,
+            project_id=project_id,
+            episode=episode,
+            output_path=script_path,
+        )
+        print(f"  [OK] 剧本已生成: {path}")
+        return path
+    except Exception as e:
+        print(f"  [ERROR] 剧本生成失败: {e}")
+        return None
+
+
 def stage2_storyboard(
     outline_path: Path,
     episode: str,
@@ -523,7 +572,7 @@ def stage3_p1(
         "--outline", str(outline_path),
         "--output-dir", str(shots_images_dir),
         "--provider", "doubao",
-        "--model", "doubao-seedream-4.5",
+        "--model", "doubao-seedream-5-0-260128",
     ]
     if optimize_prompts:
         cmd.append("--optimize")
@@ -692,6 +741,11 @@ def main():
         help="执行 Stage 1.5：资产图 API 生成（需 outline 完成）",
     )
     stage.add_argument(
+        '--run-script',
+        action='store_true',
+        help='执行 Stage 1.8：剧本生成（大纲 → 纯台词剧本）',
+    )
+    stage.add_argument(
         "--skip-video",
         action="store_true",
         default=False,
@@ -711,7 +765,7 @@ def main():
     stage.add_argument(
         "--video-provider",
         default="doubao",
-        choices=["doubao", "kling"],
+        choices=["doubao", "kling", "wan", "vidu", "gemini"],
         help="视频生成提供商（默认 doubao）",
     )
     stage.add_argument(
@@ -742,6 +796,12 @@ def main():
         default="stage",
         choices=["stage", "shot"],
         help="报告颗粒度：stage（默认，日常用）/ shot（精查用）",
+    )
+    parser.add_argument(
+        "--json-output",
+        default=None,
+        metavar="PATH",
+        help="写入结构化 JSON（含 completed_stages + outputs），Claude Code 可直接 json.loads() 解析",
     )
 
     args = parser.parse_args()
@@ -909,6 +969,29 @@ def main():
     else:
         print(f"\n[Stage 1.5] SKIP（需 --run-asset-images 且 outline 存在）")
 
+    # ── Stage 1.8: script ──────────────────────────────────────────────
+    script_path: Path | None = None
+    if args.run_script and outline_path and outline_path.exists():
+        print(f"\n[Stage 1.8] 剧本生成")
+        script_path = stage1_8_script(
+            outline_path=outline_path,
+            episode=args.episode,
+            project=args.project,
+            project_id=project_id,
+            output_dir=output_dir,
+            dry_run=args.dry_run,
+        )
+        if report_logger:
+            report_logger.log_stage_end(
+                stage=1.8, name="script",
+                status="success" if script_path else "failed",
+                output_file=_rel(script_path) if script_path else "",
+                model="qwen-max",
+            )
+    else:
+        print(f"\n[Stage 1.8] SKIP（需 --run-script 且 outline 存在）")
+
+
     # ── Stage 2: storyboard ────────────────────────────────────────────
     shots_path: Path | None = None
 
@@ -987,7 +1070,7 @@ def main():
             report_logger.log_stage_end(
                 stage=3, name="p1",
                 status="success" if p1_ok else "failed",
-                model="doubao-seedream-4.5",
+                model="doubao-seedream-5-0-260128",
             )
 
     # ── Stage 4: P2 ─────────────────────────────────────────────────────
@@ -1094,6 +1177,27 @@ def main():
             },
         },
     }
+
+    # ── --json-output（Claude Code 结构化接口）───────────────────────────
+    if args.json_output:
+        json_output = {
+            "episode": args.episode,
+            "project": args.project,
+            "generated_at": datetime.now().isoformat(),
+            "completed_stages": [
+                s for s, v in summary["stages"].items()
+                if v.get("status") == "success"
+            ],
+            "outputs": {
+                s: v.get("path") or ""
+                for s, v in summary["stages"].items()
+                if v.get("path")
+            },
+        }
+        json_path = Path(args.json_output)
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(json.dumps(json_output, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"  📄 JSON 输出: {json_path}")
 
     summary_path = output_dir / args.episode / f"{args.episode}-pipeline-summary.json"
     summary_path.parent.mkdir(parents=True, exist_ok=True)
