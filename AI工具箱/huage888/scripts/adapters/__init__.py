@@ -5,6 +5,9 @@ from .video_adapter_base import (
 )
 from .doubao_adapter import DoubaoAdapter
 from .kling_adapter import KlingAdapter
+from .wan_adapter import WanAdapter
+from .vidu_adapter import ViduAdapter
+from .gemini_veo_adapter import GeminiVeoAdapter
 from .video_adapter_registry import VideoAdapterRegistry, get_registry
 
 __all__ = [
@@ -17,6 +20,9 @@ __all__ = [
     "IMAGE_ROLE_REFERENCE",
     "DoubaoAdapter",
     "KlingAdapter",
+    "WanAdapter",
+    "ViduAdapter",
+    "GeminiVeoAdapter",
     "VideoAdapterRegistry",
     "get_registry",
 ]

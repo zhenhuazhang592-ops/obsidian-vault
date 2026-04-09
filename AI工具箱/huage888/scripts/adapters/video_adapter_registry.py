@@ -9,6 +9,9 @@ from typing import Optional
 from .video_adapter_base import VideoAdapterBase, AdapterConfig
 from .doubao_adapter import DoubaoAdapter
 from .kling_adapter import KlingAdapter
+from .wan_adapter import WanAdapter
+from .vidu_adapter import ViduAdapter
+from .gemini_veo_adapter import GeminiVeoAdapter
 
 
 class VideoAdapterRegistry:
@@ -68,6 +71,30 @@ class VideoAdapterRegistry:
                 base_url=os.environ.get("KLING_BASE_URL", "https://api.klingai.com"),
             )))
             print("✅ Kling 适配器已注册（环境变量 KLING_API_KEY）")
+
+        # Wan（Stub）
+        wan_key = os.environ.get("WAN_API_KEY", "")
+        if wan_key:
+            registry.register("wan", WanAdapter(AdapterConfig(
+                api_key=wan_key,
+            )))
+            print("✅ Wan 适配器已注册（环境变量 WAN_API_KEY）")
+
+        # Vidu（Stub）
+        vidu_key = os.environ.get("VIDU_API_KEY", "")
+        if vidu_key:
+            registry.register("vidu", ViduAdapter(AdapterConfig(
+                api_key=vidu_key,
+            )))
+            print("✅ Vidu 适配器已注册（环境变量 VIDU_API_KEY）")
+
+        # Gemini Veo（Stub）
+        gemini_key = os.environ.get("GEMINI_API_KEY", "")
+        if gemini_key:
+            registry.register("gemini", GeminiVeoAdapter(AdapterConfig(
+                api_key=gemini_key,
+            )))
+            print("✅ Gemini Veo 适配器已注册（环境变量 GEMINI_API_KEY）")
 
         return registry
 
