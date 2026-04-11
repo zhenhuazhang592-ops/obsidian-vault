@@ -115,21 +115,43 @@ class SessionStore:
         ]
 
     def search_messages(self, query: str, limit: int = 50) -> list[dict]:
-        """FTS5 搜索消息"""
+        """FTS5 搜索消息（snippets 不可用时降级）"""
+        conn = sqlite3.connect(self.db_path)
+        try:
+            rows = conn.execute(
+                """SELECT m.session_id, m.role, m.content, m.created_at,
+                          snippets(messages_fts, 0, '>>>', '<<<', '...', 32) as snippet
+                   FROM messages_fts
+                   JOIN messages m ON messages_fts.rowid = m.id
+                   WHERE messages_fts MATCH ?
+                   ORDER BY rank
+                   LIMIT ?""",
+                (query, limit)
+            ).fetchall()
+            conn.close()
+            return [
+                {"session_id": r[0], "role": r[1], "content": r[2], "created_at": r[3], "snippet": r[4]}
+                for r in rows
+            ]
+        except sqlite3.OperationalError:
+            # snippets() 不可用时降级：直接返回匹配消息内容
+            conn.close()
+            return self._search_messages_fallback(query, limit)
+
+    def _search_messages_fallback(self, query: str, limit: int) -> list[dict]:
+        """FTS5 降级搜索（无 snippets）"""
         conn = sqlite3.connect(self.db_path)
         rows = conn.execute(
-            """SELECT m.session_id, m.role, m.content, m.created_at,
-                      snippets(messages_fts, 0, '>>>', '<<<', '...', 32) as snippet
-               FROM messages_fts
-               JOIN messages m ON messages_fts.rowid = m.id
-               WHERE messages_fts MATCH ?
-               ORDER BY rank
+            """SELECT m.session_id, m.role, m.content, m.created_at
+               FROM messages m
+               WHERE m.content LIKE ?
+               ORDER BY m.id DESC
                LIMIT ?""",
-            (query, limit)
+            (f"%{query}%", limit)
         ).fetchall()
         conn.close()
         return [
-            {"session_id": r[0], "role": r[1], "content": r[2], "created_at": r[3], "snippet": r[4]}
+            {"session_id": r[0], "role": r[1], "content": r[2], "created_at": r[3], "snippet": r[2][:200]}
             for r in rows
         ]
 
