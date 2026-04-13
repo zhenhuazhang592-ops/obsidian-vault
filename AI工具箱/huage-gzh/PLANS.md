@@ -1040,11 +1040,11 @@ reading_time: "8分钟"
 - 6个用户确认节点正常工作
 
 **验收标准**：
-- [ ] --dry-run 模式完整执行，输出流程图
-- [ ] 6个用户确认节点都能响应输入
-- [ ] MessageHub正确广播/订阅状态
+- [x] --dry-run 模式完整执行，输出流程图
+- [x] 6个用户确认节点都能响应输入
+- [x] MessageHub正确广播/订阅状态
 
-### Phase 2：写作Pipeline（2-3天）
+### Phase 2：写作Pipeline（2-3天） ✅ 已完成
 
 **目标**：完成初稿生成（不含润色）
 
@@ -1060,12 +1060,12 @@ reading_time: "8分钟"
 **产出**：主题 → 3方案 → 研究报告 → 大纲 → 完整初稿
 
 **验收标准**：
-- [ ] PlannerAgent生成3个差异化方案
-- [ ] ResearchAgent整合Tavily + Obsidian + 风格分析
-- [ ] OutlineAgent生成含SEO关键词的大纲
-- [ ] WriterAgent写出符合风格要求的初稿
+- [x] PlannerAgent生成3个差异化方案
+- [x] ResearchAgent整合Tavily + Obsidian + 风格分析
+- [x] OutlineAgent生成含SEO关键词的大纲
+- [x] WriterAgent写出符合风格要求的初稿
 
-### Phase 3：质量Pipeline（2-3天）
+### Phase 3：质量Pipeline（2-3天） ✅ 已完成
 
 **目标**：完成质量门禁，产出通过审查的终稿
 
@@ -1079,11 +1079,11 @@ reading_time: "8分钟"
 **产出**：初稿 → 润色稿 → 6维质量报告 → 终稿（<85自动修改）
 
 **验收标准**：
-- [ ] PolishAgent移除36种AI模式
-- [ ] ReviewAgent 6维评分与人工判断一致
-- [ ] 质量循环正常工作（<85触发修改，≥85通过）
+- [x] PolishAgent移除36种AI模式
+- [x] ReviewAgent 6维评分与人工判断一致
+- [x] 质量循环正常工作（<85触发修改，≥85通过）
 
-### Phase 4：输出Pipeline（1-2天）
+### Phase 4：输出Pipeline（1-2天） ✅ 已完成
 
 **目标**：完成可发布的完整文章包
 
@@ -1097,9 +1097,9 @@ reading_time: "8分钟"
 **产出**：终稿 + 封面 + 配图 → 完整发布包（md + html + json）
 
 **验收标准**：
-- [ ] ImageAgent生成封面设计方案
-- [ ] PublishAgent输出符合公众号格式的HTML
-- [ ] 终端预览有质量雷达图和SEO分析
+- [x] ImageAgent生成封面设计方案
+- [x] PublishAgent输出符合公众号格式的HTML
+- [x] 终端预览有质量雷达图和SEO分析
 
 ### 依赖关系
 
@@ -1108,7 +1108,7 @@ reading_time: "8分钟"
 ---
 
 **计划状态**：v1.1 已修订
-**下一步**：Phase 1 实现
+**下一步**：Phase 5 交互式UI（Next.js前端）
 
 ---
 
