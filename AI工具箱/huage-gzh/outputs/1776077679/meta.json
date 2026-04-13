@@ -1,0 +1,162 @@
+{
+  "title": "《AI工具链实战：实战完整指南》",
+  "topic": "AI工具链实战",
+  "plan": {
+    "is_template": true,
+    "topic": "AI工具链实战",
+    "target_audience": {
+      "persona": "【请填写：目标读者画像，如：3-5年经验的中级开发者】",
+      "pain_points": [
+        "【痛点1：如：多Agent协作混乱】",
+        "【痛点2：如：上下文丢失】",
+        "【痛点3：如：成本失控】"
+      ],
+      "reading_habit": "【阅读习惯：如：通勤/午休快速阅读，偏好实操性内容】"
+    },
+    "unique_angle": "【从什么独特角度切入「AI工具链实战」】",
+    "content_promise": "【读者读完能获得什么】",
+    "tone": "技术干货，但有个人见解，不刻板",
+    "title_options": [
+      "《AI工具链实战：我从实战中总结的完整方案》",
+      "《AI工具链实战？这一篇够了》",
+      "《关于AI工具链实战，我有些不一样看法》"
+    ],
+    "llm_error": null
+  },
+  "outline": {
+    "is_template": true,
+    "title": "《AI工具链实战：实战完整指南》",
+    "seo_keywords": {
+      "primary": "AI工具链实战",
+      "secondary": [
+        "AI工具链实战技巧",
+        "AI工具链实战方法",
+        "AI工具链实战案例"
+      ],
+      "long_tail": [
+        "如何AI工具链实战",
+        "AI工具链实战入门",
+        "AI工具链实战避坑"
+      ]
+    },
+    "outline": [
+      {
+        "h2": "一、为什么AI工具链实战值得关注？",
+        "key_points": [
+          "背景",
+          "现状",
+          "核心价值"
+        ],
+        "word_target": 350
+      },
+      {
+        "h2": "二、AI工具链实战的第一核心要点",
+        "key_points": [
+          "要点1",
+          "要点2",
+          "案例"
+        ],
+        "word_target": 400
+      },
+      {
+        "h2": "三、AI工具链实战的第二核心要点",
+        "key_points": [
+          "要点1",
+          "要点2",
+          "案例"
+        ],
+        "word_target": 400
+      },
+      {
+        "h2": "四、AI工具链实战的第三核心要点",
+        "key_points": [
+          "要点1",
+          "要点2",
+          "案例"
+        ],
+        "word_target": 400
+      },
+      {
+        "h2": "五、常见错误与避坑指南",
+        "key_points": [
+          "错误1",
+          "错误2",
+          "正确做法"
+        ],
+        "word_target": 300
+      },
+      {
+        "h2": "六、如何开始AI工具链实战？",
+        "key_points": [
+          "步骤1",
+          "步骤2",
+          "步骤3"
+        ],
+        "word_target": 250
+      },
+      {
+        "h2": "七、总结与行动建议",
+        "key_points": [
+          "核心回顾",
+          "行动建议",
+          "延伸阅读"
+        ],
+        "word_target": 200
+      }
+    ],
+    "estimated_word_count": 2600,
+    "opening_hook": "你知道吗，AI工具链实战其实没有想象中那么难。"
+  },
+  "word_count": 323,
+  "h2_count": 7,
+  "is_template": true,
+  "style_fingerprint": {
+    "sentence": {
+      "avg_length": 16.512820512820515,
+      "variance": 96.81393819855359,
+      "short_ratio": 0.2564102564102564,
+      "long_ratio": 0.1282051282051282,
+      "max_length": 42,
+      "min_length": 3
+    },
+    "vocabulary": {
+      "unique_ratio": 1.0,
+      "avg_word_length": 5.28125,
+      "common_words": [
+        "示例文章",
+        "工具链实战",
+        "从入门到精通",
+        "坦白说",
+        "这篇文章是给我自己写的",
+        "一",
+        "为什么你需要这套工具链",
+        "搞",
+        "应用开发",
+        "最费时间的是什么"
+      ],
+      "rare_markers": []
+    },
+    "structure": {
+      "h2_count": 5,
+      "quote_ratio": 0.0,
+      "list_ratio": 0.8,
+      "code_ratio": 0.4,
+      "callout_count": 0
+    },
+    "format": {
+      "has_emoji": false,
+      "emoji_count": 0,
+      "has_divider": true,
+      "has_table": false,
+      "image_caption_style": ""
+    },
+    "tone": {
+      "first_person": 0.0,
+      "question_ratio": 0.0,
+      "exclamation_ratio": 0.0,
+      "colloquial_markers": [
+        "坦白说"
+      ]
+    }
+  }
+}
