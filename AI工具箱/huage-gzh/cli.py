@@ -11,7 +11,7 @@ from pathlib import Path
 
 from core import MessageHub, MessageType
 from core.llm_client import create_llm_client
-from agents import StyleLearnerAgent, PlannerAgent, OutlineAgent, WriterAgent, PolisherAgent
+from agents import StyleLearnerAgent, PlannerAgent, OutlineAgent, WriterAgent, PolisherAgent, LeadAgent
 from core.review_gate import review_article
 
 
@@ -766,8 +766,10 @@ def cmd_dry_run(args):
     """LeadAgent 干运行命令（不调用 LLM，只展示流水线）"""
     topic = args.topic.strip() if args.topic else ""
     if not topic:
-        print("❌ 主题不能为空")
-        sys.exit(1)
+        topic = input("请输入文章主题: ").strip()
+        if not topic:
+            print("❌ 主题不能为空")
+            sys.exit(1)
 
     print()
     print("=" * 60)
@@ -802,15 +804,20 @@ def cmd_dry_run(args):
     print("  ④ 内容写作     →")
     print("  ⑤ 润色优化     → [确认节点④：质量审查]")
     print("  ⑥ 质量审查     → [循环，最多3次]")
-    print("  ⑦ 配图封面     → [确认节点⑤] Phase 2 实现")
-    print("  ⑧ 排版输出     →")
+    print("  ⑦ 配图封面     → [确认节点⑤] Phase 4 实现")
+    print("  ⑧ 排版输出     → [完整发布包] Phase 4 实现")
     print()
-    print("  Phase 2 新增组件：")
-    print("    core/tavily_client.py      — Tavily 网络深度搜索")
-    print("    core/obsidian_search.py    — Obsidian 知识库检索")
-    print("    ResearchAgent 增强         — 接入 Tavily + Obsidian")
-    print("    OutlineAgent 增强         — 融合研究报告 + SEO关键词")
-    print("    WriterAgent 增强         — 注入研究发现内容")
+    print("  Phase 3 组件（已完成）：")
+    print("    PolishAgent              — 去AI味双引擎 + GEO优化")
+    print("    ReviewGate               — 6维度质量评分（≥85通过）")
+    print("    HumanizerEngine          — 29类AI写作模式检测")
+    print("    AntiSlopEngine           — 15条结构规则 + 词汇黑名单")
+    print()
+    print("  Phase 4 组件（已完成）：")
+    print("    ImageAgent               — 封面色系 + 配图风格 + 尺寸规范")
+    print("    PublishAgent             — 排版输出 + 多格式导出")
+    print("    core/seo_reporter.py     — 4项评分 + 关键词图谱")
+    print("    publishers/wechat_formatter.py — 公众号HTML排版")
     print()
     print("  干运行仅展示阶段，不执行真实 LLM 调用")
     print("=" * 60)
@@ -818,9 +825,9 @@ def cmd_dry_run(args):
 
 def cmd_version(args):
     """版本信息"""
-    print("公众号多Agent协同创作系统 v0.4")
-    print("M3: PolisherAgent + ReviewGate + 去AI味双引擎")
-    print("   + 润色优化循环 + 6维度质量评分门禁")
+    print("公众号多Agent协同创作系统 v0.5")
+    print("Phase 1-4 完整实现：LeadAgent + 8阶段流水线")
+    print("Phase 4: ImageAgent + PublishAgent + SEO报告 + 公众号排版")
 
 
 def cmd_polish(args):

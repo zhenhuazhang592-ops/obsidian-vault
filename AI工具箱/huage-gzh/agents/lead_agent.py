@@ -113,6 +113,12 @@ class LeadAgent:
                     tavily_api_key=self.tavily_api_key,
                     obsidian_vault_path=self.obsidian_vault_path,
                 )
+            elif name == "image":
+                from agents.image_agent import ImageAgent
+                self._agents[name] = ImageAgent(hub=self.hub, llm_client=self.llm_client)
+            elif name == "publish":
+                from agents.publish_agent import PublishAgent
+                self._agents[name] = PublishAgent(hub=self.hub, llm_client=self.llm_client)
             else:
                 raise ValueError(f"Unknown agent: {name}")
         return self._agents[name]
@@ -278,6 +284,8 @@ class LeadAgent:
             if confirm.action == "accept":
                 current_content = polished_article
                 self.context["quality_report"] = q_report
+                self.context["humanizer_report"] = h_report_dict
+                self.context["anti_slop_report"] = a_report_dict
                 break
 
             elif confirm.action == "repolish":
@@ -286,6 +294,8 @@ class LeadAgent:
                 if retry_count > 2:
                     self._emit_status(stage_review, "max_retries", "已达最大润色次数，进入排版")
                     self.context["quality_report"] = q_report
+                    self.context["humanizer_report"] = h_report_dict
+                    self.context["anti_slop_report"] = a_report_dict
                     break
 
             else:  # quit
@@ -293,18 +303,56 @@ class LeadAgent:
 
         # ── Stage 7: 配图封面 ────────────────────────────────
         stage, stage_name, _ = self.STAGES[6]
-        self._emit_status(stage, "skipped", "配图封面（Phase 2）")
-        image_output = {"status": "pending", "cover": {}, "image_ideas": []}
+        self._emit_status(stage, "running", "设计配图方案")
+
+        try:
+            image_agent = self._get_agent("image")
+            plan = self.context.get("plan", {})
+            outline = self.context.get("outline", {})
+            tone = plan.get("tone", "")
+            seo_kw = outline.get("seo_keywords", {})
+            keywords = seo_kw.get("secondary", []) + seo_kw.get("long_tail", [])
+
+            image_result = image_agent.run({
+                "topic": plan.get("topic", ""),
+                "title": outline.get("title", ""),
+                "tone": tone,
+                "keywords": keywords,
+                "word_count": outline.get("estimated_word_count", 2000),
+            })
+
+            if image_result.success:
+                image_output = image_result.output
+            else:
+                image_output = {"status": "error", "cover": {}, "image_ideas": []}
+        except Exception as e:
+            self._emit_status(stage, "skipped", f"配图阶段跳过: {e}")
+            image_output = {"status": "skipped", "cover": {}, "image_ideas": []}
+
         self.context["image"] = image_output
 
-        # 确认节点⑤（Phase 2 实现）
-        # confirm = self.image_confirm.confirm(image_output)
+        # 确认节点⑤（配图方案确认）
+        self._emit_status(stage, "waiting_confirm", "等待用户确认配图方案")
+        confirm = self.image_confirm.confirm(image_output)
 
         # ── Stage 8: 排版输出 ────────────────────────────────
         stage, stage_name, _ = self.STAGES[7]
-        self._emit_status(stage, "running", "保存输出文件")
+        self._emit_status(stage, "running", "排版输出")
 
-        self._save_outputs(output_path, current_content, writer_output, q_report)
+        publish_agent = self._get_agent("publish")
+        publish_result = publish_agent.run({
+            "title": outline.get("title", writer_output.get("title", "无标题")),
+            "content": current_content,
+            "outline": outline,
+            "seo_keywords": outline.get("seo_keywords", {}),
+            "quality_report": q_report.to_dict(),
+            "humanizer_score": self.context.get("humanizer_report", {}).get("humanizer_score", 100.0),
+            "anti_slop_score": self.context.get("anti_slop_report", {}).get("anti_slop_score", 100.0),
+            "image_plan": image_output,
+            "author": "",
+            "publish_date": time.strftime("%Y-%m-%d"),
+            "output_dir": str(output_path),
+        })
 
         return self._success_result(output_path)
 
