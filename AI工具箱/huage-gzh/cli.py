@@ -763,15 +763,11 @@ def cmd_status(args):
 
 
 def cmd_dry_run(args):
-    """LeadAgent 干运行命令（不调用 LLM）"""
-    from agents.lead_agent import LeadAgent
-
+    """LeadAgent 干运行命令（不调用 LLM，只展示流水线）"""
     topic = args.topic.strip() if args.topic else ""
     if not topic:
-        topic = input("请输入文章主题: ").strip()
-        if not topic:
-            print("❌ 主题不能为空")
-            sys.exit(1)
+        print("❌ 主题不能为空")
+        sys.exit(1)
 
     print()
     print("=" * 60)
@@ -801,25 +797,22 @@ def cmd_dry_run(args):
     print("─── LeadAgent 流水线阶段预览 ───")
     print()
     print("  ① 主题策划     → [确认节点①]")
-    print("  ② 深度研究     → [确认节点②]")
-    print("  ③ 大纲规划     → [确认节点③]")
+    print("  ② 深度研究     → [确认节点②] (Tavily + Obsidian)")
+    print("  ③ 大纲规划     → [确认节点③] (融合研究报告)")
     print("  ④ 内容写作     →")
     print("  ⑤ 润色优化     → [确认节点④：质量审查]")
     print("  ⑥ 质量审查     → [循环，最多3次]")
     print("  ⑦ 配图封面     → [确认节点⑤] Phase 2 实现")
     print("  ⑧ 排版输出     →")
     print()
+    print("  Phase 2 新增组件：")
+    print("    core/tavily_client.py      — Tavily 网络深度搜索")
+    print("    core/obsidian_search.py    — Obsidian 知识库检索")
+    print("    ResearchAgent 增强         — 接入 Tavily + Obsidian")
+    print("    OutlineAgent 增强         — 融合研究报告 + SEO关键词")
+    print("    WriterAgent 增强         — 注入研究发现内容")
+    print()
     print("  干运行仅展示阶段，不执行真实 LLM 调用")
-    print()
-
-    result = lead.run(topic, output_dir=args.output_dir)
-    print()
-    print("=" * 60)
-    if result["success"]:
-        print(f"✅ 干运行完成（输出: {result['output_dir']}）")
-        print("   注意：实际运行需要配置 DASHSCOPE_API_KEY")
-    else:
-        print(f"❌ 干运行中断：{result.get('error', 'unknown')}")
     print("=" * 60)
 
 

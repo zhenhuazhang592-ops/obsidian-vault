@@ -64,10 +64,14 @@ class LeadAgent:
         hub: MessageHub = None,
         llm_client: Optional[LLMClient] = None,
         dry_run: bool = False,
+        tavily_api_key: str = None,
+        obsidian_vault_path: str = None,
     ):
         self.hub = hub or MessageHub()
         self.llm_client = llm_client
         self.dry_run = dry_run
+        self.tavily_api_key = tavily_api_key
+        self.obsidian_vault_path = obsidian_vault_path
 
         # 确认节点
         self.plan_confirm = PlanConfirmNode()
@@ -103,7 +107,12 @@ class LeadAgent:
                 self._agents[name] = PolisherAgent(hub=self.hub, llm_client=self.llm_client)
             elif name == "research":
                 from agents.research_agent import ResearchAgent
-                self._agents[name] = ResearchAgent(hub=self.hub, llm_client=self.llm_client)
+                self._agents[name] = ResearchAgent(
+                    hub=self.hub,
+                    llm_client=self.llm_client,
+                    tavily_api_key=self.tavily_api_key,
+                    obsidian_vault_path=self.obsidian_vault_path,
+                )
             else:
                 raise ValueError(f"Unknown agent: {name}")
         return self._agents[name]
@@ -112,13 +121,14 @@ class LeadAgent:
     # 干线运行
     # ──────────────────────────────────────────────────────────────
 
-    def run(self, topic: str, *, output_dir: str = None) -> dict[str, Any]:
+    def run(self, topic: str, *, output_dir: str = None, article_dir: str = None) -> dict[str, Any]:
         """
         执行完整创作链路。
 
         Args:
             topic: 文章主题
             output_dir: 输出目录，默认 ./outputs/{timestamp}
+            article_dir: 已发布文章目录（用于 ResearchAgent Obsidian 搜索）
 
         Returns:
             完整流水线结果，包含所有阶段的输出
@@ -130,6 +140,9 @@ class LeadAgent:
             print(f"\n🔍 [干运行模式] 主题: {topic}")
             print(f"   将按顺序执行各阶段 Agent（不调用 LLM）")
             print()
+
+        # 初始化上下文
+        self.context["article_dir"] = article_dir
 
         # 初始化输出目录
         if output_dir is None:
@@ -166,6 +179,7 @@ class LeadAgent:
             research_result = researcher.run({
                 "topic": plan_output.get("topic", topic),
                 "unique_angle": plan_output.get("unique_angle", ""),
+                "article_dir": self.context.get("article_dir"),
             })
 
             if research_result.success:
@@ -214,6 +228,7 @@ class LeadAgent:
             "outline": outline_output,
             "target_audience": plan_output.get("target_audience", {}),
             "style_instructions": self.context.get("style_instructions", ""),
+            "research": self.context.get("research"),
         })
 
         if not writer_result.success:

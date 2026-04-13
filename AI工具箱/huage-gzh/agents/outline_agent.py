@@ -65,8 +65,9 @@ class OutlineAgent(BaseAgent):
         输入: {
             "topic": str,
             "target_audience": dict,
-            "style_instructions": str,  # 风格写作指令
-            "num_h2": int,  # H2数量，默认7
+            "style_instructions": str,    # 风格写作指令
+            "num_h2": int,                 # H2数量，默认7
+            "research": dict,              # 研究报告（Phase 2 新增）
         }
 
         输出: {
@@ -86,6 +87,7 @@ class OutlineAgent(BaseAgent):
         target_audience = input_data.get("target_audience", {})
         style_instructions = input_data.get("style_instructions", "")
         num_h2 = input_data.get("num_h2", 7)
+        research = input_data.get("research", {})
 
         if not topic:
             return AgentResult(success=False, error="主题不能为空")
@@ -99,11 +101,11 @@ class OutlineAgent(BaseAgent):
         ))
 
         if self.llm_client:
-            return self._generate_with_llm(topic, target_audience, style_instructions, num_h2)
+            return self._generate_with_llm(topic, target_audience, style_instructions, num_h2, research)
         else:
-            return self._generate_template(topic, num_h2)
+            return self._generate_template(topic, num_h2, research)
 
-    def _generate_template(self, topic: str, num_h2: int) -> AgentResult:
+    def _generate_template(self, topic: str, num_h2: int, research: dict = None) -> AgentResult:
         """生成大纲模板（降级模式）"""
         primary_kw = topic
 
@@ -120,15 +122,16 @@ class OutlineAgent(BaseAgent):
         output = {
             "is_template": True,
             "title": f"《{topic}：实战完整指南》",
-            "seo_keywords": {
-                "primary": primary_kw,
-                "secondary": [f"{topic}技巧", f"{topic}方法", f"{topic}案例"],
-                "long_tail": [f"如何{topic}", f"{topic}入门", f"{topic}避坑"]
-            },
+            "seo_keywords": self._merge_seo_keywords(primary_kw, research),
             "outline": h2_templates[:num_h2],
             "estimated_word_count": num_h2 * 300 + 500,
             "opening_hook": f"你知道吗，{topic}其实没有想象中那么难。"
         }
+
+        if research:
+            findings = research.get("findings", [])
+            if findings:
+                output["seo_keywords"] = self._merge_seo_keywords(topic, research)
 
         self.hub.publish(Message(
             type=MessageType.STATUS,
@@ -144,7 +147,8 @@ class OutlineAgent(BaseAgent):
         topic: str,
         target_audience: dict,
         style_instructions: str,
-        num_h2: int
+        num_h2: int,
+        research: dict = None,
     ) -> AgentResult:
         """使用 LLM 生成大纲"""
         try:
@@ -179,10 +183,20 @@ class OutlineAgent(BaseAgent):
                 "required": ["title", "seo_keywords", "outline", "estimated_word_count", "opening_hook"]
             }
 
-            # 构造 prompt，注入受众和风格信息
+            # 构造 prompt，注入受众、风格和研究信息
             persona = target_audience.get("persona", "一般读者")
             pain_points = ", ".join(target_audience.get("pain_points", []))
             tone = target_audience.get("tone", "技术干货")
+
+            # 研究上下文
+            research_context = ""
+            if research:
+                findings = research.get("findings", [])
+                if findings:
+                    research_context = f"\n## 研究发现（来自 Tavily + Obsidian）：\n" + "\n".join(f"- {f}" for f in findings[:5])
+                seo_kw = research.get("seo_keywords", {})
+                if seo_kw:
+                    research_context += f"\nSEO关键词：primary={seo_kw.get('primary', topic)}, secondary={seo_kw.get('secondary', [])}"
 
             prompt = f"""{OUTLINE_PROMPT}
 
@@ -191,6 +205,8 @@ class OutlineAgent(BaseAgent):
 - 目标读者：{persona}
 - 读者痛点：{pain_points}
 - 内容调性：{tone}
+
+{research_context}
 
 {f"风格写作指令：\n{style_instructions}" if style_instructions else ""}
 
@@ -214,7 +230,7 @@ class OutlineAgent(BaseAgent):
             return AgentResult(success=True, output=result)
 
         except LLMCallError as e:
-            result = self._generate_template(topic, num_h2)
+            result = self._generate_template(topic, num_h2, research)
             result.output["is_template"] = True
             return result
 
@@ -223,6 +239,26 @@ class OutlineAgent(BaseAgent):
                 success=False,
                 error=f"OutlineAgent异常: {str(e)}"
             )
+
+    def _merge_seo_keywords(self, primary: str, research: dict = None) -> dict:
+        """融合研究报告中的 SEO keywords"""
+        default = {
+            "primary": primary,
+            "secondary": [f"{primary}技巧", f"{primary}方法"],
+            "long_tail": [f"如何{primary}", f"{primary}入门"],
+        }
+        if not research:
+            return default
+
+        seo = research.get("seo_keywords", {})
+        if not seo:
+            return default
+
+        return {
+            "primary": seo.get("primary", primary),
+            "secondary": seo.get("secondary", default["secondary"]),
+            "long_tail": seo.get("long_tail", default["long_tail"]),
+        }
 
     def _get_output_type(self) -> MessageType:
         return MessageType.OUTLINE

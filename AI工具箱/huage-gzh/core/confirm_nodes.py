@@ -91,7 +91,10 @@ class PlanConfirmNode:
         print()
 
         import sys
-        choice = input("请选择 [直接回车接受]: ").strip().lower()
+        try:
+            choice = input("请选择 [直接回车接受]: ").strip().lower()
+        except (EOFError, OSError):
+            choice = ""  # 非交互模式，默认接受
 
         if choice == "q":
             print("\n已退出。")
