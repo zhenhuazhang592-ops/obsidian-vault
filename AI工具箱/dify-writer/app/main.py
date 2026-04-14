@@ -15,6 +15,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from app.core.config import CACHE_DIR, LOG_FILE, MCP_SERVER_KEY, SESSIONS_DIR
 from app.core.session import SessionState
 from app.core.utils import safe_json_parse
+from app.routers.pipeline_router import router as pipeline_router
 from app.tools.base import get_registry
 
 logging.basicConfig(
@@ -37,6 +38,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Pipeline router
+app.include_router(pipeline_router)
 
 
 # ─── Auth Middleware ───────────────────────────────────────────────
