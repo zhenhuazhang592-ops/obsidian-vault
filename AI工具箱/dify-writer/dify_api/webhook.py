@@ -4,9 +4,10 @@ Dify Webhook 处理
 """
 import asyncio
 import logging
+import os
 from typing import Literal, Optional
 from dataclasses import dataclass
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Header
 
 logger = logging.getLogger(__name__)
 
@@ -170,13 +171,21 @@ def set_pipeline(pipeline):
 
 
 @router.post("/hitl")
-async def handle_hitl_callback(payload: dict):
+async def handle_hitl_callback(
+    payload: dict,
+    authorization: str = Header(None),
+):
     """
     Dify HITL 回调端点
 
     Dify 的 HITL 节点会在需要人工确认时调用此端点，
     我们返回确认卡片内容让 Dify 展示给用户
     """
+    # Bearer token 验证
+    expected = os.environ.get("DIFY_WEBHOOK_BEARER_TOKEN", "")
+    if expected and authorization != f"Bearer {expected}":
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
     hitl_type = payload.get("hitl_type")
     session_id = payload.get("session_id")
 
@@ -204,6 +213,8 @@ async def handle_hitl_callback(payload: dict):
 async def get_session_status(session_id: str):
     """获取会话状态"""
     handler = get_handler()
+    if handler.pipeline is None:
+        raise HTTPException(status_code=503, detail="Pipeline not configured")
     status = await handler.pipeline.get_status(session_id)
     return status
 

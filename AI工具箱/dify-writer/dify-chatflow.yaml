@@ -695,14 +695,14 @@ edges:
     target: quality_condition
 
   - source: quality_condition
-    target: image_generation
+    target: cover_generation
     condition: score >= 85
 
   - source: quality_condition
     target: polish
     condition: score < 85
 
-  - source: image_generation
+  - source: cover_generation
     target: html_layout
 
   - source: html_layout
