@@ -1,4 +1,5 @@
 # Dify Writer MCP Server - FastAPI main application
+import asyncio
 import json
 import logging
 import time
@@ -176,7 +177,10 @@ async def get_session(
 ):
     """Get session state."""
     await verify_mcp_key(x_mcp_key)
-    session = SessionState.load(session_id)
+    try:
+        session = SessionState.load(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not session:
         raise HTTPException(status_code=404, detail="Session not found")
     return {"session_id": session_id, "state": session.state}
@@ -190,12 +194,18 @@ async def write_session_checkpoint(
 ):
     """Write session checkpoint with updates."""
     await verify_mcp_key(x_mcp_key)
-    session = SessionState.load(session_id)
+    try:
+        session = SessionState.load(session_id)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
     if not session:
-        session = SessionState(session_id)
+        try:
+            session = SessionState(session_id)
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e)) from e
     session.update(**updates)
     try:
-        session.write_checkpoint()
+        await asyncio.to_thread(session.write_checkpoint)
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e)) from e
     return {"session_id": session_id, "state": session.state}
@@ -227,7 +237,7 @@ async def call_tool(
     try:
         result = await tool.execute(**params)
         latency_ms = (time.time() - start) * 1000
-        _record_request(tool_name, latency_ms, success=True)
+        await asyncio.to_thread(_record_request, tool_name, latency_ms, True)
         logger.info(
             json.dumps(
                 {
@@ -241,7 +251,7 @@ async def call_tool(
         return {"result": result, "tool": tool_name}
     except Exception as e:
         latency_ms = (time.time() - start) * 1000
-        _record_request(tool_name, latency_ms, success=False, error_type=type(e).__name__)
+        await asyncio.to_thread(_record_request, tool_name, latency_ms, False, type(e).__name__)
         logger.error(f"Tool {tool_name} failed: {e}")
         raise HTTPException(status_code=500, detail=str(e)) from e
 

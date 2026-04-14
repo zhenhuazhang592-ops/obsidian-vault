@@ -450,11 +450,40 @@ class TestSessionState:
 
     @pytest.mark.asyncio
     async def test_nonexistent_session_load_returns_none(self):
-        """Test loading nonexistent session returns None."""
+        """Test loading nonexistent session returns None (valid UUID but no file)."""
         from app.core.session import SessionState
 
-        result = SessionState.load("nonexistent-session-id")
+        # Use a valid UUID format that doesn't exist on disk
+        result = SessionState.load("00000000-0000-0000-0000-000000000000")
         assert result is None
+
+    @pytest.mark.asyncio
+    async def test_invalid_session_id_format_rejected(self):
+        """Test path traversal attempt via malformed session_id raises ValueError."""
+        from app.core.session import SessionState
+
+        for malicious_id in [
+            "../../../etc",
+            "..\\..\\windows\\system32",
+            "foo/../../../etc",
+            "x" * 100,
+            "",
+        ]:
+            with pytest.raises(ValueError, match="Invalid session_id format"):
+                SessionState.load(malicious_id)
+
+    @pytest.mark.asyncio
+    async def test_load_corrupted_checkpoint_raises_runtimeerror(self, temp_session_dir):
+        """Test corrupted JSON checkpoint raises RuntimeError."""
+        from app.core.session import SessionState
+
+        session = SessionState.create(topic="test", platform="wechat")
+        session.write_checkpoint()
+        # Corrupt the file
+        with open(session.state_file, "w") as f:
+            f.write("not valid json{ broken")
+        with pytest.raises(RuntimeError, match="Failed to load checkpoint"):
+            SessionState.load(session.session_id)
 
 
 class TestToolRegistry:

@@ -1,6 +1,7 @@
 # Session state management with atomic checkpoint writes
 import json
 import os
+import re
 import tempfile
 import uuid
 from datetime import datetime, timezone
@@ -9,11 +10,24 @@ from typing import Optional
 
 from app.core.config import SESSIONS_DIR
 
+# Valid session_id pattern: UUID v4 format
+_SESSION_ID_RE = re.compile(
+    r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+    re.IGNORECASE,
+)
+
+
+def _validate_session_id(session_id: str) -> None:
+    """Validate session_id is a UUID before constructing file paths."""
+    if not _SESSION_ID_RE.match(session_id):
+        raise ValueError(f"Invalid session_id format: {session_id}")
+
 
 class SessionState:
     """Session state with atomic checkpoint writes."""
 
     def __init__(self, session_id: str):
+        _validate_session_id(session_id)
         self.session_id = session_id
         self.state_file = SESSIONS_DIR / session_id / "checkpoint.json"
         self.state: dict = {
@@ -72,6 +86,7 @@ class SessionState:
     @classmethod
     def load(cls, session_id: str) -> Optional["SessionState"]:
         """Load session state from checkpoint, or None if not found."""
+        _validate_session_id(session_id)
         state_file = SESSIONS_DIR / session_id / "checkpoint.json"
         if not state_file.exists():
             return None
