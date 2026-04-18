@@ -26,12 +26,12 @@ export class WikiGraphBuilder {
   private checkpointFile: string;
 
   constructor() {
-    const wikiDir = config.wikiPath();
+    const wikiDir = config.wikiPath;
     this.checkpointFile = path.join(wikiDir, 'graph.jsonl');
   }
 
   async build(): Promise<WikiGraph> {
-    const wikiDir = config.wikiPath();
+    const wikiDir = config.wikiPath;
     const { nodes, edges } = await this.pass1(wikiDir);
     const graph: WikiGraph = { nodes, edges, generatedAt: new Date().toISOString() };
     fs.appendFileSync(this.checkpointFile, JSON.stringify({ ts: new Date().toISOString(), graph }) + '\n', 'utf-8');

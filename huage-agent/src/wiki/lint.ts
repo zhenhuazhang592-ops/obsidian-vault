@@ -18,7 +18,7 @@ export class WikiLint {
   private wikiDir: string;
 
   constructor(wikiDir?: string) {
-    this.wikiDir = wikiDir ?? config.wikiPath();
+    this.wikiDir = wikiDir ?? config.wikiPath;
   }
 
   async lint(): Promise<LintResult> {

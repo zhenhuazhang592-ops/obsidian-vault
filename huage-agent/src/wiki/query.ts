@@ -27,7 +27,7 @@ export function tokenizeCJK(text: string): string[] {
 
 export class WikiQuery {
   async search(keyword: string): Promise<WikiQueryResult> {
-    const wikiPath = config.wikiPath();
+    const wikiPath = config.wikiPath;
     const pages = await this.searchPages(wikiPath, keyword);
     pages.sort((a, b) => this.relevanceScore(b, keyword) - this.relevanceScore(a, keyword));
     return { pages: pages.slice(0, 10), query: keyword, matchedAt: new Date().toISOString() };

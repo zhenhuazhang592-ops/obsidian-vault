@@ -14,7 +14,10 @@
     "test": "vitest run --config vitest.config.ts",
     "test:watch": "vitest",
     "test:stages": "vitest run tests/stages.test.ts --config vitest.config.ts",
-    "test:prompts": "vitest run tests/prompts.test.ts --config vitest.config.ts"
+    "test:prompts": "vitest run tests/prompts.test.ts --config vitest.config.ts",
+    "test:wiki": "vitest run tests/wiki.test.ts --config vitest.config.ts",
+    "test:validation": "vitest run tests/validation.test.ts --config vitest.config.ts",
+    "test:output": "vitest run tests/output.test.ts --config vitest.config.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.0",

@@ -35,7 +35,7 @@ export class WikiIngest {
     });
 
     const parsed = WikiRefluxOutputSchema.parse(result);
-    const wikiDir = config.wikiPath();
+    const wikiDir = config.wikiPath;
     const sourcePath = path.join(wikiDir, `sources/${date}-${slug}.md`);
     fs.mkdirSync(path.dirname(sourcePath), { recursive: true });
     fs.writeFileSync(sourcePath, parsed.sourcePage.content, 'utf-8');
