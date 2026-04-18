@@ -85,6 +85,16 @@ fi
 _ROUTING_DECLINED=$(~/.claude/skills/gstack/bin/gstack-config get routing_declined 2>/dev/null || echo "false")
 echo "HAS_ROUTING: $_HAS_ROUTING"
 echo "ROUTING_DECLINED: $_ROUTING_DECLINED"
+# Vendoring deprecation: detect if CWD has a vendored gstack copy
+_VENDORED="no"
+if [ -d ".claude/skills/gstack" ] && [ ! -L ".claude/skills/gstack" ]; then
+  if [ -f ".claude/skills/gstack/VERSION" ] || [ -d ".claude/skills/gstack/.git" ]; then
+    _VENDORED="yes"
+  fi
+fi
+echo "VENDORED_GSTACK: $_VENDORED"
+# Detect spawned session (OpenClaw or other orchestrator)
+[ -n "$OPENCLAW_SESSION" ] && echo "SPAWNED_SESSION: true" || true
 ```
 
 If `PROACTIVE` is `"false"`, do not proactively suggest gstack skills AND do not
@@ -210,6 +220,45 @@ If B: run `~/.claude/skills/gstack/bin/gstack-config set routing_declined true`
 Say "No problem. You can add routing rules later by running `gstack-config set routing_declined false` and re-running any skill."
 
 This only happens once per project. If `HAS_ROUTING` is `yes` or `ROUTING_DECLINED` is `true`, skip this entirely.
+
+If `VENDORED_GSTACK` is `yes`: This project has a vendored copy of gstack at
+`.claude/skills/gstack/`. Vendoring is deprecated. We will not keep vendored copies
+up to date, so this project's gstack will fall behind.
+
+Use AskUserQuestion (one-time per project, check for `~/.gstack/.vendoring-warned-$SLUG` marker):
+
+> This project has gstack vendored in `.claude/skills/gstack/`. Vendoring is deprecated.
+> We won't keep this copy up to date, so you'll fall behind on new features and fixes.
+>
+> Want to migrate to team mode? It takes about 30 seconds.
+
+Options:
+- A) Yes, migrate to team mode now
+- B) No, I'll handle it myself
+
+If A:
+1. Run `git rm -r .claude/skills/gstack/`
+2. Run `echo '.claude/skills/gstack/' >> .gitignore`
+3. Run `~/.claude/skills/gstack/bin/gstack-team-init required` (or `optional`)
+4. Run `git add .claude/ .gitignore CLAUDE.md && git commit -m "chore: migrate gstack from vendored to team mode"`
+5. Tell the user: "Done. Each developer now runs: `cd ~/.claude/skills/gstack && ./setup --team`"
+
+If B: say "OK, you're on your own to keep the vendored copy up to date."
+
+Always run (regardless of choice):
+```bash
+eval "$(~/.claude/skills/gstack/bin/gstack-slug 2>/dev/null)" 2>/dev/null || true
+touch ~/.gstack/.vendoring-warned-${SLUG:-unknown}
+```
+
+This only happens once per project. If the marker file exists, skip entirely.
+
+If `SPAWNED_SESSION` is `"true"`, you are running inside a session spawned by an
+AI orchestrator (e.g., OpenClaw). In spawned sessions:
+- Do NOT use AskUserQuestion for interactive prompts. Auto-choose the recommended option.
+- Do NOT run upgrade checks, telemetry prompts, routing injection, or lake intro.
+- Focus on completing the task and reporting results via prose output.
+- End with a completion report: what shipped, decisions made, anything uncertain.
 
 ## Voice
 
@@ -442,6 +491,31 @@ artifacts that inform the plan, not code changes:
 These are read-only in spirit — they inspect the live site, generate visual artifacts,
 or get independent opinions. They do NOT modify project source files.
 
+## Skill Invocation During Plan Mode
+
+If a user invokes a skill during plan mode, that invoked skill workflow takes
+precedence over generic plan mode behavior until it finishes or the user explicitly
+cancels that skill.
+
+Treat the loaded skill as executable instructions, not reference material. Follow
+it step by step. Do not summarize, skip, reorder, or shortcut its steps.
+
+If the skill says to use AskUserQuestion, do that. Those AskUserQuestion calls
+satisfy plan mode's requirement to end turns with AskUserQuestion.
+
+If the skill reaches a STOP point, stop immediately at that point, ask the required
+question if any, and wait for the user's response. Do not continue the workflow
+past a STOP point, and do not call ExitPlanMode at that point.
+
+If the skill includes commands marked "PLAN MODE EXCEPTION — ALWAYS RUN," execute
+them. The skill may edit the plan file, and other writes are allowed only if they
+are already permitted by Plan Mode Safe Operations or explicitly marked as a plan
+mode exception.
+
+Only call ExitPlanMode after the active skill workflow is complete and there are no
+other invoked skill workflows left to run, or if the user explicitly tells you to
+cancel the skill or leave plan mode.
+
 ## Plan Status Footer
 
 When you are in plan mode and about to call ExitPlanMode:
@@ -470,6 +544,7 @@ Then write a `## GSTACK REVIEW REPORT` section to the end of the plan file:
 | Codex Review | \`/codex review\` | Independent 2nd opinion | 0 | — | — |
 | Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | 0 | — | — |
 | Design Review | \`/plan-design-review\` | UI/UX gaps | 0 | — | — |
+| DX Review | \`/plan-devex-review\` | Developer experience gaps | 0 | — | — |
 
 **VERDICT:** NO REVIEWS YET — run \`/autoplan\` for full review pipeline, or individual reviews above.
 \`\`\`
@@ -585,9 +660,94 @@ These aren't a checklist — they're how you see. The perceptual instincts that 
 11. **Design for trust** — Every design decision either builds or erodes trust. Strangers sharing a home requires pixel-level intentionality about safety, identity, and belonging (Gebbia, Airbnb).
 12. **Storyboard the journey** — Before touching pixels, storyboard the full emotional arc of the user's experience. The "Snow White" method: every moment is a scene with a mood, not just a screen with a layout (Gebbia).
 
-Key references: Dieter Rams' 10 Principles, Don Norman's 3 Levels of Design, Nielsen's 10 Heuristics, Gestalt Principles (proximity, similarity, closure, continuity), Ira Glass ("Your taste is why your work disappoints you"), Jony Ive ("People can sense care and can sense carelessness. Different and new is relatively easy. Doing something that's genuinely better is very hard."), Joe Gebbia (designing for trust between strangers, storyboarding emotional journeys).
+Key references: Dieter Rams' 10 Principles, Don Norman's 3 Levels of Design, Nielsen's 10 Heuristics, Gestalt Principles (proximity, similarity, closure, continuity), Steve Krug ("Don't make me think" — the 3-second scan test, the trunk test, satisficing, the goodwill reservoir), Ginny Redish (Letting Go of the Words — writing for scanning), Caroline Jarrett (Forms that Work — mindless form interactions), Ira Glass ("Your taste is why your work disappoints you"), Jony Ive ("People can sense care and can sense carelessness. Different and new is relatively easy. Doing something that's genuinely better is very hard."), Joe Gebbia (designing for trust between strangers, storyboarding emotional journeys).
 
 When reviewing a plan, empathy as simulation runs automatically. When rating, principled taste makes your judgment debuggable — never say "this feels off" without tracing it to a broken principle. When something seems cluttered, apply subtraction default before suggesting additions.
+
+## UX Principles: How Users Actually Behave
+
+These principles govern how real humans interact with interfaces. They are observed
+behavior, not preferences. Apply them before, during, and after every design decision.
+
+### The Three Laws of Usability
+
+1. **Don't make me think.** Every page should be self-evident. If a user stops
+   to think "What do I click?" or "What does this mean?", the design has failed.
+   Self-evident > self-explanatory > requires explanation.
+
+2. **Clicks don't matter, thinking does.** Three mindless, unambiguous clicks
+   beat one click that requires thought. Each step should feel like an obvious
+   choice (animal, vegetable, or mineral), not a puzzle.
+
+3. **Omit, then omit again.** Get rid of half the words on each page, then get
+   rid of half of what's left. Happy talk (self-congratulatory text) must die.
+   Instructions must die. If they need reading, the design has failed.
+
+### How Users Actually Behave
+
+- **Users scan, they don't read.** Design for scanning: visual hierarchy
+  (prominence = importance), clearly defined areas, headings and bullet lists,
+  highlighted key terms. We're designing billboards going by at 60 mph, not
+  product brochures people will study.
+- **Users satisfice.** They pick the first reasonable option, not the best.
+  Make the right choice the most visible choice.
+- **Users muddle through.** They don't figure out how things work. They wing
+  it. If they accomplish their goal by accident, they won't seek the "right" way.
+  Once they find something that works, no matter how badly, they stick to it.
+- **Users don't read instructions.** They dive in. Guidance must be brief,
+  timely, and unavoidable, or it won't be seen.
+
+### Billboard Design for Interfaces
+
+- **Use conventions.** Logo top-left, nav top/left, search = magnifying glass.
+  Don't innovate on navigation to be clever. Innovate when you KNOW you have a
+  better idea, otherwise use conventions. Even across languages and cultures,
+  web conventions let people identify the logo, nav, search, and main content.
+- **Visual hierarchy is everything.** Related things are visually grouped. Nested
+  things are visually contained. More important = more prominent. If everything
+  shouts, nothing is heard. Start with the assumption everything is visual noise,
+  guilty until proven innocent.
+- **Make clickable things obviously clickable.** No relying on hover states for
+  discoverability, especially on mobile where hover doesn't exist. Shape, location,
+  and formatting (color, underlining) must signal clickability without interaction.
+- **Eliminate noise.** Three sources: too many things shouting for attention
+  (shouting), things not organized logically (disorganization), and too much stuff
+  (clutter). Fix noise by removal, not addition.
+- **Clarity trumps consistency.** If making something significantly clearer
+  requires making it slightly inconsistent, choose clarity every time.
+
+### Navigation as Wayfinding
+
+Users on the web have no sense of scale, direction, or location. Navigation
+must always answer: What site is this? What page am I on? What are the major
+sections? What are my options at this level? Where am I? How can I search?
+
+Persistent navigation on every page. Breadcrumbs for deep hierarchies.
+Current section visually indicated. The "trunk test": cover everything except
+the navigation. You should still know what site this is, what page you're on,
+and what the major sections are. If not, the navigation has failed.
+
+### The Goodwill Reservoir
+
+Users start with a reservoir of goodwill. Every friction point depletes it.
+
+**Deplete faster:** Hiding info users want (pricing, contact, shipping). Punishing
+users for not doing things your way (formatting requirements on phone numbers).
+Asking for unnecessary information. Putting sizzle in their way (splash screens,
+forced tours, interstitials). Unprofessional or sloppy appearance.
+
+**Replenish:** Know what users want to do and make it obvious. Tell them what they
+want to know upfront. Save them steps wherever possible. Make it easy to recover
+from errors. When in doubt, apologize.
+
+### Mobile: Same Rules, Higher Stakes
+
+All the above applies on mobile, just more so. Real estate is scarce, but never
+sacrifice usability for space savings. Affordances must be VISIBLE: no cursor
+means no hover-to-discover. Touch targets must be big enough (44px minimum).
+Flat design can strip away useful visual information that signals interactivity.
+Prioritize ruthlessly: things needed in a hurry go close at hand, everything
+else a few taps away with an obvious path to get there.
 
 ## Priority Hierarchy Under Context Pressure
 
@@ -997,6 +1157,8 @@ descriptions of what 10/10 looks like.
 
 ## Review Sections (7 passes, after scope is agreed)
 
+**Anti-skip rule:** Never condense, abbreviate, or skip any review pass (1-7) regardless of plan type (strategy, spec, code, infra). Every pass in this skill exists for a reason. "This is a strategy doc so design passes don't apply" is always wrong — design gaps are where implementation breaks down. If a pass genuinely has zero findings, say "No issues found" and move on — but you must evaluate it.
+
 ## Prior Learnings
 
 Search for relevant learnings from previous sessions:
@@ -1122,6 +1284,10 @@ FIX TO 10: Rewrite vague UI descriptions with specific alternatives.
 - One job per section
 - "If deleting 30% of the copy improves it, keep deleting"
 - Cards earn their existence — no decorative card grids
+- NEVER use small, low-contrast type (body text < 16px or contrast ratio < 4.5:1 on body text)
+- NEVER put labels inside form fields as the only label (placeholder-as-label pattern — labels must be visible when the field has content)
+- ALWAYS preserve visited vs unvisited link distinction (visited links must have a different color)
+- NEVER float headings between paragraphs (heading must be visually closer to the section it introduces than to the preceding section)
 
 **AI Slop blacklist** (the 10 patterns that scream "AI-generated"):
 1. Purple/violet/indigo gradient backgrounds or blue-to-purple color schemes
@@ -1347,6 +1513,10 @@ Parse each JSONL entry. Each skill logs different fields:
   → Findings: "{issues_found} issues, {critical_gaps} critical gaps"
 - **plan-design-review**: \`status\`, \`initial_score\`, \`overall_score\`, \`unresolved\`, \`decisions_made\`, \`commit\`
   → Findings: "score: {initial_score}/10 → {overall_score}/10, {decisions_made} decisions"
+- **plan-devex-review**: \`status\`, \`initial_score\`, \`overall_score\`, \`product_type\`, \`tthw_current\`, \`tthw_target\`, \`mode\`, \`persona\`, \`competitive_tier\`, \`unresolved\`, \`commit\`
+  → Findings: "score: {initial_score}/10 → {overall_score}/10, TTHW: {tthw_current} → {tthw_target}"
+- **devex-review**: \`status\`, \`overall_score\`, \`product_type\`, \`tthw_measured\`, \`dimensions_tested\`, \`dimensions_inferred\`, \`boomerang\`, \`commit\`
+  → Findings: "score: {overall_score}/10, TTHW: {tthw_measured}, {dimensions_tested} tested/{dimensions_inferred} inferred"
 - **codex-review**: \`status\`, \`gate\`, \`findings\`, \`findings_fixed\`
   → Findings: "{findings} findings, {findings_fixed}/{findings} fixed"
 
@@ -1365,6 +1535,7 @@ Produce this markdown table:
 | Codex Review | \`/codex review\` | Independent 2nd opinion | {runs} | {status} | {findings} |
 | Eng Review | \`/plan-eng-review\` | Architecture & tests (required) | {runs} | {status} | {findings} |
 | Design Review | \`/plan-design-review\` | UI/UX gaps | {runs} | {status} | {findings} |
+| DX Review | \`/plan-devex-review\` | Developer experience gaps | {runs} | {status} | {findings} |
 \`\`\`
 
 Below the table, add these lines (omit any that are empty/not applicable):

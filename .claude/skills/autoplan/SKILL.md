@@ -1,0 +1,1 @@
+/Users/huage/Obsidian Vault/.claude/skills/gstack/autoplan/SKILL.md

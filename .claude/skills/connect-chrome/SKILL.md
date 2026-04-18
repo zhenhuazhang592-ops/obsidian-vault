@@ -1,0 +1,1 @@
+/Users/huage/Obsidian Vault/.claude/skills/gstack/connect-chrome/SKILL.md
