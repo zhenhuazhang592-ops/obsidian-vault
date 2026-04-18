@@ -185,9 +185,13 @@ describe('Prompt Templates', () => {
   });
 
   it('RESEARCH_PROMPT 包含必要变量', () => {
-    const vars = { topic: '测试主题' };
+    const vars = {
+      topic: '测试主题',
+      _researchContent: '搜索结果内容...',
+    };
     const rendered = PromptEngine.render(RESEARCH_PROMPT, vars);
     expect(rendered).toContain('测试主题');
+    expect(rendered).toContain('搜索结果内容...');
   });
 
   it('WIKI_REFLUX_PROMPT 包含必要变量', () => {

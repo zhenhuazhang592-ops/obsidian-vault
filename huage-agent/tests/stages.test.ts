@@ -1,89 +1,74 @@
 /**
  * 五阶段执行器测试
+ *
+ * 策略：
+ * - prompts.test.ts 单独跑（18 tests，render 真实）
+ * - stages.test.ts 只测 Stage execute（file-level vi.fn mock，shared module 不需要 render）
  */
 
 import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 
-// ==================== Template Render Tests ====================
-// vi.mock hoisted to top; use vi.importActual to get the real render()
-describe('Template Engine', () => {
-  async function getPE() {
-    const mod = await vi.importActual<typeof import('../src/prompts/shared')>(
-      '../src/prompts/shared'
+// ==================== Mock callLLM at module level ====================
+
+const mockCallLLM = vi.fn();
+vi.mock('../src/prompts/shared', () => ({
+  PromptEngine: {
+    render: vi.fn().mockReturnValue('rendered'),
+    callLLM: mockCallLLM,
+  },
+}));
+
+// ==================== Phase 0 Research Tests ====================
+
+describe('Phase0Research', () => {
+  const testDir = '/tmp/huage-agent-phase0-test';
+
+  beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
+  afterAll(() => fs.rmSync(testDir, { recursive: true }));
+
+  it('execute generates research results and saves output', async () => {
+    vi.mock('../src/tools/tavily', () => ({
+      TavilyClient: class {
+        searchMany = vi.fn().mockResolvedValue([
+          { title: 'Article 1', url: 'https://example.com/1', content: 'Content 1', score: 0.9 },
+        ]);
+      },
+    }));
+
+    vi.mock('../src/tools/youtube', () => ({
+      YouTubeClient: class {
+        search = vi.fn().mockResolvedValue([
+          { title: 'Video 1', videoId: 'abc123', channelName: 'Test Channel', duration: '10:00', transcript: '' },
+        ]);
+      },
+    }));
+
+    mockCallLLM.mockResolvedValueOnce(
+      JSON.stringify({
+        summary: 'Test summary',
+        keyInsights: ['Insight 1', 'Insight 2'],
+        expertViews: [],
+        cases: [],
+        controversies: [],
+      })
     );
-    return mod.PromptEngine;
-  }
 
-  it('renders simple variables', async () => {
-    const { render } = await getPE();
-    expect(render('Hello {{name}}', { name: 'World' })).toBe('Hello World');
+    const { Phase0Research } = await import('../src/stages/phase0-research');
+    const phase = new Phase0Research(testDir);
+    const output = await phase.execute({ topic: '时间管理' });
+
+    expect(output.status).toBe('waiting_user');
+    expect(output.result).toHaveProperty('topic');
+    expect(output.result).toHaveProperty('tavilyResults');
+    expect(output.result).toHaveProperty('youtubeResults');
+    expect(output.result).toHaveProperty('summary');
+
+    const filePath = path.join(testDir, 'phase0-research.json');
+    expect(fs.existsSync(filePath)).toBe(true);
   });
-
-  it('replaces multiple variables', async () => {
-    const { render } = await getPE();
-    expect(render('{{greeting}} {{name}}!', { greeting: 'Hi', name: 'Claude' })).toBe('Hi Claude!');
-  });
-
-  it('unresolved variable throws error (strict mode)', async () => {
-    const { render } = await getPE();
-    expect(() => render('Hello {{name}}', {})).toThrow('Unresolved prompt variables');
-  });
-
-  it('{{#if}} block renders when truthy', async () => {
-    const { render } = await getPE();
-    expect(render('S {{#if flag}}M{{/if}} E', { flag: 'yes' })).toBe('S M E');
-  });
-
-  it('{{#if}} block skipped when empty string', async () => {
-    const { render } = await getPE();
-    expect(render('S {{#if flag}}M{{/if}} E', { flag: '' })).toBe('S  E');
-  });
-
-  it('{{#each}} block iterates over array', async () => {
-    const { render } = await getPE();
-    const result = render('{{#each items}}{{name}}{{/each}}', {
-      items: [{ name: 'A' }, { name: 'B' }],
-    });
-    expect(result).toBe('AB');
-  });
-
-  it('dot notation variable: {{opening.hook}}', async () => {
-    const { render } = await getPE();
-    expect(render('Hook: {{opening.hook}}', { 'opening.hook': '反直觉' })).toBe('Hook: 反直觉');
-  });
-
-  it('{{#each}} with object items resolves {{heading}} correctly', async () => {
-    const { render } = await getPE();
-    const result = render('{{#each sections}}{{heading}}|{{/each}}', {
-      sections: [{ heading: 'S1' }, { heading: 'S2' }],
-    });
-    expect(result).toBe('S1|S2|');
-  });
-
-  it('{{#if}} with dot notation: truthy renders block', async () => {
-    const { render } = await getPE();
-    expect(render('A{{#if data.x}}B{{/if}}C', { 'data.x': 'yes' })).toBe('ABC');
-  });
-
-  it('{{#if}} with dot notation: empty string skips block', async () => {
-    const { render } = await getPE();
-    expect(render('A{{#if data.x}}B{{/if}}C', { 'data.x': '' })).toBe('AC');
-  });
-});
-
-// ==================== Stage Tests (mock callLLM) ====================
-
-vi.mock('../src/prompts/shared', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../src/prompts/shared')>();
-  return {
-    ...actual,
-    PromptEngine: {
-      ...actual.PromptEngine,
-      callLLM: vi.fn(),
-    },
-  };
 });
 
 // ==================== Stage 1 Tests ====================
@@ -92,11 +77,11 @@ describe('Stage1Topic', () => {
   const testDir = '/tmp/huage-agent-stage1-test';
 
   beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
   afterAll(() => fs.rmSync(testDir, { recursive: true }));
 
   it('execute generates topic options and saves output', async () => {
-    const { PromptEngine } = await import('../src/prompts/shared');
-    (PromptEngine.callLLM as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+    mockCallLLM.mockResolvedValueOnce(
       JSON.stringify({
         options: [
           {
@@ -151,11 +136,11 @@ describe('Stage2Thesis', () => {
   const testDir = '/tmp/huage-agent-stage2-test';
 
   beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
   afterAll(() => fs.rmSync(testDir, { recursive: true }));
 
   it('execute generates thesis and saves output', async () => {
-    const { PromptEngine } = await import('../src/prompts/shared');
-    (PromptEngine.callLLM as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+    mockCallLLM.mockResolvedValueOnce(
       JSON.stringify({
         coreThesis: '时间管理的本质是精力管理',
         supportingPoints: [
@@ -194,11 +179,11 @@ describe('Stage3Outline', () => {
   const testDir = '/tmp/huage-agent-stage3-test';
 
   beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
   afterAll(() => fs.rmSync(testDir, { recursive: true }));
 
   it('execute builds outline from topic and thesis', async () => {
-    const { PromptEngine } = await import('../src/prompts/shared');
-    (PromptEngine.callLLM as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+    mockCallLLM.mockResolvedValueOnce(
       JSON.stringify({
         opening: {
           hook: '反直觉开篇',
@@ -258,11 +243,11 @@ describe('Stage4Writing', () => {
   const testDir = '/tmp/huage-agent-stage4-test';
 
   beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
   afterAll(() => fs.rmSync(testDir, { recursive: true }));
 
   it('writes draft and saves .md file', async () => {
-    const { PromptEngine } = await import('../src/prompts/shared');
-    (PromptEngine.callLLM as ReturnType<typeof vi.fn>).mockResolvedValueOnce(
+    mockCallLLM.mockResolvedValueOnce(
       '# 时间管理的真相\n\n这是一篇测试文章。'
     );
 
@@ -302,6 +287,7 @@ describe('FiveStageOrchestrator', () => {
   const testDir = '/tmp/huage-agent-orchestrator-test';
 
   beforeAll(() => fs.mkdirSync(testDir, { recursive: true }));
+  afterAll(() => mockCallLLM.mockReset());
   afterAll(() => fs.rmSync(testDir, { recursive: true }));
 
   it('creates output directory on construction', async () => {
@@ -312,8 +298,7 @@ describe('FiveStageOrchestrator', () => {
   });
 
   it('runFull throws on invalid LLM response (not JSON)', async () => {
-    const { PromptEngine } = await import('../src/prompts/shared');
-    (PromptEngine.callLLM as ReturnType<typeof vi.fn>).mockResolvedValueOnce('not json');
+    mockCallLLM.mockResolvedValueOnce('not json');
 
     const { FiveStageOrchestrator } = await import('../src/stages/index');
     const orch = new FiveStageOrchestrator(testDir);

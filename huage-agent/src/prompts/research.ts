@@ -20,6 +20,10 @@ export const RESEARCH_PROMPT = `你是 huage Agent，专注文章创作的 AI �
 {{wikiKnowledge}}
 {{/if}}
 
+## 搜索结果内容
+
+{{_researchContent}}
+
 ## 研究要求
 
 ### 1. 核心发现
