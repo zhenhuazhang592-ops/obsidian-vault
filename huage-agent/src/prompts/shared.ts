@@ -182,11 +182,12 @@ export class PromptEngine {
       messages: [{ role: 'user', content }],
     });
 
-    // Collect all text blocks (skip thinking blocks)
-    const text = response.content
-      .filter((block): block is { type: 'text'; text: string } => block.type === 'text')
-      .map(block => block.text)
-      .join('\n');
+    // Collect text blocks, fall back to thinking blocks (MiniMax returns thinking by default)
+    const textBlocks = response.content.filter((block): block is { type: 'text'; text: string } => block.type === 'text');
+    const thinkingBlocks = response.content.filter((block): block is { type: 'thinking'; thinking: string } => block.type === 'thinking');
+    const text = textBlocks.length > 0
+      ? textBlocks.map(block => block.text).join('\n')
+      : thinkingBlocks.map(block => block.thinking).join('\n');
 
     if (params.outputSchema) {
       return params.outputSchema.parse(JSON.parse(text));
