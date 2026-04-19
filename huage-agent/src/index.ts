@@ -1,9 +1,17 @@
 #!/usr/bin/env node
 
 import { Command } from 'commander';
-import { WritingEngine, createSession, createReadlineLoop } from './engine';
-import { WikiManager } from './wiki/manager';
-import { logger } from './logger';
+import * as fs from 'fs';
+import * as path from 'path';
+import { config } from './config.js';
+import { logger } from './logger.js';
+import { FiveStageOrchestrator } from './stages/index.js';
+import { Phase0Research } from './stages/phase0-research.js';
+import { WikiManager } from './wiki/manager.js';
+import { SessionMetaBuilder } from './learn/session-meta.js';
+import { PatternExtractor } from './learn/extractor.js';
+import { LocalEvolve } from './learn/evolve.js';
+import { VaultBridge } from './learn/vault-bridge.js';
 
 const program = new Command();
 
@@ -18,7 +26,8 @@ program
   .command('write')
   .description('开始一篇文章创作')
   .argument('[topic]', '文章主题（不填则交互式输入）')
-  .action(async (topic: string | undefined) => {
+  .option('-i, --interactive', '交互模式：选题时由用户选择（默认自动选第1个）')
+  .action(async (topic: string | undefined, opts: { interactive?: boolean }) => {
     try {
       // 如果没给主题，交互式输入
       if (!topic) {
@@ -39,45 +48,114 @@ program
         }
       }
 
-      logger.info(`🚀 开始创作: "${topic}"`);
-      const engine = await createSession(topic, await createReadlineLoop());
-      await engine.run();
+      console.log(`\n🚀 开始创作: "${topic}"\n`);
+      console.log('━'.repeat(50));
+
+      // Wiki 知识查询（先查，用于研究阶段注入）
+      let wikiKnowledge = '';
+      try {
+        const wiki = new WikiManager();
+        const result = await wiki.search(topic);
+        if (result.pages.length > 0) {
+          wikiKnowledge = result.pages.map((p) => `[[${p.title}]]: ${p.content.slice(0, 200)}`).join('\n');
+          console.log(`📚 Wiki 知识: ${result.pages.length} 条相关页面\n`);
+        }
+      } catch (e) {
+        // wiki 查询失败不影响主流程
+      }
+
+      // 生成输出目录
+      const dateStr = new Date().toISOString().split('T')[0];
+      const safeTopic = topic.replace(/[<>:"/\\|?*]/g, '-');
+      const outputDir = path.join(config.outputPath, dateStr, safeTopic);
+      fs.mkdirSync(outputDir, { recursive: true });
+      console.log(`\n📁 输出目录: ${outputDir}\n`);
+
+      // Phase 0: 深度研究（Tavily + YouTube）
+      let researchSummary = '';
+      try {
+        console.log('\n📡 Phase 0: 深度研究中...\n');
+        const researcher = new Phase0Research(outputDir);
+        await researcher.execute({ topic, wikiKnowledge });
+        const saved = await researcher.load();
+        researchSummary = saved.summary;
+        console.log('\n✅ Phase 0 研究完成\n');
+      } catch (e) {
+        console.log('⚠️  Phase 0 研究失败，继续后续阶段:', (e as Error).message, '\n');
+      }
+
+      console.log('━'.repeat(50));
+
+      // 五阶段执行
+      const orchestrator = new FiveStageOrchestrator(outputDir);
+      if (opts.interactive) {
+        await orchestrator.runInteractive({ topic, researchSummary, wikiKnowledge });
+      } else {
+        await orchestrator.runFull({ topic, researchSummary, wikiKnowledge });
+      }
+
+      console.log('\n✅ 文章创作完成！');
+      console.log(`📂 查看: ${outputDir}\n`);
+
+      // Stage 5 完成后 — 自动触发 /learn
+      try {
+        console.log('\n' + '━'.repeat(50));
+        console.log('📚 开始学习本次创作模式...\n');
+
+        // 1. 构建 session-meta.json
+        const sessionMeta = new SessionMetaBuilder(outputDir);
+        await sessionMeta.build();
+        await sessionMeta.save();
+
+        // 2. 提取模式
+        const extractor = new PatternExtractor(sessionMeta.getMeta());
+        const patterns = extractor.extract();
+        if (patterns.length === 0) {
+          console.log('未提取到任何模式，跳过学习。\n');
+        } else {
+          extractor.printSummary(patterns);
+
+          // 3. 用户确认
+          console.log('确认要保存以上模式吗？(y/n，默认 y)');
+          const rl = await import('readline');
+          const rli = rl.createInterface({ input: process.stdin, output: process.stdout });
+          const answer = await new Promise<string>(resolve => {
+            rli.question('> ', (a: string) => { rli.close(); resolve(a.trim()); });
+          });
+
+          if (answer.toLowerCase() !== 'n' && answer !== 'no') {
+            // 4. 双写
+            const vaultBridge = new VaultBridge();
+            const dateStr2 = new Date().toISOString().split('T')[0];
+
+            for (const pattern of patterns) {
+              await vaultBridge.writeProjectInstinct(pattern, dateStr2, extractor);
+              await vaultBridge.writeVaultInstinct(pattern, dateStr2);
+            }
+            console.log(`已保存 ${patterns.length} 个创作模式。`);
+
+            // 5. 自动进化检查
+            const evolve = new LocalEvolve();
+            const suggestions = evolve.check(patterns);
+            if (suggestions.highConfidence.length > 0 || suggestions.clusters.length > 0) {
+              console.log('\n✨ 检测到可进化的模式：');
+              suggestions.highConfidence.forEach(p => {
+                console.log(`  - ${p.type}（confidence: ${p.confidence}）`);
+              });
+              suggestions.clusters.forEach(group => {
+                console.log(`  - 聚类：${group[0].domain}（${group.length} 个）`);
+              });
+              await vaultBridge.triggerSkillEvolution(suggestions.highConfidence);
+            }
+          } else {
+            console.log('已取消保存模式。');
+          }
+        }
+      } catch (e) {
+        console.warn('⚠️ 学习模块执行失败，不影响主流程:', (e as Error).message);
+      }
     } catch (error) {
-      logger.error(`启动失败: ${error}`);
-      process.exit(1);
-    }
-  });
-
-// ==================== prompt 命令（交互式） ====================
-
-program
-  .command('prompt')
-  .description('交互式对话模式')
-  .action(async () => {
-    const readline = await import('readline');
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    console.log('🔵 huage-agent 交互模式，输入主题开始创作，输入 q 退出\n');
-
-    let topic = await new Promise<string>((resolve) => {
-      rl.question('📝 请输入文章主题: ', (answer) => resolve(answer.trim()));
-    });
-
-    if (!topic || topic.toLowerCase() === 'q') {
-      console.log('👋 再见！');
-      rl.close();
-      return;
-    }
-
-    try {
-      console.log(`🚀 开始创作: "${topic}"`);
-      const engine = await createSession(topic, await createReadlineLoop());
-      await engine.run();
-    } catch (error) {
-      logger.error(`启动失败: ${error}`);
+      logger.error(`创作失败: ${error}`);
       process.exit(1);
     }
   });
