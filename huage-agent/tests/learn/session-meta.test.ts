@@ -76,7 +76,7 @@ describe('SessionMetaBuilder', () => {
     expect(meta.stages.polish?.violations).toEqual(['空洞词A', '空洞词B']);
     expect(meta.stages.polish?.seoKeywords).toEqual(['关键词A', '关键词B']);
     expect(meta.stages.polish?.geoScore).toBe(82);
-    expect(meta.stages.writing?.wordCount).toBe(3100);
+    expect(meta.stages.writing?.wordCount).toBe(3200); // stage5-confirmed wins (max with stage4)
     expect(meta.stages.outline?.hooks).toContain('用问题开场');
     expect(meta.stages.outline?.sections[0].function).toBe('建立共鸣');
   });
