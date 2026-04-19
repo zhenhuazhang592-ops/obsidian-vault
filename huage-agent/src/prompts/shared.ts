@@ -160,12 +160,18 @@ export class PromptEngine {
     const { config } = await import('../config');
 
     const modelMap: Record<string, string> = {
-      'claude-sonnet': 'claude-sonnet-4-6',
-      'claude-opus': 'claude-opus-4-5',
-      'qwen3-max': 'qwen3-max',
+      'claude-sonnet': 'MiniMax-M2.7',
+      'claude-opus': 'MiniMax-M2.7',
+      'qwen3-max': 'MiniMax-M2.7',
     };
 
-    const client = new Anthropic({ apiKey: config.anthropicApiKey });
+    const clientOptions: { apiKey: string; baseURL?: string } = {
+      apiKey: config.anthropicApiKey,
+    };
+    if (config.anthropicBaseUrl) {
+      clientOptions.baseURL = config.anthropicBaseUrl;
+    }
+    const client = new Anthropic(clientOptions);
     const content = this.render(params.template, params.vars);
 
     const response = await client.messages.create({

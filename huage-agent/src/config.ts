@@ -11,6 +11,7 @@ dotenvConfig();
 
 const EnvSchema = z.object({
   ANTHROPIC_API_KEY: z.string().optional(),
+  ANTHROPIC_BASE_URL: z.string().optional(), // MiniMax 兼容: https://api.minimaxi.com/anthropic
   TAVILY_API_KEY: z.string().optional(),
   YOUTUBE_API_KEY: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),
@@ -25,6 +26,7 @@ const vaultPath = env.OBSIDIAN_VAULT_PATH ?? '/Users/huage/Obsidian Vault';
 export const config = {
   // API Keys
   anthropicApiKey: env.ANTHROPIC_API_KEY ?? '',
+  anthropicBaseUrl: env.ANTHROPIC_BASE_URL ?? '', // MiniMax 兼容模式
   tavilyApiKey: env.TAVILY_API_KEY ?? '',
   youtubeApiKey: env.YOUTUBE_API_KEY ?? '',
   youtubeClientSecret: env.YOUTUBE_CLIENT_SECRET ?? '',
