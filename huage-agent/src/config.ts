@@ -16,6 +16,7 @@ const EnvSchema = z.object({
   YOUTUBE_API_KEY: z.string().optional(),
   YOUTUBE_CLIENT_SECRET: z.string().optional(),
   ARK_API_KEY: z.string().optional(),
+  ARK_BASE_URL: z.string().optional(), // 火山引擎 Ark: https://ark.cn-beijing.volces.com
   OBSIDIAN_VAULT_PATH: z.string().optional(),
 });
 
@@ -31,6 +32,7 @@ export const config = {
   youtubeApiKey: env.YOUTUBE_API_KEY ?? '',
   youtubeClientSecret: env.YOUTUBE_CLIENT_SECRET ?? '',
   arkApiKey: env.ARK_API_KEY ?? '',
+  arkBaseUrl: env.ARK_BASE_URL ?? 'https://ark.cn-beijing.volces.com',
 
   // 路径
   vaultPath,
