@@ -17,10 +17,63 @@ program
 program
   .command('write')
   .description('开始一篇文章创作')
-  .argument('<topic>', '文章主题')
-  .action(async (topic: string) => {
+  .argument('[topic]', '文章主题（不填则交互式输入）')
+  .action(async (topic: string | undefined) => {
     try {
-      logger.info('启动 Writing Workflow Engine...');
+      // 如果没给主题，交互式输入
+      if (!topic) {
+        const readline = await import('readline');
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+        });
+        topic = await new Promise<string>((resolve) => {
+          rl.question('📝 请输入文章主题: ', (answer) => {
+            rl.close();
+            resolve(answer.trim());
+          });
+        });
+        if (!topic) {
+          logger.error('主题不能为空');
+          process.exit(1);
+        }
+      }
+
+      logger.info(`🚀 开始创作: "${topic}"`);
+      const engine = await createSession(topic, await createReadlineLoop());
+      await engine.run();
+    } catch (error) {
+      logger.error(`启动失败: ${error}`);
+      process.exit(1);
+    }
+  });
+
+// ==================== prompt 命令（交互式） ====================
+
+program
+  .command('prompt')
+  .description('交互式对话模式')
+  .action(async () => {
+    const readline = await import('readline');
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+
+    console.log('🔵 huage-agent 交互模式，输入主题开始创作，输入 q 退出\n');
+
+    let topic = await new Promise<string>((resolve) => {
+      rl.question('📝 请输入文章主题: ', (answer) => resolve(answer.trim()));
+    });
+
+    if (!topic || topic.toLowerCase() === 'q') {
+      console.log('👋 再见！');
+      rl.close();
+      return;
+    }
+
+    try {
+      console.log(`🚀 开始创作: "${topic}"`);
       const engine = await createSession(topic, await createReadlineLoop());
       await engine.run();
     } catch (error) {
