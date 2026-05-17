@@ -4,53 +4,11 @@
     "type": "split",
     "children": [
       {
-        "id": "3fd4e84306247519",
+        "id": "682cdebccf709a84",
         "type": "tabs",
         "children": [
           {
-            "id": "c704ba8b0d7eca53",
-            "type": "leaf",
-            "pinned": true,
-            "state": {
-              "type": "terminal:terminal",
-              "state": {
-                "terminal:terminal": {
-                  "cwd": "/Users/huage/Obsidian Vault",
-                  "focus": false,
-                  "profile": {
-                    "args": [
-                      "--login"
-                    ],
-                    "executable": "/bin/zsh",
-                    "followTheme": true,
-                    "name": "",
-                    "platforms": {
-                      "darwin": true
-                    },
-                    "pythonExecutable": "python3",
-                    "restoreHistory": false,
-                    "rightClickAction": "copyPaste",
-                    "successExitCodes": [
-                      "0",
-                      "SIGINT",
-                      "SIGTERM"
-                    ],
-                    "terminalOptions": {
-                      "documentOverride": null
-                    },
-                    "type": "integrated",
-                    "useWin32Conhost": true
-                  },
-                  "serial": null
-                }
-              },
-              "pinned": true,
-              "icon": "terminal",
-              "title": "终端：✳ Claude Code"
-            }
-          },
-          {
-            "id": "e0c665735b49ce09",
+            "id": "f8e9c15860edac2f",
             "type": "leaf",
             "pinned": true,
             "state": {
@@ -123,7 +81,7 @@
             "state": {
               "type": "search",
               "state": {
-                "query": "",
+                "query": "Research_Workflow_Agent",
                 "matchingCase": false,
                 "explainSearch": false,
                 "collapseAll": false,
@@ -148,7 +106,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 311.5
+    "width": 363.5
   },
   "right": {
     "id": "7af3afd3ef4c513e",
@@ -233,14 +191,33 @@
               "icon": "lucide-list",
               "title": "大纲"
             }
+          },
+          {
+            "id": "fd2a175360076b84",
+            "type": "leaf",
+            "state": {
+              "type": "copilot-chat-view",
+              "state": {},
+              "icon": "lucide-ghost",
+              "title": "copilot-chat-view"
+            }
+          },
+          {
+            "id": "0827ad79a583f708",
+            "type": "leaf",
+            "state": {
+              "type": "claudian-view",
+              "state": {},
+              "icon": "bot",
+              "title": "Claudian"
+            }
           }
         ],
-        "currentTab": 4
+        "currentTab": 6
       }
     ],
     "direction": "horizontal",
-    "width": 340.5,
-    "collapsed": true
+    "width": 200
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -256,53 +233,54 @@
       "terminal:Open terminal": false
     }
   },
-  "active": "c704ba8b0d7eca53",
+  "active": "f8e9c15860edac2f",
   "lastOpenFiles": [
-    "AI工具箱/huage888/outputs/S01E01/S01E01-pipeline-summary.json",
-    "AI工具箱/huage888/outputs/S01E01/production_report.md",
-    "AI工具箱/huage888/outputs/S01E01/technical_log.json",
-    "AI工具箱/huage888/outputs/S01E01",
-    "AI工具箱/huage888/scripts/__pycache__/production_report.cpython-314.pyc",
-    "AI工具箱/huage888/scripts/production_report.py",
-    "AI工具箱/huage888/scripts/__pycache__/report_logger.cpython-314.pyc",
-    "AI工具箱/huage888/scripts/report_logger.py",
-    "docs/superpowers/plans/2026-04-08-production-report-design.md",
-    "docs/superpowers/specs/2026-04-08-production-report-design.md",
-    "AI工具箱/huage888/skills/中年修复术-style/SKILL.md",
-    "AI工具箱/huage888/skills/中年修复术-style",
-    "AI工具箱/huage888/projects/测试项目/README.md",
-    "AI工具箱/huage888/projects/测试项目/config/visual-bible.md",
-    "AI工具箱/huage888/projects/测试项目/docs/README.md",
-    "AI工具箱/huage888/projects/测试项目/outputs",
-    "AI工具箱/huage888/projects/测试项目/docs",
-    "AI工具箱/huage888/projects/测试项目/CLAUDE.md",
-    "AI工具箱/huage888/agents/storyboard-review.md",
-    "AI工具箱/huage888/agents/art-review.md",
-    "AI工具箱/huage888/agents/script-review.md",
-    "AI工具箱/huage888/skills/motion-prompt-skill/SKILL.md",
-    "AI工具箱/huage888/docs/README.md",
-    "AI工具箱/huage888/docs/reference/toonflow-gap-analysis.md",
-    "AI工具箱/huage888/outputs/S01E01/S01E01-shots.md",
-    "AI工具箱/huage888/outputs/S01E01/S01E01-outline.md",
-    "AI工具箱/huage888/agents/storyline.md",
-    "AI工具箱/huage888/config/seedream_prompts/prop_card_template.md",
-    "AI工具箱/huage888/config/seedream_prompts/scene_card_template.md",
-    "AI工具箱/huage888/config/seedream_prompts/character_card_template.md",
-    "docs/superpowers/plans/2026-04-07-huage888-p1-p2-implementation.md",
-    "docs/superpowers/specs/2026-04-07-huage888-p1-p2-design.md",
-    "AI工具箱/huage888/outputs/S01E01-shots.md",
-    "AI工具箱/huage888/outputs/S01E01-outline.md",
-    "AI工具箱/huage888/agents/outline-agent.md",
-    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/01.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/04.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/03.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v3/assets/phase1/02.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_08.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_02.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_01.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_07.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_06.png",
-    "AI工具箱/huage888/projects/断桥奇遇-v2/assets/02-libtv-assets/asset_05.png",
+    "独立站项目/Strapi/平台分析.md",
+    "独立站项目/types/index.ts",
+    "独立站项目/Saleor/平台分析.md",
+    "独立站项目/Medusa/平台分析.md",
+    "独立站项目/Payload/平台分析.md",
+    "独立站项目/总览.md",
+    "独立站项目/types",
+    "独立站项目/Strapi",
+    "独立站项目/Saleor",
+    "独立站项目/Payload",
+    "独立站项目/Medusa",
+    "独立站项目",
+    "小红书内容创作/配图/avocado-p4.jpeg",
+    "小红书内容创作/配图/avocado-p4-scene.jpeg",
+    "小红书内容创作/配图/avocado-p3.jpeg",
+    "小红书内容创作/配图/avocado-p3-infographic.jpeg",
+    "小红书内容创作/配图/avocado-p2.jpeg",
+    "小红书内容创作/配图/avocado-p2-comparison.jpeg",
+    "小红书内容创作/配图/avocado-p1.jpeg",
+    "小红书内容创作/配图/avocado-p1-scene.jpeg",
+    "小红书内容创作/配图/avocado-cover.jpeg",
+    "小红书内容创作/配图/avocado-cover-bold.jpeg",
+    "小红书内容创作/小红书笔记/20260318_科学家跟踪5万人发现_常吃牛油果的人体重增幅少73.md",
+    "小红书内容创作/配图",
+    "小红书内容创作/小红书笔记",
+    "小红书内容创作",
+    "华哥影视/AI漫剧知识库/06-资源索引/外部工具库/prompts-chat/项目档案.md",
+    "华哥影视/AI漫剧工具研究/智剧通(ZJT)/详细研究/04-API层.md",
+    "华哥影视/AI漫剧知识库/07-执行层/火宝短剧架构/项目档案.md",
+    "华哥影视/AI漫剧知识库/02-Prompt工程库/Prompt模板-A级/A级Prompt索引.md",
+    "华哥影视/awesome-seedance/prompts/commercial-use-cases.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-漫剧制作底层架构深度研究.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-架构拆解.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-剧本工作室初步研究.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-分镜模块深度研究.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-剧本创作模块深度研究.md",
+    "华哥影视/AI漫剧工具研究/联易方舟/联易方舟-全链路架构拆解.md",
+    "华哥影视/AI漫剧工具研究/TapNow/TapNow一键拉片Agent可行性分析.md",
+    "华哥影视/AI漫剧工具研究/LibTV/LibTV-Canvas-API突破研究.md",
+    "华哥影视/AI漫剧知识库/07-执行层/cdp_doc_generator_示例.md",
+    "华哥影视/AI漫剧知识库/03-工具手册/工具手册索引.md",
+    "华哥影视/AI漫剧知识库/03-工具手册/Seedance手册.md",
+    "华哥影视/AI漫剧知识库/03-工具手册/Kling手册.md",
+    "华哥影视/AI漫剧知识库/02-Prompt工程库/Prompt进化规则.md",
+    "华哥影视/AI漫剧知识库/02-Prompt工程库/Prompt失败日志.md",
+    "华哥影视/AI漫剧知识库/01-制作SOP/Step11-风控审核.md",
     "未命名.canvas"
   ]
 }

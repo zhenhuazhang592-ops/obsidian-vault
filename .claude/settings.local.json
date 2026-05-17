@@ -465,7 +465,9 @@
       "Bash(/usr/local/bin/python3.12 -c \"\nimport anthropic\nclient = anthropic.Anthropic\\(\n    api_key='sk-cp-OsTXrT2oMjPDS6JjsA1oiAMjQat33qnxnKGwAv38J-nUO10HXOFRs8lIoQldMh0quKX46MkMfLwj0bo74vca0EJgFCt2LcclRz6apYhKhoUO9d8pZXG1fOo',\n    base_url='https://api.minimaxi.com/anthropic'\n\\)\nmsg = client.messages.create\\(model='MiniMax-M2.7', max_tokens=50,\n    messages=[{'role':'user','content':[{'type':'text','text':'hi'}]}]\\)\nfor block in msg.content:\n    t = getattr\\(block, 'text', None\\) or getattr\\(block, 'thinking', None\\) or str\\(block\\)\n    print\\('RESPONSE:', str\\(t\\)[:80]\\)\n\" 2>&1)",
       "Bash(ANTHROPIC_API_KEY=\"sk-cp-OsTXrT2oMjPDS6JjsA1oiAMjQat33qnxnKGwAv38J-nUO10HXOFRs8lIoQldMh0quKX46MkMfLwj0bo74vca0EJgFCt2LcclRz6apYhKhoUO9d8pZXG1fOo\" ANTHROPIC_BASE_URL=\"https://api.minimaxi.com/anthropic\" claude --print \"hi\")",
       "Skill(autoplan)",
-      "Skill(checkpoint)"
+      "Skill(checkpoint)",
+      "Bash(git branch:*)",
+      "mcp__tavily__tavily_research"
     ]
   }
 }
